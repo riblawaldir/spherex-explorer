@@ -1,0 +1,7 @@
+fastapi>=0.115,<1
+uvicorn[standard]>=0.34,<1
+astropy>=7,<9
+astroquery>=0.4.10,<1
+pyvo>=1.6,<2
+numpy>=2,<3
+pillow>=11,<13
