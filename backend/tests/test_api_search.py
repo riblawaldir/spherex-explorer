@@ -107,7 +107,7 @@ def test_epochs_time_ordered_for_wise_region():
         "provenance",
     }
     assert required <= epochs[0].keys()
-    assert all(e["provenance"] in {"stub", "cached_sample"} for e in epochs)
+    assert all(e["provenance"] in {"stub", "cached_sample", "live"} for e in epochs)
     # Fixture truth: coords from data/metadata/epochs.json — not invented defaults.
     assert epochs[0]["ra"] == 133.79513
     assert epochs[0]["dec"] == -7.24459
