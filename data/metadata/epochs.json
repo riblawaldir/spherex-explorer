@@ -1,0 +1,50 @@
+{
+  "provenance": "cached_sample",
+  "notes": "Synthetic labeled epochs for Sprint 1 API demos. t_mjd / bandpass are placeholders for contract shape — not downloaded IRSA rows. fits_sample points at tiny synthetic FITS under data/samples/ (not science products).",
+  "epochs": [
+    {
+      "obs_id": "stub-wise0855-001",
+      "ra": 133.79513,
+      "dec": -7.24459,
+      "t_mjd": 60310.125,
+      "bandpass": "SPHEREx-B1",
+      "wavelength_um": 0.95,
+      "preview_url": "/api/preview/stub-wise0855-001",
+      "provenance": "cached_sample",
+      "fits_sample": "samples/stub-wise0855-001.fits"
+    },
+    {
+      "obs_id": "stub-wise0855-002",
+      "ra": 133.79513,
+      "dec": -7.24459,
+      "t_mjd": 60490.33,
+      "bandpass": "SPHEREx-B1",
+      "wavelength_um": 0.95,
+      "preview_url": "/api/preview/stub-wise0855-002",
+      "provenance": "cached_sample",
+      "fits_sample": null
+    },
+    {
+      "obs_id": "stub-wise0855-003",
+      "ra": 133.79513,
+      "dec": -7.24459,
+      "t_mjd": 60670.01,
+      "bandpass": "SPHEREx-B3",
+      "wavelength_um": 2.4,
+      "preview_url": "/api/preview/stub-wise0855-003",
+      "provenance": "cached_sample",
+      "fits_sample": null
+    },
+    {
+      "obs_id": "stub-barnard-001",
+      "ra": 269.45208,
+      "dec": 4.69336,
+      "t_mjd": 60355.5,
+      "bandpass": "SPHEREx-B2",
+      "wavelength_um": 1.4,
+      "preview_url": "/api/preview/stub-barnard-001",
+      "provenance": "stub",
+      "fits_sample": null
+    }
+  ]
+}

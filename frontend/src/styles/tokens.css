@@ -1,0 +1,36 @@
+@theme inline {
+  --font-sans: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-violet: var(--violet);
+}
+
+:root:root,
+.dark.dark {
+  --background: oklch(0.125 0.016 265);
+  --foreground: oklch(0.942 0.014 268);
+  --card: oklch(0.18 0.034 269);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.797 0.134 211);
+  --primary-foreground: var(--background);
+  --secondary: oklch(0.222 0.051 272);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--secondary);
+  --muted-foreground: oklch(0.671 0.043 270);
+  --accent: var(--secondary);
+  --accent-foreground: var(--foreground);
+  --border: oklch(1 0 0 / 0.08);
+  --input: var(--border);
+  --ring: var(--primary);
+  --warning: oklch(0.769 0.165 70);
+  --destructive: oklch(0.645 0.215 16);
+  --success: oklch(0.765 0.153 163);
+  --violet: oklch(0.606 0.219 293);
+  --brand-gradient: linear-gradient(110deg, var(--primary), var(--violet));
+  --panel-shadow: 0 12px 40px oklch(0 0 0 / 0.2);
+  --active-shadow: 0 0 24px oklch(0.797 0.134 211 / 0.1);
+  --radius: 0.75rem;
+}

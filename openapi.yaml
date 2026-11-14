@@ -1,0 +1,250 @@
+openapi: 3.0.3
+info:
+  title: SPHEREx Explorer API
+  version: 0.1.0-sprint1
+  description: |
+    Sprint 1 contract for SPHEREx Explorer.
+    Search and epochs use labeled fixtures under `data/metadata/` with
+    provenance `stub` or `cached_sample` (never live IRSA until P4).
+    Preview returns PNG when a local sample FITS exists and P5 `fits_to_png`
+    succeeds; otherwise 501.
+servers:
+  - url: http://127.0.0.1:8000
+    description: Local uvicorn
+paths:
+  /health:
+    get:
+      summary: Liveness
+      operationId: getHealth
+      tags: [system]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /api/targets:
+    get:
+      summary: Catálogo mínimo de test targets
+      operationId: getTargets
+      tags: [targets]
+      responses:
+        "200":
+          description: Lista Target (labeled fixtures)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Target"
+  /api/search:
+    get:
+      summary: Buscar por q y/o ra/dec
+      operationId: search
+      tags: [search]
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          description: Nombre o fragmento de target
+        - in: query
+          name: ra
+          schema:
+            type: number
+            minimum: 0
+            exclusiveMaximum: 360
+          description: Right ascension (degrees) [0, 360)
+        - in: query
+          name: dec
+          schema:
+            type: number
+            minimum: -90
+            maximum: 90
+          description: Declination (degrees) [-90, 90]
+        - in: query
+          name: radius_arcsec
+          schema:
+            type: number
+            exclusiveMinimum: 0
+            maximum: 3600
+          description: Search radius in arcseconds (requires ra/dec)
+      responses:
+        "200":
+          description: hits
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
+        "422":
+          description: Validation error (RA/Dec/radius bounds or unpaired ra/dec)
+  /api/epochs:
+    get:
+      summary: Visitas cerca de ra/dec (time-ordered)
+      operationId: getEpochs
+      tags: [epochs]
+      parameters:
+        - in: query
+          name: ra
+          required: true
+          schema:
+            type: number
+            minimum: 0
+            exclusiveMaximum: 360
+        - in: query
+          name: dec
+          required: true
+          schema:
+            type: number
+            minimum: -90
+            maximum: 90
+        - in: query
+          name: radius_arcsec
+          schema:
+            type: number
+            exclusiveMinimum: 0
+            maximum: 3600
+          description: Search radius in arcseconds
+        - in: query
+          name: band
+          schema:
+            type: string
+          description: Optional bandpass filter
+      responses:
+        "200":
+          description: epochs[] time-ordered by t_mjd
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EpochsResponse"
+        "422":
+          description: Validation error (missing/out-of-range ra/dec/radius)
+  /api/preview/{obs_id}:
+    get:
+      summary: Preview PNG (P5 fits_to_png when sample FITS exists)
+      operationId: getPreview
+      tags: [preview]
+      parameters:
+        - in: path
+          name: obs_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 4096
+            default: 512
+      responses:
+        "200":
+          description: image/png from local sample via P5 fits_to_png
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+          headers:
+            X-Provenance:
+              schema:
+                type: string
+                example: cached_sample
+        "501":
+          description: No sample FITS or processing failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StubNotImplemented"
+components:
+  schemas:
+    Target:
+      type: object
+      required: [id, name, ra, dec]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        ra:
+          type: number
+          description: Degrees
+        dec:
+          type: number
+          description: Degrees
+        notes:
+          type: string
+    SearchHit:
+      type: object
+      required: [id, name, ra, dec]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        ra:
+          type: number
+        dec:
+          type: number
+        notes:
+          type: string
+    SearchResponse:
+      type: object
+      required: [hits, provenance]
+      properties:
+        hits:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchHit"
+        provenance:
+          type: string
+          enum: [stub, cached_sample]
+          example: stub
+    Epoch:
+      type: object
+      required: [obs_id, t_mjd, bandpass, wavelength_um, preview_url, provenance]
+      properties:
+        obs_id:
+          type: string
+        t_mjd:
+          type: number
+          nullable: true
+        bandpass:
+          type: string
+          nullable: true
+        wavelength_um:
+          type: number
+          nullable: true
+        preview_url:
+          type: string
+          nullable: true
+        provenance:
+          type: string
+          enum: [stub, cached_sample]
+    EpochsResponse:
+      type: object
+      required: [epochs, provenance]
+      properties:
+        epochs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Epoch"
+        provenance:
+          type: string
+          enum: [stub, cached_sample]
+          example: cached_sample
+    StubNotImplemented:
+      type: object
+      required: [detail, provenance]
+      properties:
+        detail:
+          type: string
+        provenance:
+          type: string
+          example: stub
