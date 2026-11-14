@@ -1,8 +1,9 @@
-"""GET /api/search — hollow Sprint 0 stub."""
+"""GET /api/search — fixture-backed search (Sprint 1)."""
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 
-from app.routers.fixtures import STUB_PROVENANCE, STUB_TARGETS
+from app.services.catalog import get_catalog_service
+from app.validation import OptionalDecQuery, OptionalRaQuery, OptionalRadiusArcsecQuery
 
 router = APIRouter(prefix="/api", tags=["search"])
 
@@ -10,28 +11,27 @@ router = APIRouter(prefix="/api", tags=["search"])
 @router.get("/search")
 def search(
     q: str | None = Query(default=None, description="Name fragment"),
-    ra: float | None = Query(default=None, description="RA degrees"),
-    dec: float | None = Query(default=None, description="Dec degrees"),
+    ra: OptionalRaQuery = None,
+    dec: OptionalDecQuery = None,
+    radius_arcsec: OptionalRadiusArcsecQuery = None,  # noqa: FAST002 — default via =
 ) -> dict:
-    """Filter static fixtures by name fragment or exact ra/dec match.
+    """Search labeled targets by name fragment and/or sky position.
 
-    No IRSA / SIMBAD — Sprint 0 placeholder only.
+    Uses ``data/metadata/targets.json`` via CatalogService.
+    TODO(P4): CatalogService will query IRSA; provenance will change accordingly.
     """
-    hits: list[dict] = []
+    if (ra is None) ^ (dec is None):
+        raise HTTPException(
+            status_code=422,
+            detail="Provide both ra and dec together, or neither",
+        )
+    if radius_arcsec is not None and (ra is None or dec is None):
+        raise HTTPException(
+            status_code=422,
+            detail="radius_arcsec requires ra and dec",
+        )
 
-    if q is not None and q.strip():
-        needle = q.strip().lower()
-        hits = [
-            t
-            for t in STUB_TARGETS
-            if needle in t["name"].lower() or needle in t["id"].lower()
-        ]
-    elif ra is not None and dec is not None:
-        # Exact match against stub fixtures only (no sky search).
-        hits = [
-            t for t in STUB_TARGETS if t["ra"] == ra and t["dec"] == dec
-        ]
-    else:
-        hits = list(STUB_TARGETS)
-
-    return {"hits": hits, "provenance": STUB_PROVENANCE}
+    result = get_catalog_service().search(
+        q=q, ra=ra, dec=dec, radius_arcsec=radius_arcsec
+    )
+    return {"hits": result.hits, "provenance": result.provenance}

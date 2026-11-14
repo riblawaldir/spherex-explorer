@@ -5,10 +5,11 @@ from app.routers import epochs, preview, search, targets
 
 app = FastAPI(
     title="SPHEREx Explorer",
-    version="0.0.0-sprint0",
+    version="0.1.0-sprint1",
     description=(
-        "Sprint 0 API: /health + hollow /api stubs. "
-        "Contract also documented in repo-root openapi.yaml."
+        "Sprint 1 API: validated search/epochs over labeled fixtures "
+        "(stub / cached_sample). Contract also in repo-root openapi.yaml. "
+        "Live IRSA is owned by P4 (feat/spherex-data)."
     ),
 )
 app.add_middleware(

@@ -1,4 +1,4 @@
-"""API routers (Sprint 0 stubs — no IRSA / no live FITS)."""
+"""API routers (Sprint 1: fixture-backed search/epochs; preview via P5 when sample exists)."""
 
 from app.routers import epochs, preview, search, targets
 
