@@ -1,15 +1,20 @@
 openapi: 3.0.3
 info:
   title: SPHEREx Explorer API
-  version: 0.1.1-sprint1
+  version: 0.2.0-sprint2
   description: |
-    Sprint 1 contract for SPHEREx Explorer.
-    Search and epochs use labeled fixtures under `data/metadata/` with
-    provenance `stub` or `cached_sample` (never live IRSA until P4).
-    Epoch includes fixture ra/dec when present; does not invent collection
-    or source_url for the frontend Observation adapter.
+    Sprint 2 contract for SPHEREx Explorer.
+    Default search/epochs path uses labeled fixtures under `data/metadata/`
+    with provenance `stub` or `cached_sample` (offline demo / CI).
+    When `SPHEREX_USE_IRSA=1` (or CatalogService `use_irsa=True`), the
+    backend calls P4 `search_observations` (IRSA SIA2). Successful queries
+    are labeled provenance `live`. IRSA failures fall back to fixtures.
+    Epoch always includes obs_id, ra, dec, t_mjd, bandpass, wavelength_um,
+    preview_url, provenance (nullable values where the row lacks them).
+    For live rows only, optional `collection` and `source_url` are passed
+    through from P4 when IRSA provides them — never invented for fixtures.
     Preview returns PNG when a local sample FITS exists and P5 `fits_to_png`
-    succeeds; otherwise 501.
+    succeeds; otherwise 501 (or null `preview_url` on live rows without a sample).
 servers:
   - url: http://127.0.0.1:8000
     description: Local uvicorn
@@ -206,19 +211,27 @@ components:
             $ref: "#/components/schemas/SearchHit"
         provenance:
           type: string
-          enum: [stub, cached_sample]
+          enum: [stub, cached_sample, live]
+          description: |
+            stub / cached_sample = labeled fixtures; live = successful IRSA
+            SIA2 query via P4 search_observations.
           example: stub
     Epoch:
       type: object
       required:
         [obs_id, ra, dec, t_mjd, bandpass, wavelength_um, preview_url, provenance]
       description: |
-        Time-ordered visit near a sky region. Keys are always present; t_mjd,
-        bandpass, wavelength_um, preview_url, ra, and dec may be null when the
-        labeled fixture (or later IRSA row) lacks that value. collection and
-        source_url are intentionally absent until real metadata exists — clients
-        must not invent them. preview_url may point at /api/preview/{obs_id}
-        even when that endpoint returns 501 (no sample FITS).
+        Time-ordered visit near a sky region. Required keys are always present;
+        t_mjd, bandpass, wavelength_um, preview_url, ra, and dec may be null
+        when the fixture or IRSA row lacks that value.
+        Field mapping from P4 ObservationRecord (live only):
+          id → obs_id, t_min_mjd → t_mjd, band_label → bandpass,
+          em_min/em_max → wavelength_um (midpoint µm when both present),
+          access_url → source_url (optional), collection → collection (optional).
+        collection / source_url are omitted on fixture rows; included on live
+        rows only when P4/IRSA actually provided them. preview_url is null for
+        live rows without a local sample FITS; fixture rows may point at
+        /api/preview/{obs_id} even when that endpoint returns 501.
       properties:
         obs_id:
           type: string
@@ -245,7 +258,21 @@ components:
           nullable: true
         provenance:
           type: string
-          enum: [stub, cached_sample]
+          enum: [stub, cached_sample, live]
+          description: |
+            stub = synthetic labeled fixture; cached_sample = local sample
+            metadata/FITS; live = real IRSA SIA2 row via P4.
+        collection:
+          type: string
+          nullable: true
+          description: |
+            IRSA obs_collection when present on a live row (e.g. spherex_dr1).
+            Omitted for fixtures — clients must not invent DR1/QR3.
+        source_url:
+          type: string
+          nullable: true
+          description: |
+            IRSA access_url when present on a live row. Omitted for fixtures.
     EpochsResponse:
       type: object
       required: [epochs, provenance]
@@ -256,7 +283,7 @@ components:
             $ref: "#/components/schemas/Epoch"
         provenance:
           type: string
-          enum: [stub, cached_sample]
+          enum: [stub, cached_sample, live]
           example: cached_sample
     StubNotImplemented:
       type: object
