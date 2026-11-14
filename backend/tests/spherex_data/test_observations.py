@@ -2,13 +2,11 @@
 test_observations.py — Pruebas de organización temporal de observaciones SPHEREx.
 """
 
-import sys
 from pathlib import Path
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from spherex_data.search import ObservationRecord
-from spherex_data.observations import organize_observations
+from app.science.spherex_data.search import ObservationRecord
+from app.science.spherex_data.observations import organize_observations
 
 
 # ---------------------------------------------------------------------------

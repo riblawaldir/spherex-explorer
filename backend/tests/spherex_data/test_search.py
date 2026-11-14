@@ -182,7 +182,7 @@ class TestSearchObservationsMocked:
             "facility_name": ["SPHEREx", "SPHEREx"],
         })
 
-    @patch("spherex_data.search.IRSAClient")
+    @patch("app.science.spherex_data.search.IRSAClient")
     def test_returns_dict_structure(self, MockClient):
         mock_instance = MagicMock()
         mock_instance.query_sia.return_value = self._make_mock_table()
@@ -191,12 +191,16 @@ class TestSearchObservationsMocked:
 
         result = search_observations(127.69, -39.17, 0.01)
 
+        MockClient.assert_called_once()
+        mock_instance.query_sia.assert_called_once_with(
+            127.69, -39.17, 0.01, ["spherex_dr1", "spherex_qr3"]
+        )
         assert "region" in result
         assert "count" in result
         assert "observations" in result
         assert result["count"] == 2
 
-    @patch("spherex_data.search.IRSAClient")
+    @patch("app.science.spherex_data.search.IRSAClient")
     def test_empty_result(self, MockClient):
         mock_instance = MagicMock()
         mock_instance.query_sia.return_value = Table()
@@ -214,7 +218,7 @@ class TestSearchObservationsMocked:
         with pytest.raises(CoordinateValidationError):
             search_observations(-999.0, 0.0, 0.01)
 
-    @patch("spherex_data.search.IRSAClient")
+    @patch("app.science.spherex_data.search.IRSAClient")
     def test_region_preserved_in_result(self, MockClient):
         mock_instance = MagicMock()
         mock_instance.query_sia.return_value = Table()

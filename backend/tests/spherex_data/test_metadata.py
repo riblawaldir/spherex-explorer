@@ -6,15 +6,13 @@ Incluye:
   - Prueba con archivo FITS real si está disponible en data/raw/.
 """
 
-import sys
 from pathlib import Path
 import numpy as np
 import pytest
 from astropy.io import fits
 from astropy.wcs import WCS
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from spherex_data.metadata import extract_metadata
+from app.science.spherex_data.metadata import extract_metadata
 
 
 # ---------------------------------------------------------------------------
