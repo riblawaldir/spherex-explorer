@@ -8,7 +8,8 @@ import {
   mockObservations,
 } from "@/data/mockObservations";
 import { validateCoordinatesStrict } from "@/lib/coordinates";
-import { searchByCoordinates } from "@/services/searchService";
+import { fetchObservations } from "@/services/observationsApi";
+import type { DiscardedEpoch } from "@/services/adapters/epochToObservation";
 import type { Coordinates, SearchFilters } from "@/types/search";
 import { Sidebar } from "./Sidebar";
 import { ResponsivePanel } from "./ResponsivePanel";
@@ -20,13 +21,20 @@ import { ResultsPanel } from "@/components/observations/ResultsPanel";
 import { MetadataPanel } from "@/components/observations/MetadataPanel";
 
 export function ExplorerWorkspace() {
+  const isMockMode = import.meta.env?.VITE_USE_MOCKS === "true";
   const [coordinates, setCoordinates] = useState<Coordinates>({ ...defaultCoordinates });
   const [submitted, setSubmitted] = useState<Coordinates>({ ...defaultCoordinates });
   const [filters, setFilters] = useState<SearchFilters>({ ...emptyFilters });
-  const [observations, setObservations] = useState(mockObservations);
-  const [status, setStatus] = useState<"ready" | "loading" | "error">("ready");
+  const [observations, setObservations] = useState(isMockMode ? mockObservations : []);
+  const [discarded, setDiscarded] = useState<DiscardedEpoch[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | undefined>();
+  const [status, setStatus] = useState<"ready" | "loading" | "error">(
+    isMockMode ? "ready" : "ready",
+  );
   const [errors, setErrors] = useState<Partial<Record<keyof Coordinates, string>>>({});
-  const [selectedId, setSelectedId] = useState<string | undefined>(mockObservations[0]?.id);
+  const [selectedId, setSelectedId] = useState<string | undefined>(
+    isMockMode ? mockObservations[0]?.id : undefined,
+  );
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const navigate = useNavigate();
@@ -37,6 +45,7 @@ export function ExplorerWorkspace() {
   function commitMock(c: Coordinates, f: SearchFilters) {
     const rows = filterMockObservations(c, f);
     setObservations(rows);
+    setDiscarded([]);
     setSelectedId((previous) => (rows.some((o) => o.id === previous) ? previous : rows[0]?.id));
     setCompareIds((previous) => previous.filter((id) => rows.some((o) => o.id === id)));
   }
@@ -48,44 +57,62 @@ export function ExplorerWorkspace() {
 
     clearTimeout(timer.current);
     setStatus("loading");
+    setErrorMessage(undefined);
+
+    // Si está explícitamente activado VITE_USE_MOCKS=true, usar fixtures locales
+    if (isMockMode) {
+      timer.current = setTimeout(() => {
+        commitMock(coordinates, filters);
+        setSubmitted({ ...coordinates });
+        setStatus("ready");
+      }, 300);
+      return;
+    }
 
     try {
-      // Consultar endpoint backend /api/epochs y /api/search vía proxy Vite
-      const apiResult = await searchByCoordinates({
+      const radiusArcsec = validation.parsed.radius * 3600;
+      const apiResult = await fetchObservations({
         ra: validation.parsed.ra,
         dec: validation.parsed.dec,
-        radiusDegrees: validation.parsed.radius,
+        radiusArcsec,
         band: filters.bands.length === 1 ? filters.bands[0] : undefined,
       });
 
-      if (apiResult.success && apiResult.backendAvailable && apiResult.observations.length > 0) {
+      if (apiResult.status === "error") {
+        setErrorMessage(apiResult.error);
+        setObservations([]);
+        setDiscarded(apiResult.discarded);
+        setStatus("error");
+      } else {
         setObservations(apiResult.observations);
+        setDiscarded(apiResult.discarded);
         setSelectedId(apiResult.observations[0]?.id);
         setCompareIds([]);
         setSubmitted({ ...coordinates });
         setStatus("ready");
-      } else {
-        // Fallback controlado a datos simulados locales de desarrollo (DATOS SIMULADOS)
-        commitMock(coordinates, filters);
-        setSubmitted({ ...coordinates });
-        setStatus("ready");
       }
     } catch (error) {
-      console.warn("No se pudo conectar con el backend /api, usando fixtures simulados:", error);
-      try {
-        commitMock(coordinates, filters);
-        setSubmitted({ ...coordinates });
-        setStatus("ready");
-      } catch {
-        setStatus("error");
-      }
+      console.warn("Fallo al consultar /api/epochs:", error);
+      setErrorMessage(
+        error instanceof Error ? error.message : "Error inesperado al conectar con el backend",
+      );
+      setObservations([]);
+      setDiscarded([]);
+      setStatus("error");
     }
   }
 
   function handleReset() {
     setCoordinates({ ...defaultCoordinates });
     setErrors({});
-    commitMock(defaultCoordinates, filters);
+    setDiscarded([]);
+    setErrorMessage(undefined);
+    if (isMockMode) {
+      commitMock(defaultCoordinates, filters);
+    } else {
+      setObservations([]);
+      setStatus("ready");
+    }
     setSubmitted({ ...defaultCoordinates });
   }
 
@@ -118,8 +145,10 @@ export function ExplorerWorkspace() {
               onChange={(f) => {
                 clearTimeout(timer.current);
                 setFilters(f);
-                commitMock(submitted, f);
-                setStatus("ready");
+                if (isMockMode) {
+                  commitMock(submitted, f);
+                  setStatus("ready");
+                }
               }}
             />
           </Sidebar>
@@ -137,6 +166,8 @@ export function ExplorerWorkspace() {
               selectedId={selectedId}
               compareIds={compareIds}
               status={status}
+              discarded={discarded}
+              errorMessage={errorMessage}
               onSelect={setSelectedId}
               onCheck={(id) =>
                 setCompareIds((prev) =>
