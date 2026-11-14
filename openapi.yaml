@@ -1,0 +1,217 @@
+openapi: 3.0.3
+info:
+  title: SPHEREx Explorer API
+  version: 0.0.0-sprint0
+  description: |
+    Sprint 0 contract stub for SPHEREx Explorer.
+    Paths under `/api/*` return static fixtures with clear stub provenance.
+    Live IRSA / FITS preview are out of scope until Sprint 1+.
+servers:
+  - url: http://127.0.0.1:8000
+    description: Local uvicorn
+paths:
+  /health:
+    get:
+      summary: Liveness
+      operationId: getHealth
+      tags: [system]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /api/targets:
+    get:
+      summary: Catálogo mínimo de test targets
+      operationId: getTargets
+      tags: [targets]
+      responses:
+        "200":
+          description: Lista Target (fixture estático Sprint 0)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Target"
+  /api/search:
+    get:
+      summary: Buscar por q o ra/dec
+      operationId: search
+      tags: [search]
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          description: Nombre o fragmento de target
+        - in: query
+          name: ra
+          schema:
+            type: number
+          description: Right ascension (degrees)
+        - in: query
+          name: dec
+          schema:
+            type: number
+          description: Declination (degrees)
+      responses:
+        "200":
+          description: hits
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
+  /api/epochs:
+    get:
+      summary: Visitas cerca de ra/dec
+      operationId: getEpochs
+      tags: [epochs]
+      parameters:
+        - in: query
+          name: ra
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: dec
+          required: true
+          schema:
+            type: number
+        - in: query
+          name: radius_arcsec
+          schema:
+            type: number
+          description: Search radius in arcseconds
+        - in: query
+          name: band
+          schema:
+            type: string
+          description: Optional bandpass filter
+      responses:
+        "200":
+          description: epochs[]
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EpochsResponse"
+  /api/preview/{obs_id}:
+    get:
+      summary: Preview PNG (stub — 501 hasta processing Sprint 2+)
+      operationId: getPreview
+      tags: [preview]
+      parameters:
+        - in: path
+          name: obs_id
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: size
+          schema:
+            type: integer
+            default: 512
+      responses:
+        "501":
+          description: Not implemented yet (Sprint 0 stub)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StubNotImplemented"
+        "200":
+          description: image/png (futuro — WCS + provenance headers)
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+components:
+  schemas:
+    Target:
+      type: object
+      required: [id, name, ra, dec]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        ra:
+          type: number
+          description: Degrees
+        dec:
+          type: number
+          description: Degrees
+        notes:
+          type: string
+    SearchHit:
+      type: object
+      required: [id, name, ra, dec]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        ra:
+          type: number
+        dec:
+          type: number
+        notes:
+          type: string
+    SearchResponse:
+      type: object
+      required: [hits, provenance]
+      properties:
+        hits:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchHit"
+        provenance:
+          type: string
+          example: stub
+    Epoch:
+      type: object
+      required: [obs_id, t_mjd, bandpass, wavelength_um, preview_url, provenance]
+      properties:
+        obs_id:
+          type: string
+        t_mjd:
+          type: number
+          nullable: true
+        bandpass:
+          type: string
+          nullable: true
+        wavelength_um:
+          type: number
+          nullable: true
+        preview_url:
+          type: string
+          nullable: true
+        provenance:
+          type: string
+    EpochsResponse:
+      type: object
+      required: [epochs, provenance]
+      properties:
+        epochs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Epoch"
+        provenance:
+          type: string
+          example: stub
+    StubNotImplemented:
+      type: object
+      required: [detail, provenance]
+      properties:
+        detail:
+          type: string
+        provenance:
+          type: string
+          example: stub
