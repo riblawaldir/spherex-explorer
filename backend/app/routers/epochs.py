@@ -1,22 +1,26 @@
-"""GET /api/epochs — hollow Sprint 0 stub."""
+"""GET /api/epochs — fixture-backed time-ordered visits (Sprint 1)."""
 
 from fastapi import APIRouter, Query
 
-from app.routers.fixtures import STUB_PROVENANCE
+from app.services.catalog import get_catalog_service
+from app.validation import DecQuery, OptionalRadiusArcsecQuery, RaQuery
 
 router = APIRouter(prefix="/api", tags=["epochs"])
 
 
 @router.get("/epochs")
 def get_epochs(
-    ra: float = Query(..., description="RA degrees"),
-    dec: float = Query(..., description="Dec degrees"),
-    radius_arcsec: float | None = Query(default=None),
-    band: str | None = Query(default=None),
-) -> dict:
-    """Empty epochs list until Sprint 2 IRSA / cache wiring.
+    ra: RaQuery,
+    dec: DecQuery,
+    radius_arcsec: OptionalRadiusArcsecQuery = None,
+    band: str | None = Query(default=None, description="Optional bandpass filter"),
+) -> dict:  # radius default via = (FastAPI Annotated rule)
+    """Return time-ordered epochs near ra/dec from labeled fixtures.
 
-    Accepts query params for contract shape; ignores them in Sprint 0.
+    Fields: obs_id, t_mjd, bandpass, wavelength_um, preview_url, provenance.
+    TODO(P4): replace fixture CatalogService with IRSA SIA2/TAP results.
     """
-    _ = (ra, dec, radius_arcsec, band)
-    return {"epochs": [], "provenance": STUB_PROVENANCE}
+    result = get_catalog_service().epochs(
+        ra=ra, dec=dec, radius_arcsec=radius_arcsec, band=band
+    )
+    return {"epochs": result.epochs, "provenance": result.provenance}

@@ -1,0 +1,41 @@
+{
+  "provenance": "stub",
+  "notes": "Labeled Sprint 1 fixtures for API development. Coordinates for wise-0855 follow the sprint-0-guide sketch; other rows use published approximate J2000 positions cited in notes. Not live IRSA results — do not treat as NASA metadata.",
+  "targets": [
+    {
+      "id": "wise-0855",
+      "name": "WISE 0855",
+      "ra": 133.79513,
+      "dec": -7.24459,
+      "notes": "stub — approx J2000 for WISE J085510.83-071442.5 (challenge guide region); pending P4 IRSA citation"
+    },
+    {
+      "id": "barnards-star",
+      "name": "Barnard's Star",
+      "ra": 269.45208,
+      "dec": 4.69336,
+      "notes": "stub — approx J2000; pending P4 fixture verification against IRSA coverage"
+    },
+    {
+      "id": "epsilon-indi-b",
+      "name": "Epsilon Indi B",
+      "ra": 330.84023,
+      "dec": -56.78598,
+      "notes": "stub — approx J2000 near Epsilon Indi; pending P4 citation"
+    },
+    {
+      "id": "rw-aurigae",
+      "name": "RW Aurigae",
+      "ra": 76.96954,
+      "dec": 30.40155,
+      "notes": "stub — approx J2000; pending P4 fixture verification"
+    },
+    {
+      "id": "r-draconis",
+      "name": "R Draconis",
+      "ra": 245.34883,
+      "dec": 66.55972,
+      "notes": "stub — approx J2000; pending P4 fixture verification"
+    }
+  ]
+}
