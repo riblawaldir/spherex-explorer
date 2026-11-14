@@ -1,11 +1,13 @@
 openapi: 3.0.3
 info:
   title: SPHEREx Explorer API
-  version: 0.0.0-sprint0
+  version: 0.1.0-sprint1
   description: |
-    Sprint 0 contract stub for SPHEREx Explorer.
-    Paths under `/api/*` return static fixtures with clear stub provenance.
-    Live IRSA / FITS preview are out of scope until Sprint 1+.
+    Sprint 1 contract for SPHEREx Explorer.
+    Search and epochs use labeled fixtures under `data/metadata/` with
+    provenance `stub` or `cached_sample` (never live IRSA until P4).
+    Preview returns PNG when a local sample FITS exists and P5 `fits_to_png`
+    succeeds; otherwise 501.
 servers:
   - url: http://127.0.0.1:8000
     description: Local uvicorn
@@ -34,7 +36,7 @@ paths:
       tags: [targets]
       responses:
         "200":
-          description: Lista Target (fixture estático Sprint 0)
+          description: Lista Target (labeled fixtures)
           content:
             application/json:
               schema:
@@ -43,7 +45,7 @@ paths:
                   $ref: "#/components/schemas/Target"
   /api/search:
     get:
-      summary: Buscar por q o ra/dec
+      summary: Buscar por q y/o ra/dec
       operationId: search
       tags: [search]
       parameters:
@@ -56,12 +58,23 @@ paths:
           name: ra
           schema:
             type: number
-          description: Right ascension (degrees)
+            minimum: 0
+            exclusiveMaximum: 360
+          description: Right ascension (degrees) [0, 360)
         - in: query
           name: dec
           schema:
             type: number
-          description: Declination (degrees)
+            minimum: -90
+            maximum: 90
+          description: Declination (degrees) [-90, 90]
+        - in: query
+          name: radius_arcsec
+          schema:
+            type: number
+            exclusiveMinimum: 0
+            maximum: 3600
+          description: Search radius in arcseconds (requires ra/dec)
       responses:
         "200":
           description: hits
@@ -69,9 +82,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SearchResponse"
+        "422":
+          description: Validation error (RA/Dec/radius bounds or unpaired ra/dec)
   /api/epochs:
     get:
-      summary: Visitas cerca de ra/dec
+      summary: Visitas cerca de ra/dec (time-ordered)
       operationId: getEpochs
       tags: [epochs]
       parameters:
@@ -80,15 +95,21 @@ paths:
           required: true
           schema:
             type: number
+            minimum: 0
+            exclusiveMaximum: 360
         - in: query
           name: dec
           required: true
           schema:
             type: number
+            minimum: -90
+            maximum: 90
         - in: query
           name: radius_arcsec
           schema:
             type: number
+            exclusiveMinimum: 0
+            maximum: 3600
           description: Search radius in arcseconds
         - in: query
           name: band
@@ -97,14 +118,16 @@ paths:
           description: Optional bandpass filter
       responses:
         "200":
-          description: epochs[]
+          description: epochs[] time-ordered by t_mjd
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/EpochsResponse"
+        "422":
+          description: Validation error (missing/out-of-range ra/dec/radius)
   /api/preview/{obs_id}:
     get:
-      summary: Preview PNG (stub — 501 hasta processing Sprint 2+)
+      summary: Preview PNG (P5 fits_to_png when sample FITS exists)
       operationId: getPreview
       tags: [preview]
       parameters:
@@ -117,21 +140,28 @@ paths:
           name: size
           schema:
             type: integer
+            minimum: 1
+            maximum: 4096
             default: 512
       responses:
-        "501":
-          description: Not implemented yet (Sprint 0 stub)
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StubNotImplemented"
         "200":
-          description: image/png (futuro — WCS + provenance headers)
+          description: image/png from local sample via P5 fits_to_png
           content:
             image/png:
               schema:
                 type: string
                 format: binary
+          headers:
+            X-Provenance:
+              schema:
+                type: string
+                example: cached_sample
+        "501":
+          description: No sample FITS or processing failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StubNotImplemented"
 components:
   schemas:
     Target:
@@ -174,6 +204,7 @@ components:
             $ref: "#/components/schemas/SearchHit"
         provenance:
           type: string
+          enum: [stub, cached_sample]
           example: stub
     Epoch:
       type: object
@@ -195,6 +226,7 @@ components:
           nullable: true
         provenance:
           type: string
+          enum: [stub, cached_sample]
     EpochsResponse:
       type: object
       required: [epochs, provenance]
@@ -205,7 +237,8 @@ components:
             $ref: "#/components/schemas/Epoch"
         provenance:
           type: string
-          example: stub
+          enum: [stub, cached_sample]
+          example: cached_sample
     StubNotImplemented:
       type: object
       required: [detail, provenance]

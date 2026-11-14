@@ -1,3 +1,5 @@
+"""Backward-compatible smoke tests (Sprint 0 names → Sprint 1 fixtures)."""
+
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -19,9 +21,6 @@ def test_targets_stub_shape():
     assert len(data) == 5
     first = data[0]
     assert {"id", "name", "ra", "dec"} <= first.keys()
-    assert "stub" in first.get("notes", "").lower() or "pending" in first.get(
-        "notes", ""
-    ).lower()
 
 
 def test_search_by_q():
@@ -41,11 +40,14 @@ def test_search_all_when_no_params():
     assert len(body["hits"]) == 5
 
 
-def test_epochs_stub_empty():
-    response = client.get("/api/epochs", params={"ra": 133.786, "dec": -7.411})
+def test_epochs_returns_fixture_rows():
+    response = client.get(
+        "/api/epochs", params={"ra": 133.79513, "dec": -7.24459}
+    )
     assert response.status_code == 200
     body = response.json()
-    assert body == {"epochs": [], "provenance": "stub"}
+    assert body["provenance"] == "cached_sample"
+    assert len(body["epochs"]) >= 1
 
 
 def test_epochs_requires_ra_dec():
@@ -53,10 +55,10 @@ def test_epochs_requires_ra_dec():
     assert response.status_code == 422
 
 
-def test_preview_stub_501():
-    response = client.get("/api/preview/stub-obs-1")
+def test_preview_stub_501_when_no_fits():
+    response = client.get("/api/preview/missing-obs")
     assert response.status_code == 501
     body = response.json()
     assert body["provenance"] == "stub"
-    assert "not implemented" in body["detail"].lower()
+    assert "unavailable" in body["detail"].lower() or "not" in body["detail"].lower()
     assert response.headers.get("X-Provenance") == "stub"

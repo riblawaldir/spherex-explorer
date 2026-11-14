@@ -1,13 +1,13 @@
-"""GET /api/targets — hollow Sprint 0 stub."""
+"""GET /api/targets — labeled fixture catalog (Sprint 1)."""
 
 from fastapi import APIRouter
 
-from app.routers.fixtures import STUB_TARGETS
+from app.services.catalog import get_catalog_service
 
 router = APIRouter(prefix="/api", tags=["targets"])
 
 
 @router.get("/targets")
 def get_targets() -> list[dict]:
-    """Return static test-target fixtures (stub provenance in notes)."""
-    return STUB_TARGETS
+    """Return test-target fixtures (provenance in notes / catalog payload)."""
+    return get_catalog_service().list_targets()

@@ -17,6 +17,9 @@ __pycache__/
 *.fits.gz
 *.fit.gz
 *.fts.gz
+# Tiny labeled synthetic stubs for Sprint 1 preview wiring (not science products).
+!data/samples/stub-*.fits
+
 *.tmp
 *.temp
 .test-venv/
