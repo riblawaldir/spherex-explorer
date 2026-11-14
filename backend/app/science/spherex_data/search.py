@@ -6,6 +6,7 @@ de resultados del servicio SIA2 a un formato JSON consistente.
 """
 
 import logging
+import math
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional
@@ -172,14 +173,14 @@ def normalize_sia2_row(row, available_columns: list[str]) -> ObservationRecord:
     obs_id = (
         _safe_get(row, "obs_id")
         or _safe_get(row, "obs_publisher_did")
-        or "unknown"
     )
     collection = (
         _safe_get(row, "obs_collection")
         or _safe_get(row, "collection")
-        or "unknown"
     )
     access_url = _safe_get(row, "access_url") or ""
+    if obs_id is None or collection is None:
+        raise ValueError("La fila SIA2 no incluye obs_id/obs_publisher_did o obs_collection")
 
     t_min = _safe_get(row, "t_min")
     t_max = _safe_get(row, "t_max")
@@ -202,21 +203,32 @@ def normalize_sia2_row(row, available_columns: list[str]) -> ObservationRecord:
         obs_id=str(obs_id),
         collection=str(collection),
         access_url=str(access_url),
-        ra=_safe_get(row, "s_ra"),
-        dec=_safe_get(row, "s_dec"),
-        t_min_mjd=float(t_min) if t_min is not None else None,
-        t_max_mjd=float(t_max) if t_max is not None else None,
-        observed_at=_mjd_to_iso(float(t_min) if t_min is not None else None),
-        em_min_m=float(em_min) if em_min is not None else None,
-        em_max_m=float(em_max) if em_max is not None else None,
+        ra=_finite_float(_safe_get(row, "s_ra")),
+        dec=_finite_float(_safe_get(row, "s_dec")),
+        t_min_mjd=_finite_float(t_min),
+        t_max_mjd=_finite_float(t_max),
+        observed_at=_mjd_to_iso(_finite_float(t_min)),
+        em_min_m=_finite_float(em_min),
+        em_max_m=_finite_float(em_max),
         band_label=_derive_band_label(
-            float(em_min) if em_min is not None else None,
-            float(em_max) if em_max is not None else None,
+            _finite_float(em_min),
+            _finite_float(em_max),
         ),
         instrument_name=_safe_get(row, "instrument_name"),
         facility_name=_safe_get(row, "facility_name"),
         extra=extra,
     )
+
+
+def _finite_float(value) -> Optional[float]:
+    """Convert a table scalar to a finite float, omitting NaN and infinity."""
+    if value is None:
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
 
 
 # ---------------------------------------------------------------------------

@@ -76,6 +76,22 @@ def synthetic_fits(tmp_path) -> Path:
     return fits_path
 
 
+@pytest.fixture
+def extension_image_fits(tmp_path) -> Path:
+    """MEF con PRIMARY vacío y WCS/datos en una extensión SCI."""
+    path = tmp_path / "extension_image.fits"
+    wcs = WCS(naxis=2)
+    wcs.wcs.ctype = ["RA---TAN", "DEC--TAN"]
+    wcs.wcs.crval = [127.0, -39.0]
+    wcs.wcs.crpix = [16.0, 16.0]
+    wcs.wcs.cdelt = [-0.001, 0.001]
+    primary = fits.PrimaryHDU()
+    primary.header["TELESCOP"] = "SPHEREx"
+    image = fits.ImageHDU(data=np.ones((32, 32), dtype=np.float32), header=wcs.to_header(), name="SCI")
+    fits.HDUList([primary, image]).writeto(path)
+    return path
+
+
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
@@ -142,6 +158,14 @@ class TestExtractMetadata:
     def test_primary_header_has_bitpix(self, synthetic_fits):
         meta = extract_metadata(synthetic_fits)
         assert "BITPIX" in meta["primary_header"]
+
+    def test_reads_image_and_wcs_from_extension(self, extension_image_fits):
+        meta = extract_metadata(extension_image_fits)
+        assert meta["image"]["naxis1"] == 32
+        assert meta["image"]["naxis2"] == 32
+        assert meta["wcs"]["is_celestial"] is True
+        assert meta["wcs"]["center_ra_deg"] == pytest.approx(127.0, abs=0.002)
+        assert meta["wcs"]["center_dec_deg"] == pytest.approx(-39.0, abs=0.002)
 
 
 # ---------------------------------------------------------------------------

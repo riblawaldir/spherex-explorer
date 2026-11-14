@@ -20,6 +20,7 @@ from typing import Optional
 
 from astropy.io import fits
 from astropy.wcs import WCS
+from astropy.wcs.utils import proj_plane_pixel_scales
 
 logger = logging.getLogger(__name__)
 
@@ -93,15 +94,16 @@ def extract_metadata(fits_path: str | Path) -> dict:
                 for i, ext in enumerate(hdul)
             ]
 
-            # 2. Cabecera del primer HDU con datos (PRIMARY o primera ImageHDU)
-            primary_hdr = None
-            for ext in hdul:
-                if isinstance(ext, (fits.PrimaryHDU, fits.ImageHDU)):
-                    primary_hdr = ext.header
-                    break
-
-            if primary_hdr is None:
-                primary_hdr = hdul[0].header
+            # PRIMARY puede estar vacío en un MEF. Conservamos su cabecera para
+            # metadatos generales y elegimos por separado la extensión con imagen.
+            primary_hdr = hdul[0].header
+            image_hdu = next(
+                (ext for ext in hdul
+                 if isinstance(ext, (fits.PrimaryHDU, fits.ImageHDU))
+                 and ext.data is not None and getattr(ext.data, "ndim", 0) >= 2),
+                None,
+            )
+            image_hdr = image_hdu.header if image_hdu is not None else primary_hdr
 
             # Extraer campos conocidos (solo los que existen en la cabecera)
             primary_dict = {}
@@ -149,32 +151,34 @@ def extract_metadata(fits_path: str | Path) -> dict:
             metadata["instrument"] = instr_info
 
             # 5. Dimensiones de imagen
-            naxis = primary_hdr.get("NAXIS", 0)
+            naxis = image_hdr.get("NAXIS", 0)
             img_info = {"naxis": naxis}
             for i in range(1, naxis + 1):
                 key = f"NAXIS{i}"
-                if key in primary_hdr:
-                    img_info[f"naxis{i}"] = primary_hdr[key]
+                if key in image_hdr:
+                    img_info[f"naxis{i}"] = image_hdr[key]
             metadata["image"] = img_info
 
             # 6. WCS — sistema de coordenadas astronómicas
             try:
-                wcs = WCS(primary_hdr, naxis=2)
+                wcs = WCS(image_hdr, naxis=2)
                 if wcs.is_celestial:
-                    # Coordenadas del píxel central
-                    n1 = primary_hdr.get("NAXIS1", 1)
-                    n2 = primary_hdr.get("NAXIS2", 1)
-                    cx, cy = n1 / 2, n2 / 2
+                    # Pixel coordinates are zero-based; center of an N-pixel
+                    # axis is (N - 1) / 2.
+                    n1 = image_hdr.get("NAXIS1", 1)
+                    n2 = image_hdr.get("NAXIS2", 1)
+                    cx, cy = (n1 - 1) / 2, (n2 - 1) / 2
                     sky = wcs.pixel_to_world(cx, cy)
+                    pixel_scales = proj_plane_pixel_scales(wcs)
                     metadata["wcs"] = {
                         "is_celestial": True,
                         "ctype": [
-                            primary_hdr.get("CTYPE1"),
-                            primary_hdr.get("CTYPE2"),
+                            image_hdr.get("CTYPE1"),
+                            image_hdr.get("CTYPE2"),
                         ],
                         "center_ra_deg": float(sky.ra.deg),
                         "center_dec_deg": float(sky.dec.deg),
-                        "pixel_scale_deg": abs(primary_hdr.get("CDELT1", None)),
+                        "pixel_scale_deg": float(abs(pixel_scales[0])),
                     }
                 else:
                     metadata["wcs"] = {"is_celestial": False}

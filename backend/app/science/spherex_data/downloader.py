@@ -18,7 +18,7 @@ import logging
 import time
 from pathlib import Path
 from typing import Optional
-from urllib.parse import urlparse, urlencode, urlunparse, parse_qs
+from urllib.parse import urlparse, urlencode, urlunparse, parse_qsl
 
 import requests
 from astropy.io import fits
@@ -56,11 +56,10 @@ def _build_cutout_url(access_url: str, ra: float, dec: float, size_deg: float) -
         URL completa con parámetros de recorte.
     """
     parsed = urlparse(access_url)
-    cutout_params = f"center={ra},{dec}&size={size_deg}"
-    if parsed.query:
-        new_query = parsed.query + "&" + cutout_params
-    else:
-        new_query = cutout_params
+    params = [(key, value) for key, value in parse_qsl(parsed.query)
+              if key not in {"center", "size"}]
+    params.extend([("center", f"{ra},{dec}"), ("size", str(size_deg))])
+    new_query = urlencode(params)
     return urlunparse(parsed._replace(query=new_query))
 
 
@@ -118,7 +117,10 @@ def download_cutout(
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # Aviso: servicio de recortes solo aplica a archivos on-premises IRSA
-    if "irsa.ipac.caltech.edu" not in access_url:
+    parsed_url = urlparse(access_url)
+    if (parsed_url.scheme != "https"
+            or parsed_url.hostname != "irsa.ipac.caltech.edu"
+            or not parsed_url.path.startswith("/ibe/data/spherex/")):
         logger.warning(
             "El servicio de recortes IBE solo funciona con URLs on-premises de IRSA. "
             "URL recibida: %s — no se descargará.",
@@ -195,6 +197,9 @@ def download_observation(
     observation: ObservationRecord,
     cutout_size_deg: float = 0.05,
     output_dir: Optional[Path] = None,
+    *,
+    center_ra: Optional[float] = None,
+    center_dec: Optional[float] = None,
 ) -> Optional[Path]:
     """
     Descarga el recorte FITS de una observación SPHEREx.
@@ -216,8 +221,8 @@ def download_observation(
 
     # Usar coordenadas de la observación; si no están disponibles, el recorte
     # puede usar las del campo (el servicio IBE recortará en torno al acceso)
-    ra = observation.ra
-    dec = observation.dec
+    ra = observation.ra if center_ra is None else center_ra
+    dec = observation.dec if center_dec is None else center_dec
     if ra is None or dec is None:
         logger.warning(
             "Observación %s sin coordenadas RA/Dec; no se puede descargar recorte.",

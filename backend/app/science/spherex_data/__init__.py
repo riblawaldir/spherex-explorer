@@ -94,7 +94,12 @@ def get_spherex_data(
     # 3. Descargar recortes si se solicita
     if download_cutouts and records:
         for rec in records:
-            download_observation(rec, cutout_size_deg=cutout_size_deg)
+            download_observation(
+                rec,
+                cutout_size_deg=cutout_size_deg,
+                center_ra=ra,
+                center_dec=dec,
+            )
         # Actualizar la lista serializada con fits_path
         search_result["observations"] = [r.to_dict() for r in records]
 

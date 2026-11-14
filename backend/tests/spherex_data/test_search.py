@@ -157,6 +157,18 @@ class TestNormalizeSIA2Row:
         for key in ("id", "collection", "access_url", "ra", "dec", "observed_at"):
             assert key in d, f"Falta clave '{key}' en to_dict()"
 
+    def test_missing_identity_is_rejected_instead_of_fabricated(self):
+        row, cols = self._make_row(obs_id=None, obs_collection=None)
+        with pytest.raises(ValueError, match="obs_id"):
+            normalize_sia2_row(row, cols)
+
+    def test_non_finite_measurements_are_omitted(self):
+        row, cols = self._make_row(t_min=float("nan"), em_min=float("inf"))
+        rec = normalize_sia2_row(row, cols)
+        assert rec.t_min_mjd is None
+        assert rec.observed_at is None
+        assert rec.em_min_m is None
+
 
 # ---------------------------------------------------------------------------
 # Tests de search_observations con mock
