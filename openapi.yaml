@@ -1,11 +1,13 @@
 openapi: 3.0.3
 info:
   title: SPHEREx Explorer API
-  version: 0.1.0-sprint1
+  version: 0.1.1-sprint1
   description: |
     Sprint 1 contract for SPHEREx Explorer.
     Search and epochs use labeled fixtures under `data/metadata/` with
     provenance `stub` or `cached_sample` (never live IRSA until P4).
+    Epoch includes fixture ra/dec when present; does not invent collection
+    or source_url for the frontend Observation adapter.
     Preview returns PNG when a local sample FITS exists and P5 `fits_to_png`
     succeeds; otherwise 501.
 servers:
@@ -208,13 +210,30 @@ components:
           example: stub
     Epoch:
       type: object
-      required: [obs_id, t_mjd, bandpass, wavelength_um, preview_url, provenance]
+      required:
+        [obs_id, ra, dec, t_mjd, bandpass, wavelength_um, preview_url, provenance]
+      description: |
+        Time-ordered visit near a sky region. Keys are always present; t_mjd,
+        bandpass, wavelength_um, preview_url, ra, and dec may be null when the
+        labeled fixture (or later IRSA row) lacks that value. collection and
+        source_url are intentionally absent until real metadata exists — clients
+        must not invent them. preview_url may point at /api/preview/{obs_id}
+        even when that endpoint returns 501 (no sample FITS).
       properties:
         obs_id:
           type: string
+        ra:
+          type: number
+          nullable: true
+          description: Right ascension in degrees from fixture/IRSA when known
+        dec:
+          type: number
+          nullable: true
+          description: Declination in degrees from fixture/IRSA when known
         t_mjd:
           type: number
           nullable: true
+          description: Observation time as MJD; null if unknown (sorted last)
         bandpass:
           type: string
           nullable: true

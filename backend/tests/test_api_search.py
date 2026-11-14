@@ -98,6 +98,8 @@ def test_epochs_time_ordered_for_wise_region():
     assert mjds == sorted(mjds)
     required = {
         "obs_id",
+        "ra",
+        "dec",
         "t_mjd",
         "bandpass",
         "wavelength_um",
@@ -106,6 +108,13 @@ def test_epochs_time_ordered_for_wise_region():
     }
     assert required <= epochs[0].keys()
     assert all(e["provenance"] in {"stub", "cached_sample"} for e in epochs)
+    # Fixture truth: coords from data/metadata/epochs.json — not invented defaults.
+    assert epochs[0]["ra"] == 133.79513
+    assert epochs[0]["dec"] == -7.24459
+    # Frontend Observation fields not available from Epoch contract yet.
+    assert "collection" not in epochs[0]
+    assert "source_url" not in epochs[0]
+    assert "observed_at" not in epochs[0]
 
 
 def test_epochs_band_filter():

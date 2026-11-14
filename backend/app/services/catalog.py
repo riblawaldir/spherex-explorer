@@ -149,6 +149,8 @@ class CatalogService:
             rows.append(
                 {
                     "obs_id": row["obs_id"],
+                    "ra": row.get("ra"),
+                    "dec": row.get("dec"),
                     "t_mjd": row.get("t_mjd"),
                     "bandpass": row.get("bandpass"),
                     "wavelength_um": row.get("wavelength_um"),
