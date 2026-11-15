@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 CompareStatus = Literal["comparable", "not_comparable"]
 AlignmentStatus = Literal["ok", "failed", "skipped", "unavailable"]
 DiffStatus = Literal["not_implemented", "skipped", "unavailable"]
-Provenance = Literal["stub", "cached_sample", "live"]
+Provenance = Literal["stub", "cached_sample", "live", "irsa_verified_local"]
 
 
 class EpochSnapshot(BaseModel):

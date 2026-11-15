@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import comparability, compare, epochs, preview, search, scientific_validation, targets
+from app.routers import real_data_demo
 
 from app.routers import comparability, compare, epochs, preview, search, targets
 
@@ -29,6 +30,7 @@ app.include_router(preview.router)
 app.include_router(comparability.router)
 app.include_router(scientific_validation.router)
 app.include_router(compare.router)
+app.include_router(real_data_demo.router)
 
 
 @app.get("/health")

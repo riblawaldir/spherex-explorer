@@ -269,6 +269,19 @@ class CatalogService:
             else float(radius_arcsec)
         )
 
+        from app.services.real_data_demo import DATA, PROVENANCE, record
+        demo_records = [r for key in DATA if (r := record(key)) is not None]
+        demo_rows = []
+        for r in demo_records:
+            if _angular_separation_arcsec(ra, dec, r.ra, r.dec) <= radius and (not band or band.lower() in r.band_label.lower()):
+                demo_rows.append({'obs_id': r.obs_id, 'ra': r.ra, 'dec': r.dec,
+                                  't_mjd': r.t_min_mjd, 'bandpass': r.band_label,
+                                  'wavelength_um': None, 'collection': r.collection,
+                                  'source_url': r.access_url, 'provenance': PROVENANCE,
+                                  'preview_url': f'/api/preview/{r.obs_id}'})
+        if demo_rows:
+            return EpochsResult(epochs=demo_rows, provenance=PROVENANCE)
+
         if self._use_irsa:
             try:
                 payload = self._irsa_search(ra=ra, dec=dec, radius_arcsec=radius)
@@ -435,6 +448,9 @@ class CatalogService:
         Returns ``None`` when no file is present — callers must set
         ``preview_url`` to null / respond 501 (never invent NASA products).
         """
+        from app.services.real_data_demo import DATA, verified_path
+        if obs_id in DATA and os.environ.get('SPHEREX_REAL_DATA_DIR'):
+            return verified_path(obs_id)
         live = self._live_fits.get(obs_id)
         if live is not None:
             found = self._safe_data_path(live)
@@ -469,6 +485,9 @@ class CatalogService:
         """
         from app.science.spherex_data.search import ObservationRecord
 
+        from app.services.real_data_demo import DATA, record
+        if obs_id in DATA and os.environ.get('SPHEREX_REAL_DATA_DIR'):
+            return record(obs_id)
         records = self._live_observations.get(obs_id, [])
         if len(records) > 1:
             raise ValueError('Observation identifier matches multiple products')
@@ -490,6 +509,16 @@ class CatalogService:
         NASA metadata. Live IRSA rows are not persisted across requests unless
         already registered via a prior epochs call in-process (fits only).
         """
+        from app.services.real_data_demo import DATA, PROVENANCE, record
+        if obs_id in DATA and os.environ.get('SPHEREX_REAL_DATA_DIR'):
+            rec = record(obs_id)
+            if rec is None:
+                return None
+            return {'obs_id': rec.obs_id, 'ra': rec.ra, 'dec': rec.dec,
+                    't_mjd': rec.t_min_mjd, 'bandpass': rec.band_label,
+                    'wavelength_um': None, 'collection': rec.collection,
+                    'source_url': rec.access_url, 'provenance': PROVENANCE,
+                    'preview_url': f'/api/preview/{rec.obs_id}'}
         payload = self._epochs_payload()
         default_prov = str(payload.get("provenance", PROVENANCE_STUB))
         for row in payload.get("epochs", []):

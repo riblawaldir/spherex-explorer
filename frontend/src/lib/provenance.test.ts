@@ -6,6 +6,7 @@ describe("normalizeProvenance", () => {
     expect(normalizeProvenance("stub")).toBe("stub");
     expect(normalizeProvenance("cached_sample")).toBe("cached_sample");
     expect(normalizeProvenance("live")).toBe("live");
+    expect(normalizeProvenance("irsa_verified_local")).toBe("irsa_verified_local");
   });
 
   it("does not invent values for empty or opaque strings", () => {
@@ -26,5 +27,7 @@ describe("describeProvenance", () => {
       "no es consulta irsa",
     );
     expect(describeProvenance("live").token).toBe("live");
+    expect(describeProvenance("irsa_verified_local").token).toBe("IRSA local verificado");
+    expect(describeProvenance("irsa_verified_local").title).toContain("no es una consulta en vivo");
   });
 });

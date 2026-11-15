@@ -133,9 +133,8 @@ export function ResultsPanel({
           <ArrowRight />
         </Button>
         <p className="text-[0.7rem] text-muted-foreground mt-2 leading-4">
-          En Comparación también puedes validar un par vía{" "}
-          <span className="font-mono">/api/compare</span> (comparable /
-          not_comparable).
+          En Comparación puedes revisar la alineación técnica y, por separado,
+          el estado de validación científica del par.
         </p>
       </div>
     </section>

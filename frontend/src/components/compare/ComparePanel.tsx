@@ -14,6 +14,9 @@ export interface ComparePanelProps {
   preferredIds?: string[];
 }
 
+const EMPTY_CANDIDATES: Observation[] = [];
+const EMPTY_IDS: string[] = [];
+
 function pickDefaults(preferred: string[], candidates: Observation[]): [string, string] {
   const fromPreferred = preferred.filter(Boolean);
   if (fromPreferred.length >= 2) {
@@ -76,8 +79,8 @@ function StatusBanner({ result }: { result: CompareApiResult }) {
 }
 
 export function ComparePanel({
-  candidates = [],
-  preferredIds = [],
+  candidates = EMPTY_CANDIDATES,
+  preferredIds = EMPTY_IDS,
 }: ComparePanelProps) {
   const defaults = useMemo(
     () => pickDefaults(preferredIds, candidates),
@@ -87,6 +90,15 @@ export function ComparePanel({
   const [obsIdB, setObsIdB] = useState(defaults[1]);
   const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
   const [result, setResult] = useState<CompareApiResult | null>(null);
+  const [scientific, setScientific] = useState<{status: string; criteria: Array<{name: string; status: string; reason: string; limitations: string[]}>} | null>(null);
+  const [scientificError, setScientificError] = useState<string | null>(null);
+  const [realData, setRealData] = useState<Array<{obs_id: string; collection: string; detector: string; date_obs: string; size_bytes: number; sha256: string; source_url: string; extensions: Array<{name: string; bunit: string | null; wcs_status: string}>}>>([]);
+
+  useEffect(() => {
+    fetch('/api/real-data-demo').then(response => response.ok ? response.json() : null)
+      .then(data => { if (data && Array.isArray(data.observations)) setRealData(data.observations); })
+      .catch(() => setRealData([]));
+  }, []);
 
   useEffect(() => {
     setObsIdA(defaults[0]);
@@ -107,8 +119,17 @@ export function ComparePanel({
   async function runCompare() {
     setStatus("loading");
     setResult(null);
-    const next = await fetchCompare({ obsIdA, obsIdB });
+    setScientific(null);
+    setScientificError(null);
+    const [next, science] = await Promise.all([
+      fetchCompare({ obsIdA, obsIdB }),
+      fetch('/api/scientific-validation', { method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({observation_1: obsIdA.trim(), observation_2: obsIdB.trim()}) })
+        .then(async response => { if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json(); })
+        .catch(error => { setScientificError(String(error)); return null; }),
+    ]);
     setResult(next);
+    setScientific(science);
     setStatus("done");
   }
 
@@ -125,9 +146,9 @@ export function ComparePanel({
           </h2>
           <p className="text-muted-foreground text-sm mt-1 max-w-2xl">
             Llama a <span className="font-mono text-xs">GET /api/compare</span>{" "}
-            con dos <span className="font-mono text-xs">obs_id</span>. Muestra
-            comparable / not_comparable, razones y estado de alineación/diff tal
-            como responde el backend — sin imágenes residuales inventadas.
+            con dos <span className="font-mono text-xs">obs_id</span>.
+            El resultado de compare describe la alineación técnica. La validación
+            científica se informa por separado y puede requerir revisión, sin imágenes residuales inventadas.
           </p>
         </div>
       </div>
@@ -158,6 +179,17 @@ export function ComparePanel({
           />
         </div>
       </div>
+      {realData.length === 2 ? <div className="mt-4 rounded border border-border p-3 text-sm">
+        <h3 className="font-medium">Datos IRSA locales verificados</h3>
+        <p>Recortes verificados por SHA-256; los enlaces conducen a las imágenes originales de IRSA.</p>
+        <button type="button" className="underline" onClick={() => {setObsIdA(realData[0]!.obs_id); setObsIdB(realData[1]!.obs_id);}}>Seleccionar los dos recortes</button>
+        {realData.map(item => <details key={item.obs_id} className="mt-2"><summary>{item.obs_id} · {item.collection} · {item.detector}</summary>
+          <p>{item.date_obs} · {item.size_bytes} bytes</p><p className="break-all">SHA-256: {item.sha256}</p>
+          <a href={item.source_url} target="_blank" rel="noreferrer" className="underline">Producto original IRSA</a>
+          <p>{item.extensions.map(h => `${h.name}${h.bunit ? ` (${h.bunit})` : ''} [${h.wcs_status}]`).join(' · ')}</p>
+          <img src={`/api/preview/${encodeURIComponent(item.obs_id)}`} alt={`Vista previa de ${item.obs_id}`} className="max-w-48" />
+        </details>)}
+      </div> : null}
       <datalist id="compare-obs-options">
         {optionIds.map((id) => (
           <option key={id} value={id} />
@@ -195,7 +227,12 @@ export function ComparePanel({
 
       {result ? (
         <div className="mt-4 space-y-3">
+          <p className="text-sm font-medium">Resultado técnico — no certifica compatibilidad científica</p>
           <StatusBanner result={result} />
+          <div className="rounded border border-border px-3 py-2 text-sm" aria-label="Validación científica">
+            <h3 className="font-medium">Validación científica</h3>
+            {scientific ? <><p>{scientific.status}</p><ul>{scientific.criteria.map(c => <li key={c.name}><strong>{c.name}: {c.status}</strong> — {c.reason} {c.limitations.join(' ')}</li>)}</ul></> : <p>{scientificError || 'No disponible'}</p>}
+          </div>
           {result.ok ? (
             <>
               <div>

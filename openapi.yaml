@@ -272,7 +272,7 @@ components:
             $ref: "#/components/schemas/SearchHit"
         provenance:
           type: string
-          enum: [stub, cached_sample, live]
+          enum: [stub, cached_sample, live, irsa_verified_local]
           description: |
             stub / cached_sample = labeled fixtures; live = successful IRSA
             SIA2 query via P4 search_observations.
@@ -320,7 +320,7 @@ components:
           description: /api/preview/{obs_id} when local FITS exists; else null
         provenance:
           type: string
-          enum: [stub, cached_sample, live]
+          enum: [stub, cached_sample, live, irsa_verified_local]
           description: |
             stub = synthetic labeled fixture; cached_sample = local sample
             metadata/FITS; live = real IRSA SIA2 row via P4.
@@ -345,7 +345,7 @@ components:
             $ref: "#/components/schemas/Epoch"
         provenance:
           type: string
-          enum: [stub, cached_sample, live]
+          enum: [stub, cached_sample, live, irsa_verified_local]
           example: cached_sample
     StubNotImplemented:
       type: object
@@ -387,7 +387,7 @@ components:
           nullable: true
         provenance:
           type: string
-          enum: [stub, cached_sample, live]
+          enum: [stub, cached_sample, live, irsa_verified_local]
         collection:
           type: string
           nullable: true
@@ -439,7 +439,7 @@ components:
           type: string
         provenance:
           type: string
-          enum: [stub, cached_sample, live]
+          enum: [stub, cached_sample, live, irsa_verified_local]
           example: stub
     CompareResponse:
       type: object
@@ -468,7 +468,7 @@ components:
             comparable only after metadata gates and successful P5 alignment.
         provenance:
           type: string
-          enum: [stub, cached_sample, live]
+          enum: [stub, cached_sample, live, irsa_verified_local]
           description: Weakest provenance of the two epochs (never promoted).
         reasons:
           type: array
