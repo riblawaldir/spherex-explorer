@@ -4,7 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { controllers, mountAladinMap } = vi.hoisted(() => {
-  const created: Array<{ destroy: ReturnType<typeof vi.fn> }> = [];
+  const created: Array<{ destroy: ReturnType<typeof vi.fn>; clearSurvey: ReturnType<typeof vi.fn> }> = [];
   const mount = vi.fn(async () => {
     const controller = {
       goto: vi.fn(),
@@ -88,5 +88,20 @@ describe("AladinLiteMap", () => {
     for (const controller of controllers) {
       expect(controller.destroy).toHaveBeenCalledTimes(1);
     }
+  });
+
+  it("muestra el fallback cuando no se puede acceder al fondo", async () => {
+    vi.useFakeTimers();
+    await act(async () => {
+      root.render(createElement(AladinLiteMap, {
+        observations: [], onSelect: vi.fn(),
+        coordinates: { ra: "127.69444", dec: "-39.17760", radius: "0.01" },
+      }));
+    });
+    await act(async () => { vi.advanceTimersByTime(8000); });
+    expect(container.textContent).toContain("Fondo del cielo no disponible");
+    expect(container.textContent).toContain("Los marcadores y la búsqueda siguen activos");
+    expect(controllers[0].clearSurvey).not.toHaveBeenCalled();
+    vi.useRealTimers();
   });
 });
