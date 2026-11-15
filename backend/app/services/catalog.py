@@ -24,8 +24,10 @@ from typing import Any
 
 # Repo root: backend/app/services/catalog.py → parents[3] = repo root
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_METADATA_DIR = _REPO_ROOT / "data" / "metadata"
-_SAMPLES_DIR = _REPO_ROOT / "data" / "samples"
+_DATA_DIR = _REPO_ROOT / "data"
+_METADATA_DIR = _DATA_DIR / "metadata"
+_SAMPLES_DIR = _DATA_DIR / "samples"
+_RAW_DIR = _DATA_DIR / "raw"
 
 DEFAULT_SEARCH_RADIUS_ARCSEC = 60.0
 DEFAULT_EPOCH_RADIUS_ARCSEC = 120.0
@@ -114,18 +116,22 @@ class CatalogService:
         targets_path: Path | None = None,
         epochs_path: Path | None = None,
         samples_dir: Path | None = None,
+        raw_dir: Path | None = None,
         use_irsa: bool | None = None,
         search_observations_fn: SearchObservationsFn | None = None,
     ) -> None:
         self._targets_path = targets_path or (_METADATA_DIR / "targets.json")
         self._epochs_path = epochs_path or (_METADATA_DIR / "epochs.json")
         self._samples_dir = samples_dir or _SAMPLES_DIR
+        self._raw_dir = raw_dir or _RAW_DIR
         self._use_irsa = (
             _env_flag("SPHEREX_USE_IRSA", default=False)
             if use_irsa is None
             else bool(use_irsa)
         )
         self._search_observations_fn = search_observations_fn
+        # obs_id → local FITS from a live P4 download in this process (no invent).
+        self._live_fits: dict[str, Path] = {}
 
     def _targets_payload(self) -> dict[str, Any]:
         return _load_json(self._targets_path)
@@ -293,15 +299,23 @@ class CatalogService:
                 bp = row.get("bandpass") or ""
                 if band.strip().lower() not in str(bp).lower():
                     continue
+            obs_id = str(row["obs_id"])
+            # Honest preview_url: only when a local FITS resolves (else null → FE
+            # should not fetch a URL that 501s). Never invent collection/source_url.
+            preview_url = (
+                f"/api/preview/{obs_id}"
+                if self.resolve_preview_fits(obs_id) is not None
+                else None
+            )
             rows.append(
                 {
-                    "obs_id": row["obs_id"],
+                    "obs_id": obs_id,
                     "ra": row.get("ra"),
                     "dec": row.get("dec"),
                     "t_mjd": row.get("t_mjd"),
                     "bandpass": row.get("bandpass"),
                     "wavelength_um": row.get("wavelength_um"),
-                    "preview_url": row.get("preview_url"),
+                    "preview_url": preview_url,
                     "provenance": row.get("provenance", provenance),
                 }
             )
@@ -328,10 +342,19 @@ class CatalogService:
                     continue
 
             obs_id = str(rec.obs_id)
-            # Local sample → preview path (501 if missing); else null (honest).
-            preview_url = None
-            if self.resolve_preview_fits(obs_id) is not None:
-                preview_url = f"/api/preview/{obs_id}"
+            # Optional P4 cutout already on disk (download_observation) — register
+            # for /api/preview without inventing paths or fetching in this request.
+            fits_path_attr = getattr(rec, "fits_path", None)
+            if fits_path_attr:
+                candidate = Path(str(fits_path_attr))
+                if candidate.is_file():
+                    self._live_fits[obs_id] = candidate.resolve()
+
+            preview_url = (
+                f"/api/preview/{obs_id}"
+                if self.resolve_preview_fits(obs_id) is not None
+                else None
+            )
 
             epoch: dict[str, Any] = {
                 "obs_id": obs_id,
@@ -359,23 +382,66 @@ class CatalogService:
         )
         return rows
 
+    def _safe_data_path(self, path: Path) -> Path | None:
+        """Return ``path`` only if it is a file under allowed data roots.
+
+        Allowed roots: repo ``data/``, plus this instance's ``samples_dir`` /
+        ``raw_dir`` (so tests and alternate layouts work without path escape).
+        """
+        try:
+            resolved = path.resolve()
+        except OSError:
+            return None
+        allowed = (
+            _DATA_DIR.resolve(),
+            self._samples_dir.resolve(),
+            self._raw_dir.resolve(),
+        )
+        resolved_s = str(resolved)
+        if not any(
+            resolved_s == str(root) or resolved_s.startswith(str(root) + "/")
+            for root in allowed
+        ):
+            return None
+        return resolved if resolved.is_file() else None
+
     def resolve_preview_fits(self, obs_id: str) -> Path | None:
-        """Return local FITS path for ``obs_id`` if a labeled sample exists."""
+        """Return local FITS path for ``obs_id`` when a real file exists.
+
+        Resolution order (first hit wins):
+        1. In-process P4 ``fits_path`` registered from a live download
+        2. ``fits_sample`` relative path from ``epochs.json``
+        3. ``data/samples/{obs_id}.fits``
+        4. ``data/raw/{obs_id}.fits`` (optional drop-in for P4 cutouts)
+
+        Returns ``None`` when no file is present — callers must set
+        ``preview_url`` to null / respond 501 (never invent NASA products).
+        """
+        live = self._live_fits.get(obs_id)
+        if live is not None:
+            found = self._safe_data_path(live)
+            if found is not None:
+                return found
+
         payload = self._epochs_payload()
         for row in payload.get("epochs", []):
             if row.get("obs_id") != obs_id:
                 continue
             rel = row.get("fits_sample")
-            if not rel:
-                return None
-            path = (_REPO_ROOT / "data" / rel).resolve()
-            # Stay inside data/
-            if not str(path).startswith(str((_REPO_ROOT / "data").resolve())):
-                return None
-            return path if path.is_file() else None
-        # Fallback: convention data/samples/{obs_id}.fits
-        candidate = self._samples_dir / f"{obs_id}.fits"
-        return candidate if candidate.is_file() else None
+            if rel:
+                found = self._safe_data_path(_DATA_DIR / str(rel))
+                if found is not None:
+                    return found
+            break
+
+        for candidate in (
+            self._samples_dir / f"{obs_id}.fits",
+            self._raw_dir / f"{obs_id}.fits",
+        ):
+            found = self._safe_data_path(candidate)
+            if found is not None:
+                return found
+        return None
 
 
 @lru_cache(maxsize=1)

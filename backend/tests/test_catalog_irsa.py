@@ -210,3 +210,76 @@ def test_search_irsa_failure_falls_back():
     result = svc.search(ra=133.79513, dec=-7.24459, radius_arcsec=30)
     assert result.provenance == PROVENANCE_STUB
     assert any(h["id"] == "wise-0855" for h in result.hits)
+
+
+def test_live_fits_path_sets_preview_url(tmp_path):
+    """P4 cutout already on disk under data/ → honest preview_url (no invent)."""
+    import numpy as np
+    from astropy.io import fits
+
+    raw = tmp_path / "raw"
+    raw.mkdir()
+    fits_path = raw / "sia-cutout-1.fits"
+    fits.PrimaryHDU(np.ones((4, 4), dtype=np.float64)).writeto(fits_path)
+
+    # CatalogService only accepts paths under repo data/; use real samples dir
+    # via fits_path pointing at an existing stub sample (honest file, not invented).
+    from pathlib import Path
+
+    repo_sample = (
+        Path(__file__).resolve().parents[2]
+        / "data"
+        / "samples"
+        / "stub-wise0855-001.fits"
+    )
+    assert repo_sample.is_file()
+
+    recs = [
+        _FakeRec(
+            obs_id="sia-with-cutout",
+            collection="spherex_dr1",
+            access_url="https://irsa.example/c.fits",
+            ra=1.0,
+            dec=2.0,
+            t_min_mjd=10.0,
+            band_label="B1",
+            fits_path=str(repo_sample),
+        )
+    ]
+    svc = CatalogService(
+        use_irsa=True,
+        search_observations_fn=lambda *a, **k: _payload(recs),
+    )
+    result = svc.epochs(ra=1.0, dec=2.0, radius_arcsec=120)
+    assert result.provenance == PROVENANCE_LIVE
+    row = result.epochs[0]
+    assert row["preview_url"] == "/api/preview/sia-with-cutout"
+    assert svc.resolve_preview_fits("sia-with-cutout") == repo_sample.resolve()
+
+
+def test_resolve_preview_fits_raw_drop_in(tmp_path):
+    import numpy as np
+    from astropy.io import fits
+
+    raw = tmp_path / "raw"
+    samples = tmp_path / "samples"
+    raw.mkdir()
+    samples.mkdir()
+    path = raw / "dropped-obs.fits"
+    fits.PrimaryHDU(np.full((3, 3), 2.0)).writeto(path)
+
+    # Point CatalogService at temp dirs; empty epochs so convention/raw wins.
+    epochs = tmp_path / "epochs.json"
+    epochs.write_text('{"provenance": "stub", "epochs": []}', encoding="utf-8")
+    targets = tmp_path / "targets.json"
+    targets.write_text('{"provenance": "stub", "targets": []}', encoding="utf-8")
+
+    svc = CatalogService(
+        targets_path=targets,
+        epochs_path=epochs,
+        samples_dir=samples,
+        raw_dir=raw,
+        use_irsa=False,
+    )
+    assert svc.resolve_preview_fits("dropped-obs") == path.resolve()
+    assert svc.resolve_preview_fits("missing") is None
