@@ -677,6 +677,7 @@ svg {
 }
 .results-panel {
   overflow: hidden;
+  flex: 0 0 auto;
 }
 .results-head {
   padding: 18px 18px 13px;
