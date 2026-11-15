@@ -132,7 +132,7 @@ export function ExplorerWorkspace() {
   }
 
   return (
-    <main>
+    <main className="explore-stage">
       <div className="workspace-heading">
         <div>
           <h1>Explorar el cielo</h1>

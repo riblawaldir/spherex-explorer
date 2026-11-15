@@ -36,13 +36,18 @@ svg {
   background: var(--background);
 }
 .app-header {
-  height: 80px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32px;
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in oklch, var(--background) 92%, transparent);
+  gap: 16px;
+  padding: 0 16px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  background: color-mix(in oklch, var(--background) 58%, transparent);
+  backdrop-filter: blur(16px);
+  position: sticky;
+  top: 0;
+  z-index: 40;
 }
 .brand {
   display: flex;
@@ -66,42 +71,44 @@ svg {
   font-weight: 400;
   color: var(--muted-foreground);
 }
-.brand-caption {
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  line-height: 1.4;
-  color: var(--muted-foreground);
-  margin-top: 2px;
-}
 .main-nav {
   display: flex;
-  height: 100%;
-  gap: 30px;
+  height: auto;
+  gap: 4px;
   align-items: center;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.08);
+  background: rgb(255 255 255 / 0.04);
 }
 .nav-link {
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 500;
   letter-spacing: -0.011em;
   color: var(--muted-foreground);
   display: flex;
   gap: 8px;
   align-items: center;
-  height: 100%;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
   position: relative;
+  transition:
+    color 200ms ease,
+    background-color 200ms ease;
 }
 .nav-link.active {
   color: var(--foreground);
+  background: rgb(255 255 255 / 0.06);
 }
 .nav-link.active:after {
   content: "";
   position: absolute;
   height: 2px;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 12px;
+  right: 12px;
+  bottom: 4px;
+  border-radius: 2px;
   background: var(--brand-gradient);
 }
 .sim-badge {
@@ -123,35 +130,40 @@ svg {
   border-radius: 50%;
   background: var(--warning);
 }
+.explore-stage {
+  height: calc(100dvh - 92px);
+  min-height: 560px;
+  display: flex;
+  flex-direction: column;
+}
 .workspace-heading {
-  padding: 27px 32px 23px;
+  padding: 12px 24px 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex: none;
 }
 .workspace-heading h1 {
-  font-size: 1.875rem;
+  font-size: 1.25rem;
   font-weight: 600;
 }
 .workspace-heading p {
   color: var(--muted-foreground);
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   line-height: 1.5;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 .workspace-layout {
-  display: grid;
-  grid-template-columns: 340px minmax(0, 1fr) 330px;
-  gap: 16px;
-  padding: 0 24px 22px;
-  align-items: start;
+  position: relative;
+  flex: 1;
+  min-height: 0;
 }
 .glass-panel {
-  background: color-mix(in oklch, var(--card) 90%, transparent);
-  border: 1px solid var(--border);
+  background: oklch(0.16 0.028 268 / 0.72);
+  border: 1px solid rgb(255 255 255 / 0.08);
   border-radius: 16px;
   backdrop-filter: blur(16px);
-  box-shadow: var(--panel-shadow);
+  box-shadow: 0 16px 40px oklch(0 0 0 / 0.28);
 }
 .panel-heading {
   display: flex;
@@ -167,7 +179,7 @@ svg {
   color: var(--muted-foreground);
 }
 .search-panel {
-  padding: 20px;
+  padding: 16px;
 }
 .eyebrow {
   font-family: var(--font-sans);
@@ -220,7 +232,7 @@ svg {
 }
 .search-divider {
   border-top: 1px solid var(--border);
-  margin: 24px -20px 20px;
+  margin: 24px -16px 20px;
 }
 .brand-button {
   background: var(--brand-gradient);
@@ -252,14 +264,39 @@ svg {
   display: flex;
   gap: 8px;
 }
+.left-sidebar,
+.right-sidebar {
+  position: absolute;
+  z-index: 20;
+  top: 16px;
+  bottom: 16px;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+  pointer-events: none;
+}
+.left-sidebar {
+  left: 16px;
+}
+.right-sidebar {
+  right: 16px;
+}
+.left-sidebar > *,
+.right-sidebar > * {
+  pointer-events: auto;
+}
 .map-panel {
-  position: relative;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   overflow: hidden;
-  height: min(690px, calc(100dvh - 238px));
-  min-height: 520px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--background);
+  height: auto;
+  min-height: 0;
+  border: none;
+  border-radius: 0;
+  background: oklch(0.1 0.02 265);
 }
 .sky-image {
   position: absolute;
@@ -656,7 +693,7 @@ svg {
   border-radius: 4px;
 }
 .metadata-panel {
-  margin-top: 14px;
+  margin-top: 0;
   overflow: hidden;
 }
 .metadata-title {
@@ -706,13 +743,14 @@ svg {
   text-align: right;
 }
 .app-footer {
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32px 18px;
+  padding: 0 16px;
   font-family: var(--font-sans);
-  font-size: 0.8125rem;
-  line-height: 1.45;
+  font-size: 0.75rem;
+  line-height: 1.4;
   letter-spacing: -0.006em;
   color: var(--muted-foreground);
 }
@@ -804,26 +842,56 @@ svg {
     background-position: -200% 0;
   }
 }
-@media (min-width: 1500px) {
-  .workspace-layout {
-    grid-template-columns: 360px minmax(0, 1fr) 360px;
+@media (min-width: 1100px) {
+  .map-toolbar {
+    left: 352px;
+    right: 352px;
   }
-  .map-panel {
-    height: calc(100dvh - 238px);
+  .map-controls {
+    right: 352px;
+  }
+  .map-legend {
+    left: 352px;
+    max-width: calc(100% - 720px);
+  }
+  .map-status {
+    left: 352px;
+    right: 352px;
   }
   .results-list {
-    max-height: 340px;
+    max-height: 240px;
   }
 }
-@media (max-width: 1100px) {
+@media (max-width: 1099px) {
+  .explore-stage {
+    height: auto;
+    min-height: 0;
+  }
   .workspace-layout {
-    grid-template-columns: 300px minmax(0, 1fr);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 0 16px 16px;
+  }
+  .map-panel {
+    position: relative;
+    inset: auto;
+    order: 1;
+    height: 68dvh;
+    min-height: 480px;
+    border-radius: 16px;
+  }
+  .left-sidebar,
+  .right-sidebar {
+    position: static;
+    width: auto;
+    inset: auto;
+    overflow: visible;
+    pointer-events: auto;
   }
   .right-sidebar {
-    grid-column: 1 / -1;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
   }
   .metadata-panel {
     margin-top: 0;
@@ -831,62 +899,48 @@ svg {
   .header-badge {
     display: none;
   }
-  .app-header {
-    padding: 0 24px;
-  }
 }
 @media (max-width: 700px) {
   .app-header {
     height: auto;
-    padding: 16px;
+    padding: 12px 16px;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 8px;
   }
   .brand-name {
-    font-size: 18px;
+    font-size: 1.125rem;
   }
   .main-nav {
     width: 100%;
-    height: auto;
     flex-wrap: wrap;
-    gap: 10px 16px;
+    gap: 4px;
+    background: transparent;
+    border: none;
+    padding: 0;
   }
   .nav-link {
-    height: auto;
-    font-size: 0.875rem;
+    height: 32px;
     white-space: nowrap;
   }
   .workspace-heading {
-    padding: 24px 16px 18px;
-  }
-  .workspace-heading h1 {
-    font-size: 1.5rem;
+    padding: 12px 16px 8px;
   }
   .workspace-heading > .eyebrow {
     display: none;
   }
   .workspace-layout {
-    padding: 0 12px 20px;
-    display: flex;
-    flex-direction: column;
-  }
-  .workspace-layout > * {
-    width: 100%;
-  }
-  .left-sidebar {
-    order: 2;
-  }
-  .map-panel {
-    order: 1;
-    height: 490px;
-    min-height: 490px;
+    padding: 0 12px 16px;
+    gap: 12px;
   }
   .right-sidebar {
-    order: 3;
     display: block;
   }
+  .map-panel {
+    height: 72dvh;
+    min-height: 420px;
+  }
   .metadata-panel {
-    margin-top: 16px;
+    margin-top: 12px;
   }
   .sidebar-note {
     display: none;
@@ -895,7 +949,8 @@ svg {
     display: none;
   }
   .app-footer {
-    padding: 0 16px 20px;
+    height: auto;
+    padding: 12px 16px 16px;
     flex-wrap: wrap;
     gap: 8px;
   }
