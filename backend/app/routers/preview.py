@@ -1,18 +1,30 @@
 """GET /api/preview/{obs_id} — PNG when a labeled sample FITS exists."""
 
 from io import BytesIO
+from pathlib import Path
 
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse, Response
 from PIL import Image
 
 from app.routers.fixtures import STUB_PROVENANCE
+from app.science.fits_inspection import inspect_fits, select_image_hdu
+from app.science.image_processing import fits_to_png
 from app.services.catalog import get_catalog_service
 
-# Public P5 API — do not reimplement stretch logic here.
-from app.science.image_processing import fits_to_png
-
 router = APIRouter(prefix="/api", tags=["preview"])
+
+
+def _choose_image_hdu(fits_path: Path) -> int:
+    """Pick HDU via P5 inspect: prefer unique IMAGE, else first numeric 2-D."""
+    inspection = inspect_fits(fits_path)
+    try:
+        return select_image_hdu(inspection)
+    except ValueError:
+        for hdu in inspection.hdus:
+            if hdu.is_numeric_2d_image and (hdu.valid_percent or 0) > 0:
+                return hdu.index
+        raise ValueError("No numeric 2-D image HDU with finite pixels")
 
 
 @router.get("/preview/{obs_id}")
@@ -22,8 +34,10 @@ def get_preview(
 ):
     """Return PNG preview via P5 ``fits_to_png`` when a sample FITS is present.
 
-    Otherwise 501 with a clear message. Sample paths come from labeled
-    ``epochs.json`` / ``data/samples/`` — not live IRSA cutouts.
+    Uses ``inspect_fits`` / ``select_image_hdu`` so MEF stubs with an ``IMAGE``
+    extension work. Otherwise 501. Sample paths come from labeled
+    ``epochs.json``, ``data/samples/``, or an existing P4 cutout under
+    ``data/raw/{obs_id}.fits`` — not invented NASA products.
     """
     fits_path = get_catalog_service().resolve_preview_fits(obs_id)
     if fits_path is None:
@@ -32,9 +46,9 @@ def get_preview(
             content={
                 "detail": (
                     f"Preview for obs_id={obs_id!r} unavailable: no local sample "
-                    "FITS. Provide data/samples/{obs_id}.fits or set fits_sample "
-                    "in data/metadata/epochs.json (P5 fits_to_png). Live IRSA "
-                    "cutouts arrive with P4."
+                    "FITS. Provide data/samples/{obs_id}.fits, set fits_sample "
+                    "in data/metadata/epochs.json, or place a P4 cutout at "
+                    "data/raw/{obs_id}.fits (P5 fits_to_png)."
                 ),
                 "provenance": STUB_PROVENANCE,
             },
@@ -42,14 +56,15 @@ def get_preview(
         )
 
     try:
-        result = fits_to_png(fits_path)
+        hdu_index = _choose_image_hdu(fits_path)
+        result = fits_to_png(fits_path, hdu=hdu_index)
     except (OSError, ValueError) as exc:
         return JSONResponse(
             status_code=501,
             content={
                 "detail": (
                     f"Preview for obs_id={obs_id!r} failed while calling "
-                    f"fits_to_png: {exc}"
+                    f"fits_to_png / inspect_fits: {exc}"
                 ),
                 "provenance": STUB_PROVENANCE,
             },
@@ -65,12 +80,16 @@ def get_preview(
         image.save(buf, format="PNG")
         png = buf.getvalue()
 
+    # Samples under data/samples are cached_sample; raw cutouts stay cached_sample
+    # until a live IRSA download path is proven end-to-end.
+    provenance = "cached_sample"
     return Response(
         content=png,
         media_type="image/png",
         headers={
-            "X-Provenance": "cached_sample",
+            "X-Provenance": provenance,
             "X-Obs-Id": obs_id,
             "X-Source-Fits": fits_path.name,
+            "X-Hdu-Index": str(hdu_index),
         },
     )
