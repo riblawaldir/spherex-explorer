@@ -1,14 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import epochs, preview, search, targets
+from app.routers import compare, epochs, preview, search, targets
 
 app = FastAPI(
     title="SPHEREx Explorer",
-    version="0.1.0-sprint1",
+    version="0.4.0-sprint4",
     description=(
-        "Sprint 1 API: validated search/epochs over labeled fixtures "
-        "(stub / cached_sample). Contract also in repo-root openapi.yaml. "
+        "Sprint 4 API: search/epochs/preview over labeled fixtures "
+        "(stub / cached_sample) plus /api/compare for obs_id pairs. "
+        "Contract also in repo-root openapi.yaml. "
         "Live IRSA is owned by P4 (feat/spherex-data)."
     ),
 )
@@ -24,6 +25,7 @@ app.include_router(targets.router)
 app.include_router(search.router)
 app.include_router(epochs.router)
 app.include_router(preview.router)
+app.include_router(compare.router)
 
 
 @app.get("/health")
