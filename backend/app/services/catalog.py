@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
+from app.science.spherex_data.timing import get_timeline_metadata
+from app.science.spherex_data.bands import classify_wavelength
 
 # Repo root: backend/app/services/catalog.py → parents[3] = repo root
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -146,8 +148,7 @@ class CatalogService:
                 bp = row.get("bandpass") or ""
                 if band.strip().lower() not in str(bp).lower():
                     continue
-            rows.append(
-                {
+            epoch = {
                     "obs_id": row["obs_id"],
                     "ra": row.get("ra"),
                     "dec": row.get("dec"),
@@ -157,7 +158,12 @@ class CatalogService:
                     "preview_url": row.get("preview_url"),
                     "provenance": row.get("provenance", provenance),
                 }
-            )
+            epoch.update(get_timeline_metadata(epoch))
+            spectral = classify_wavelength(epoch.get("wavelength_um"))
+            if spectral:
+                epoch.update(spectral)
+                epoch["band"] = spectral["detector"]
+            rows.append(epoch)
 
         # Time-ordered: null MJD last, then ascending.
         rows.sort(

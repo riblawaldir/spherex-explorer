@@ -23,6 +23,8 @@ from .metadata import extract_metadata
 from .observations import organize_observations
 from .client import IRSAClient
 from . import config
+from .bands import BANDS, classify_band, classify_wavelength, get_band_metadata
+from .timing import get_timeline_metadata, mjd_to_utc, normalize_timing, parse_planning_period
 
 __version__ = "1.0.0"
 __all__ = [
@@ -36,6 +38,8 @@ __all__ = [
     "ObservationRecord",
     "CoordinateValidationError",
     "config",
+    "BANDS", "classify_band", "classify_wavelength", "get_band_metadata",
+    "get_timeline_metadata", "mjd_to_utc", "normalize_timing", "parse_planning_period",
 ]
 
 

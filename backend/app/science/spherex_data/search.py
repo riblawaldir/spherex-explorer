@@ -15,6 +15,8 @@ from astropy.table import Table
 from astropy.time import Time
 
 from .client import IRSAClient
+from .bands import classify_band
+from .timing import normalize_timing
 from .config import (
     DEC_MAX, DEC_MIN,
     RA_MAX, RA_MIN,
@@ -48,6 +50,13 @@ class ObservationRecord:
     em_min_m: Optional[float] = None    # Longitud de onda mínima (metros)
     em_max_m: Optional[float] = None    # Longitud de onda máxima (metros)
     band_label: Optional[str] = None    # Etiqueta de banda derivada de em_*
+    detector: Optional[str] = None
+    wavelength_min_um: Optional[float] = None
+    wavelength_max_um: Optional[float] = None
+    resolving_power: Optional[int] = None
+    exposure_seconds: Optional[float] = None
+    planning_period: Optional[str] = None
+    survey_cycle: Optional[str] = None
     instrument_name: Optional[str] = None
     facility_name: Optional[str] = None
     fits_path: Optional[str] = None     # Ruta local si se descargó el archivo
@@ -67,6 +76,13 @@ class ObservationRecord:
             "em_min_m": self.em_min_m,
             "em_max_m": self.em_max_m,
             "band_label": self.band_label,
+            "detector": self.detector,
+            "wavelength_min_um": self.wavelength_min_um,
+            "wavelength_max_um": self.wavelength_max_um,
+            "resolving_power": self.resolving_power,
+            "exposure_seconds": self.exposure_seconds,
+            "planning_period": self.planning_period,
+            "survey_cycle": self.survey_cycle,
             "instrument_name": self.instrument_name,
             "facility_name": self.facility_name,
             "fits_path": self.fits_path,
@@ -186,7 +202,12 @@ def normalize_sia2_row(row, available_columns: list[str]) -> ObservationRecord:
     t_max = _safe_get(row, "t_max")
     em_min = _safe_get(row, "em_min")
     em_max = _safe_get(row, "em_max")
-
+    detector_raw = _safe_get(row, "instrument_name")
+    band_metadata = classify_band(_finite_float(em_min), _finite_float(em_max), detector_raw)
+    timing = normalize_timing(
+        obs_id=str(obs_id), t_min_mjd=_finite_float(t_min), t_max_mjd=_finite_float(t_max),
+        exposure_seconds=_finite_float(_safe_get(row, "t_exptime")),
+    )
     # Recoger todas las columnas restantes como 'extra'
     standard_cols = {
         "obs_id", "obs_publisher_did", "obs_collection", "collection",
@@ -207,13 +228,20 @@ def normalize_sia2_row(row, available_columns: list[str]) -> ObservationRecord:
         dec=_finite_float(_safe_get(row, "s_dec")),
         t_min_mjd=_finite_float(t_min),
         t_max_mjd=_finite_float(t_max),
-        observed_at=_mjd_to_iso(_finite_float(t_min)),
+        observed_at=timing["observed_at"],
         em_min_m=_finite_float(em_min),
         em_max_m=_finite_float(em_max),
         band_label=_derive_band_label(
             _finite_float(em_min),
             _finite_float(em_max),
         ),
+        detector=band_metadata["detector"] if band_metadata else None,
+        wavelength_min_um=band_metadata["wavelength_min_um"] if band_metadata else None,
+        wavelength_max_um=band_metadata["wavelength_max_um"] if band_metadata else None,
+        resolving_power=band_metadata["resolving_power"] if band_metadata else None,
+        exposure_seconds=timing["exposure_seconds"],
+        planning_period=timing["planning_period"],
+        survey_cycle=timing["survey_cycle"],
         instrument_name=_safe_get(row, "instrument_name"),
         facility_name=_safe_get(row, "facility_name"),
         extra=extra,
