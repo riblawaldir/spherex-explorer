@@ -13,13 +13,8 @@ export interface ApiEpoch {
   preview_url?: string | null;
   provenance: "stub" | "cached_sample" | string;
 
-  /* =========================================================================
-   * CAMPOS PENDIENTES DE CONFIRMAR CON EL INTEGRANTE 3 (Backend FastAPI):
-   * En openapi.yaml actual (v0.1.1-sprint1), 'collection' y 'source_url'
-   * NO existen en el esquema Epoch ("intentionally absent until real metadata exists").
-   * Se incluyen como opcionales en la interfaz para permitir que el adaptador
-   * los consuma cuando el backend empiece a enviarlos.
-   * ========================================================================= */
+  /* Optional live-only fields (OpenAPI Sprint 2+). Fixtures omit them;
+   * never invent DR1/QR3 or URLs when absent. */
   collection?: string | null;
   source_url?: string | null;
 }

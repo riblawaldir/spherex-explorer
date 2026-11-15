@@ -128,7 +128,13 @@ export function MapLegend({
   markers: readonly ObservationMarkerItem[];
   radiusDeg?: number;
 }) {
-  const collections = [...new Set(markers.map((marker) => marker.primaryObservation.collection))];
+  const collections = [
+    ...new Set(
+      markers
+        .map((marker) => marker.primaryObservation.collection)
+        .filter((c): c is string => Boolean(c)),
+    ),
+  ];
   return (
     <div className="map-legend z-10 max-w-[75%] flex-wrap">
       {collections.map((collection) => (
