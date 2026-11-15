@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useExplorer } from "@/components/layout/ExplorerContext";
 import { TemporalViewerSlot } from "@/components/layout/TemporalViewerSlot";
+import { ComparePanel } from "@/components/compare/ComparePanel";
 
 export function getComparisonSummary(count: number): string {
   if (count === 0) {
@@ -14,7 +15,7 @@ export function getComparisonSummary(count: number): string {
 }
 
 export function ComparisonPage() {
-  const { comparison, comparisonIsSimulated } = useExplorer();
+  const { comparison, comparisonIsSimulated, compareIds } = useExplorer();
 
   return (
     <main className="secondary-page">
@@ -27,6 +28,10 @@ export function ComparisonPage() {
         {getComparisonSummary(comparison.length)}
       </p>
       <TemporalViewerSlot observations={comparison} isSimulated={comparisonIsSimulated} />
+      <ComparePanel
+        candidates={comparison}
+        preferredIds={compareIds.length >= 2 ? compareIds : comparison.map((o) => o.id)}
+      />
     </main>
   );
 }

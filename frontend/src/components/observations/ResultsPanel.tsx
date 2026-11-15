@@ -132,6 +132,11 @@ export function ResultsPanel({
           Comparar en visor temporal
           <ArrowRight />
         </Button>
+        <p className="text-[0.7rem] text-muted-foreground mt-2 leading-4">
+          En Comparación también puedes validar un par vía{" "}
+          <span className="font-mono">/api/compare</span> (comparable /
+          not_comparable).
+        </p>
       </div>
     </section>
   );
