@@ -1,7 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
- feat/sprint4-scientific-validation
 from app.routers import comparability, compare, epochs, preview, search, scientific_validation, targets
 
 from app.routers import comparability, compare, epochs, preview, search, targets
