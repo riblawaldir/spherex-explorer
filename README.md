@@ -12,6 +12,14 @@ npm ci
 npm run dev
 ```
 
+Vite proxies `/api` and `/health` to `http://127.0.0.1:8000` by default. If the API listens elsewhere (for example port 8001), set `VITE_API_PROXY` before `npm run dev`:
+
+```sh
+# PowerShell
+$env:VITE_API_PROXY = 'http://127.0.0.1:8001'
+npm run dev
+```
+
 Backend (Python 3.12 recomendado):
 
 ```sh
@@ -20,7 +28,7 @@ python -m venv .venv
 # Windows PowerShell: .venv\Scripts\Activate.ps1
 # Linux/macOS: source .venv/bin/activate
 pip install -r requirements-dev.txt
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 python -m pytest
 ```
 
