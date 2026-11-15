@@ -4,6 +4,40 @@
   --color-warning: var(--warning);
   --color-success: var(--success);
   --color-violet: var(--violet);
+
+  --text-xs: var(--fs-help);
+  --text-xs--line-height: var(--lh-ui);
+  --text-sm: var(--fs-ui);
+  --text-sm--line-height: var(--lh-ui);
+  --text-base: var(--fs-ui);
+  --text-base--line-height: var(--lh-ui);
+  --text-lg: var(--fs-panel-title);
+  --text-lg--line-height: var(--lh-tight);
+  --text-xl: var(--fs-panel-title);
+  --text-xl--line-height: var(--lh-tight);
+  --text-2xl: var(--fs-page-title);
+  --text-2xl--line-height: var(--lh-tight);
+  --text-3xl: var(--fs-page-title);
+  --text-3xl--line-height: var(--lh-tight);
+  --text-4xl: var(--fs-page-title);
+  --text-4xl--line-height: var(--lh-tight);
+}
+
+/* Type scale: every font size in the interface resolves to one of these. */
+:root {
+  --fs-label: 11px;
+  --fs-help: 12px;
+  --fs-data: 12px;
+  --fs-ui: 13px;
+  --fs-panel-title: 14px;
+  --fs-brand: 15px;
+  --fs-page-title: 21px;
+  --lh-ui: 1.45;
+  --lh-tight: 1.25;
+  --control-h: 36px;
+  --button-py: 8px;
+  --panel-pad: 14px;
+  --panel-gap: 10px;
 }
 
 :root:root,

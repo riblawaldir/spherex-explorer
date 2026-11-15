@@ -105,7 +105,7 @@ export function CoordinateSearch({
         )}
       </div>
 
-      <p className="text-muted-foreground text-sm leading-6 mt-2 mb-4">
+      <p className="text-muted-foreground text-xs mt-1.5 mb-3">
         Consulta observaciones astronómicas en coordenadas ecuatoriales (ICRS · J2000).
       </p>
 
@@ -116,7 +116,7 @@ export function CoordinateSearch({
         disabled={loading}
       />
 
-      <div className="grid grid-cols-2 gap-3 mt-4">
+      <div className="grid grid-cols-2 gap-2.5 mt-3">
         {/* Campo RA */}
         <div>
           <label htmlFor="ra-input" className="field-label">
@@ -185,7 +185,7 @@ export function CoordinateSearch({
       <Button
         type="submit"
         variant="brand"
-        className="w-full mt-5 h-11 font-medium"
+        className="w-full mt-4 font-medium"
         disabled={loading}
       >
         {loading ? (

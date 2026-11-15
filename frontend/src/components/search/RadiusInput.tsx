@@ -63,7 +63,7 @@ export function RadiusInput({ value, onChange, error, disabled = false }: Radius
           {error}
         </p>
       ) : (
-        <p id="radius-desc" className="text-muted-foreground text-sm leading-6 mt-2">
+        <p id="radius-desc" className="text-muted-foreground text-xs mt-1.5">
           {arcmin && (
             <span className="scientific mr-1">
               ≈ {arcmin}′ ({arcsec}″).

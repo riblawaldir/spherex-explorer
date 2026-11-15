@@ -43,13 +43,13 @@ export function ResultsPanel({
         </h2>
         {isSimulated && <SimulatedBadge />}
       </div>
-      <p className="px-[18px] text-sm text-muted-foreground">
+      <p className="px-[14px] text-xs text-muted-foreground">
         Selecciona observaciones para comparar.
       </p>
 
       {/* Aviso discreto de observaciones descartadas por datos incompletos de la API */}
       {discarded && discarded.length > 0 && (
-        <div className="mx-3 my-2 text-sm leading-5 rounded border border-warning/30 bg-warning/5 px-2.5 py-1.5 text-muted-foreground">
+        <div className="mx-3 my-2 text-xs rounded border border-warning/30 bg-warning/5 px-2.5 py-1.5 text-muted-foreground">
           <details className="group">
             <summary className="cursor-pointer select-none font-medium flex items-center justify-between text-warning/90 hover:text-warning">
               <span className="flex items-center gap-1.5">
@@ -119,13 +119,13 @@ export function ResultsPanel({
       </div>
 
       <div className="border-t border-border p-3">
-        <div className="text-muted-foreground text-sm mb-3 flex justify-between">
+        <div className="text-muted-foreground text-xs mb-2 flex justify-between gap-2">
           <span>{compareIds.length} seleccionadas</span>
           <span>Mínimo 2 observaciones</span>
         </div>
         <Button
           variant="outline"
-          className="w-full h-10 bg-transparent"
+          className="w-full bg-transparent"
           disabled={!canCompare(compareIds) || status === "loading"}
           onClick={onCompare}
         >
