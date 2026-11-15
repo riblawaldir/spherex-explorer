@@ -1,14 +1,18 @@
-import { ListFilter, ArrowRight, RefreshCw, SearchX } from "lucide-react";
+import { ListFilter, ArrowRight, RefreshCw, SearchX, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SimulatedBadge } from "@/components/layout/Header";
 import { canCompare } from "@/data/mockObservations";
 import { ObservationCard } from "./ObservationCard";
 import type { Observation } from "@/types/observation";
+import type { DiscardedEpoch } from "@/services/adapters/epochToObservation";
+
 export function ResultsPanel({
   observations,
   selectedId,
   compareIds,
   status,
+  discarded = [],
+  errorMessage,
   onSelect,
   onCheck,
   onCompare,
@@ -18,13 +22,15 @@ export function ResultsPanel({
   selectedId?: string | undefined;
   compareIds: string[];
   status: "loading" | "ready" | "error";
+  discarded?: DiscardedEpoch[];
+  errorMessage?: string;
   onSelect: (id: string) => void;
   onCheck: (id: string) => void;
   onCompare: () => void;
   onRetry: () => void;
 }) {
   return (
-    <section className="glass-panel results-panel">
+    <section className="glass-panel results-panel" aria-label="Panel de observaciones">
       <div className="results-head">
         <h2 className="panel-heading">
           <ListFilter />
@@ -36,6 +42,35 @@ export function ResultsPanel({
       <p className="px-[18px] text-[10px] text-muted-foreground">
         Selecciona observaciones para comparar.
       </p>
+
+      {/* Aviso discreto de observaciones descartadas por datos incompletos de la API */}
+      {discarded && discarded.length > 0 && (
+        <div className="mx-3 my-2 text-[10px] rounded border border-warning/30 bg-warning/5 px-2.5 py-1.5 text-muted-foreground">
+          <details className="group">
+            <summary className="cursor-pointer select-none font-medium flex items-center justify-between text-warning/90 hover:text-warning">
+              <span className="flex items-center gap-1.5">
+                <AlertCircle size={12} className="text-warning flex-shrink-0" />
+                {discarded.length} observación{discarded.length > 1 ? "es" : ""} descartada
+                {discarded.length > 1 ? "s" : ""} por datos incompletos
+              </span>
+              <span className="text-[9px] text-muted-foreground group-open:rotate-180 transition-transform">
+                ▼
+              </span>
+            </summary>
+            <ul className="mt-2 space-y-1.5 pl-1 max-h-28 overflow-y-auto text-[9px] border-t border-border/50 pt-1.5">
+              {discarded.map((d, idx) => (
+                <li key={idx} className="leading-tight">
+                  <span className="font-mono text-foreground font-semibold">
+                    {d.obs_id || "Sin obs_id"}
+                  </span>
+                  : <span className="text-muted-foreground">{d.reasons.join(" · ")}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        </div>
+      )}
+
       <div className="results-list">
         {status === "loading" ? (
           <div aria-label="Cargando observaciones">
@@ -45,7 +80,10 @@ export function ResultsPanel({
           </div>
         ) : status === "error" ? (
           <div className="empty-state">
-            <p>No se pudo completar la búsqueda simulada.</p>
+            <p className="text-destructive font-medium mb-1">Error al consultar observaciones</p>
+            <p className="text-muted-foreground text-[10px] mb-3">
+              {errorMessage || "No se pudo conectar con el backend FastAPI (/api)."}
+            </p>
             <Button variant="ghost" onClick={onRetry}>
               <RefreshCw />
               Reintentar
@@ -70,6 +108,7 @@ export function ResultsPanel({
           </div>
         )}
       </div>
+
       <div className="border-t border-border p-3">
         <div className="text-muted-foreground text-[10px] mb-3 flex justify-between">
           <span>{compareIds.length} seleccionadas</span>

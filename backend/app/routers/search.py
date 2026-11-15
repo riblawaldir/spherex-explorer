@@ -1,4 +1,4 @@
-"""GET /api/search — fixture-backed search (Sprint 1)."""
+"""GET /api/search — fixture targets by default; optional live IRSA coords search."""
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -15,10 +15,11 @@ def search(
     dec: OptionalDecQuery = None,
     radius_arcsec: OptionalRadiusArcsecQuery = None,  # noqa: FAST002 — default via =
 ) -> dict:
-    """Search labeled targets by name fragment and/or sky position.
+    """Search by name fragment and/or sky position.
 
-    Uses ``data/metadata/targets.json`` via CatalogService.
-    TODO(P4): CatalogService will query IRSA; provenance will change accordingly.
+    Default: labeled targets in ``data/metadata/targets.json``.
+    With SPHEREX_USE_IRSA=1 and ra/dec, CatalogService queries P4 IRSA and
+    returns live hits (falls back to fixtures on failure).
     """
     if (ra is None) ^ (dec is None):
         raise HTTPException(

@@ -1,8 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, History, Pause, Play, SkipBack, SkipForward } from "lucide-react";
+import {
+  AlertTriangle,
+  History,
+  LocateFixed,
+  Pause,
+  Play,
+  Plus,
+  SkipBack,
+  SkipForward,
+  Minus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SimulatedBadge } from "@/components/layout/Header";
 import type { Observation } from "@/types/observation";
+import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 
 const playbackSpeeds = [0.5, 1, 2, 4];
 const blinkIntervalMs = 500;
@@ -14,6 +25,7 @@ const dateFormatter = new Intl.DateTimeFormat("es-BO", {
 
 export interface TemporalViewerSlotProps {
   observations: Observation[];
+  isSimulated?: boolean;
   selectedId?: string;
   onSelect?: (id: string) => void;
 }
@@ -59,6 +71,7 @@ function sortObservations(observations: Observation[]): Observation[] {
 
 export function TemporalViewerSlot({
   observations,
+  isSimulated = false,
   selectedId,
   onSelect,
 }: TemporalViewerSlotProps) {
@@ -73,6 +86,7 @@ export function TemporalViewerSlot({
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isBlinking, setIsBlinking] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
   const [blinkSecondId, setBlinkSecondId] = useState<string | undefined>(
     blinkOptions[1]?.id,
   );
@@ -208,20 +222,83 @@ export function TemporalViewerSlot({
             <History />
             Visor temporal
           </h2>
-          <SimulatedBadge />
+          {isSimulated && <SimulatedBadge />}
         </div>
 
         <div className="temporal-image relative overflow-hidden">
           {displayedObservation && hasDisplayedPreview && !imageFailed ? (
             <>
-              <img
-                key={previewKey}
-                src={displayedObservation.preview_url ?? undefined}
-                alt={`Previsualización de ${displayedObservation.id}, ${formatDate(displayedObservation.observed_at)}`}
-                className="max-h-full max-w-full object-contain"
-                onError={() => setFailedPreviewKey(previewKey)}
-                onLoad={() => setFailedPreviewKey((failed) => (failed === previewKey ? undefined : failed))}
-              />
+              <TransformWrapper
+                key={activeObservation?.id ?? "no-active-observation"}
+                minScale={1}
+                maxScale={8}
+                initialScale={1}
+                wheel={{ step: 0.1 }}
+                panning={{ excluded: ["button"] }}
+                onInit={(ref) => setZoomScale(ref.state.scale)}
+                onTransform={(_, state) => setZoomScale(state.scale)}
+              >
+                {({ zoomIn, zoomOut, resetTransform }) => (
+                  <>
+                    <TransformComponent
+                      wrapperStyle={{ width: "100%", height: "100%" }}
+                      contentStyle={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <img
+                        key={previewKey}
+                        src={displayedObservation.preview_url ?? undefined}
+                        alt={`Previsualización de ${displayedObservation.id}, ${formatDate(displayedObservation.observed_at)}`}
+                        className="max-h-full max-w-full object-contain"
+                        onError={() => setFailedPreviewKey(previewKey)}
+                        onLoad={() => setFailedPreviewKey((failed) => (failed === previewKey ? undefined : failed))}
+                      />
+                    </TransformComponent>
+                    <div className="absolute left-3 top-3 flex items-center gap-1 rounded bg-black/70 p-1 text-white">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-white hover:bg-white/20 hover:text-white"
+                        aria-label="Acercar imagen"
+                        title="Acercar imagen"
+                        disabled={zoomScale >= 8}
+                        onClick={() => zoomIn()}
+                      >
+                        <Plus size={14} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-white hover:bg-white/20 hover:text-white"
+                        aria-label="Alejar imagen"
+                        title="Alejar imagen"
+                        disabled={zoomScale <= 1}
+                        onClick={() => zoomOut()}
+                      >
+                        <Minus size={14} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-white hover:bg-white/20 hover:text-white"
+                        aria-label="Centrar imagen"
+                        title="Centrar imagen"
+                        onClick={() => resetTransform()}
+                      >
+                        <LocateFixed size={14} />
+                      </Button>
+                      <span className="min-w-9 pr-1 text-right text-[10px]" aria-live="polite">
+                        {zoomScale.toFixed(1)}×
+                      </span>
+                    </div>
+                  </>
+                )}
+              </TransformWrapper>
               <div className="absolute bottom-3 left-3 rounded bg-black/70 px-3 py-2 text-left text-xs text-white">
                 <div>{formatDate(displayedObservation.observed_at)}</div>
                 <div className="mt-1 opacity-80">
@@ -368,7 +445,7 @@ export function TemporalViewerSlot({
         </div>
 
         <p className="text-muted-foreground text-xs mt-4">
-          {count} observaciones simuladas
+          {count} observación{count === 1 ? "" : "es"}{isSimulated ? " simuladas" : ""}
           {activeObservation ? ` · ${activeObservation.id}` : ""}
         </p>
       </section>

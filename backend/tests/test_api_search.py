@@ -107,7 +107,7 @@ def test_epochs_time_ordered_for_wise_region():
         "provenance",
     }
     assert required <= epochs[0].keys()
-    assert all(e["provenance"] in {"stub", "cached_sample"} for e in epochs)
+    assert all(e["provenance"] in {"stub", "cached_sample", "live"} for e in epochs)
     # Fixture truth: coords from data/metadata/epochs.json — not invented defaults.
     assert epochs[0]["ra"] == 133.79513
     assert epochs[0]["dec"] == -7.24459
@@ -118,6 +118,12 @@ def test_epochs_time_ordered_for_wise_region():
     assert epochs[0]["detector"] == "SPHEREx-D1"
     assert epochs[0]["resolving_power"] == 39
     assert epochs[0]["survey_cycle"] is None
+    
+    # Honest preview_url: only when local FITS resolves (Sprint 3).
+    by_id = {e["obs_id"]: e for e in epochs}
+    assert by_id["stub-wise0855-001"]["preview_url"] == "/api/preview/stub-wise0855-001"
+    assert by_id["stub-wise0855-002"]["preview_url"] == "/api/preview/stub-wise0855-002"
+    assert by_id["stub-wise0855-003"]["preview_url"] is None
 
 
 def test_epochs_band_filter():
@@ -152,11 +158,23 @@ def test_preview_png_when_sample_fits_exists():
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("image/png")
     assert response.headers.get("X-Provenance") == "cached_sample"
+    assert response.headers.get("X-Obs-Id") == "stub-wise0855-001"
+    assert response.headers.get("X-Hdu-Index") == "0"
+    assert response.content[:8] == b"\x89PNG\r\n\x1a\n"
+
+
+def test_preview_png_from_mef_image_hdu():
+    """stub-wise0855-002 is MEF with IMAGE extension — P5 inspect selects it."""
+    response = client.get("/api/preview/stub-wise0855-002")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("image/png")
+    assert response.headers.get("X-Provenance") == "cached_sample"
+    assert response.headers.get("X-Hdu-Index") == "1"
     assert response.content[:8] == b"\x89PNG\r\n\x1a\n"
 
 
 def test_preview_501_without_sample():
-    response = client.get("/api/preview/stub-wise0855-002")
+    response = client.get("/api/preview/stub-wise0855-003")
     assert response.status_code == 501
     body = response.json()
     assert body["provenance"] == "stub"

@@ -1,15 +1,22 @@
 openapi: 3.0.3
 info:
   title: SPHEREx Explorer API
-  version: 0.1.1-sprint1
+  version: 0.3.0-sprint3
   description: |
-    Sprint 1 contract for SPHEREx Explorer.
-    Search and epochs use labeled fixtures under `data/metadata/` with
-    provenance `stub` or `cached_sample` (never live IRSA until P4).
-    Epoch includes fixture ra/dec when present; does not invent collection
-    or source_url for the frontend Observation adapter.
-    Preview returns PNG when a local sample FITS exists and P5 `fits_to_png`
-    succeeds; otherwise 501.
+    Sprint 3 contract for SPHEREx Explorer.
+    Default search/epochs path uses labeled fixtures under `data/metadata/`
+    with provenance `stub` or `cached_sample` (offline demo / CI).
+    When `SPHEREX_USE_IRSA=1` (or CatalogService `use_irsa=True`), the
+    backend calls P4 `search_observations` (IRSA SIA2). Successful queries
+    are labeled provenance `live`. IRSA failures fall back to fixtures.
+    Epoch always includes obs_id, ra, dec, t_mjd, bandpass, wavelength_um,
+    preview_url, provenance (nullable values where the row lacks them).
+    For live rows only, optional `collection` and `source_url` are passed
+    through from P4 when IRSA provides them — never invented for fixtures.
+    `preview_url` is non-null only when a local FITS resolves (sample under
+    data/samples/, fits_sample, data/raw/{obs_id}.fits, or a P4 fits_path
+    already on disk). GET /api/preview/{obs_id} uses P5 inspect_fits +
+    fits_to_png; otherwise 501 / null preview_url.
 servers:
   - url: http://127.0.0.1:8000
     description: Local uvicorn
@@ -129,7 +136,7 @@ paths:
           description: Validation error (missing/out-of-range ra/dec/radius)
   /api/preview/{obs_id}:
     get:
-      summary: Preview PNG (P5 fits_to_png when sample FITS exists)
+      summary: Preview PNG (P5 fits_to_png + HDU inspect when local FITS exists)
       operationId: getPreview
       tags: [preview]
       parameters:
@@ -147,7 +154,7 @@ paths:
             default: 512
       responses:
         "200":
-          description: image/png from local sample via P5 fits_to_png
+          description: image/png from local sample / cutout via P5 fits_to_png
           content:
             image/png:
               schema:
@@ -158,8 +165,18 @@ paths:
               schema:
                 type: string
                 example: cached_sample
+            X-Obs-Id:
+              schema:
+                type: string
+            X-Source-Fits:
+              schema:
+                type: string
+            X-Hdu-Index:
+              schema:
+                type: string
+                description: HDU index selected by inspect_fits / select_image_hdu
         "501":
-          description: No sample FITS or processing failed
+          description: No local FITS or processing failed
           content:
             application/json:
               schema:
@@ -206,19 +223,27 @@ components:
             $ref: "#/components/schemas/SearchHit"
         provenance:
           type: string
-          enum: [stub, cached_sample]
+          enum: [stub, cached_sample, live]
+          description: |
+            stub / cached_sample = labeled fixtures; live = successful IRSA
+            SIA2 query via P4 search_observations.
           example: stub
     Epoch:
       type: object
       required:
         [obs_id, ra, dec, t_mjd, bandpass, wavelength_um, preview_url, provenance]
       description: |
-        Time-ordered visit near a sky region. Keys are always present; t_mjd,
-        bandpass, wavelength_um, preview_url, ra, and dec may be null when the
-        labeled fixture (or later IRSA row) lacks that value. collection and
-        source_url are intentionally absent until real metadata exists — clients
-        must not invent them. preview_url may point at /api/preview/{obs_id}
-        even when that endpoint returns 501 (no sample FITS).
+        Time-ordered visit near a sky region. Required keys are always present;
+        t_mjd, bandpass, wavelength_um, preview_url, ra, and dec may be null
+        when the fixture or IRSA row lacks that value.
+        Field mapping from P4 ObservationRecord (live only):
+          id → obs_id, t_min_mjd → t_mjd, band_label → bandpass,
+          em_min/em_max → wavelength_um (midpoint µm when both present),
+          access_url → source_url (optional), collection → collection (optional).
+        collection / source_url are omitted on fixture rows; included on live
+        rows only when P4/IRSA actually provided them. preview_url is non-null
+        only when a local FITS resolves — clients should not request preview
+        when it is null (endpoint would 501).
       properties:
         obs_id:
           type: string
@@ -243,9 +268,24 @@ components:
         preview_url:
           type: string
           nullable: true
+          description: /api/preview/{obs_id} when local FITS exists; else null
         provenance:
           type: string
-          enum: [stub, cached_sample]
+          enum: [stub, cached_sample, live]
+          description: |
+            stub = synthetic labeled fixture; cached_sample = local sample
+            metadata/FITS; live = real IRSA SIA2 row via P4.
+        collection:
+          type: string
+          nullable: true
+          description: |
+            IRSA obs_collection when present on a live row (e.g. spherex_dr1).
+            Omitted for fixtures — clients must not invent DR1/QR3.
+        source_url:
+          type: string
+          nullable: true
+          description: |
+            IRSA access_url when present on a live row. Omitted for fixtures.
     EpochsResponse:
       type: object
       required: [epochs, provenance]
@@ -256,7 +296,7 @@ components:
             $ref: "#/components/schemas/Epoch"
         provenance:
           type: string
-          enum: [stub, cached_sample]
+          enum: [stub, cached_sample, live]
           example: cached_sample
     StubNotImplemented:
       type: object
