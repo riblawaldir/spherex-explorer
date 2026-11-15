@@ -272,10 +272,11 @@ components:
             $ref: "#/components/schemas/SearchHit"
         provenance:
           type: string
-          enum: [stub, cached_sample, live, irsa_verified_local]
+          enum: [stub, cached_sample, live, irsa_verified_local, local_real_fits]
           description: |
             stub / cached_sample = labeled fixtures; live = successful IRSA
-            SIA2 query via P4 search_observations.
+            SIA2 query via P4 search_observations; local_real_fits = an
+            operator allowlist on this machine. A local file is never live.
           example: stub
     Epoch:
       type: object
@@ -320,7 +321,7 @@ components:
           description: /api/preview/{obs_id} when local FITS exists; else null
         provenance:
           type: string
-          enum: [stub, cached_sample, live, irsa_verified_local]
+          enum: [stub, cached_sample, live, irsa_verified_local, local_real_fits]
           description: |
             stub = synthetic labeled fixture; cached_sample = local sample
             metadata/FITS; live = real IRSA SIA2 row via P4.
@@ -345,7 +346,7 @@ components:
             $ref: "#/components/schemas/Epoch"
         provenance:
           type: string
-          enum: [stub, cached_sample, live, irsa_verified_local]
+          enum: [stub, cached_sample, live, irsa_verified_local, local_real_fits]
           example: cached_sample
     StubNotImplemented:
       type: object
@@ -387,7 +388,7 @@ components:
           nullable: true
         provenance:
           type: string
-          enum: [stub, cached_sample, live, irsa_verified_local]
+          enum: [stub, cached_sample, live, irsa_verified_local, local_real_fits]
         collection:
           type: string
           nullable: true
@@ -439,7 +440,7 @@ components:
           type: string
         provenance:
           type: string
-          enum: [stub, cached_sample, live, irsa_verified_local]
+          enum: [stub, cached_sample, live, irsa_verified_local, local_real_fits]
           example: stub
     CompareResponse:
       type: object
@@ -468,7 +469,7 @@ components:
             comparable only after metadata gates and successful P5 alignment.
         provenance:
           type: string
-          enum: [stub, cached_sample, live, irsa_verified_local]
+          enum: [stub, cached_sample, live, irsa_verified_local, local_real_fits]
           description: Weakest provenance of the two epochs (never promoted).
         reasons:
           type: array

@@ -21,6 +21,12 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
+from app.science.local_manifest import (
+    PROVENANCE_LOCAL_REAL,
+    load_manifest,
+    manifest_claims,
+    resolve_allowed_fits,
+)
 from app.science.spherex_data.timing import get_timeline_metadata
 from app.science.spherex_data.bands import classify_band, classify_wavelength
 
@@ -34,7 +40,8 @@ _RAW_DIR = _DATA_DIR / "raw"
 DEFAULT_SEARCH_RADIUS_ARCSEC = 60.0
 DEFAULT_EPOCH_RADIUS_ARCSEC = 120.0
 
-# Provenance labels (OpenAPI enum): stub | cached_sample | live
+# Provenance labels: stub | cached_sample | live | local_real_fits
+# local_real_fits is an operator allowlist. It is never a live IRSA query.
 PROVENANCE_STUB = "stub"
 PROVENANCE_CACHED_SAMPLE = "cached_sample"
 PROVENANCE_LIVE = "live"
@@ -340,12 +347,19 @@ class CatalogService:
                 epoch["band"] = spectral["detector"]
             rows.append(epoch)
 
+        seen = {str(row["obs_id"]) for row in rows}
+        for row in self._local_epochs(ra=ra, dec=dec, radius=radius, band=band):
+            if str(row["obs_id"]) not in seen:
+                rows.append(row)
         rows.sort(
             key=lambda e: (
                 e["t_mjd"] is None,
                 e["t_mjd"] if e["t_mjd"] is not None else 0.0,
             )
         )
+        labels = {str(row.get("provenance")) for row in rows}
+        if labels == {PROVENANCE_LOCAL_REAL}:
+            provenance = PROVENANCE_LOCAL_REAL
         return EpochsResult(epochs=rows, provenance=provenance)
 
     def _epochs_from_irsa(
@@ -436,18 +450,77 @@ class CatalogService:
             return None
         return resolved if resolved.is_file() else None
 
+    def _local_epochs(
+        self,
+        *,
+        ra: float,
+        dec: float,
+        radius: float,
+        band: str | None,
+    ) -> list[dict[str, Any]]:
+        """Allowlisted local FITS inside the search radius. Paths stay server-side."""
+        manifest = load_manifest()
+        if manifest is None:
+            return []
+        rows: list[dict[str, Any]] = []
+        for obs in manifest.observations:
+            if resolve_allowed_fits(obs.obs_id) is None:
+                continue
+            if _angular_separation_arcsec(ra, dec, obs.ra, obs.dec) > radius:
+                continue
+            if band is not None and band.strip():
+                if band.strip().lower() not in obs.bandpass.lower():
+                    continue
+            rows.append(self._epoch_from_local(obs))
+        return rows
+
+    def _epoch_from_local(self, obs) -> dict[str, Any]:
+        epoch: dict[str, Any] = {
+            "obs_id": obs.obs_id,
+            "ra": obs.ra,
+            "dec": obs.dec,
+            "t_mjd": obs.t_mjd,
+            "bandpass": obs.bandpass,
+            "wavelength_um": obs.wavelength_um,
+            "preview_url": f"/api/preview/{obs.obs_id}",
+            "provenance": PROVENANCE_LOCAL_REAL,
+        }
+        if obs.collection:
+            epoch["collection"] = obs.collection
+        if obs.source_url:
+            epoch["source_url"] = obs.source_url
+        if obs.detector:
+            epoch["detector"] = obs.detector
+        epoch.update(get_timeline_metadata(epoch))
+        spectral = classify_wavelength(epoch.get("wavelength_um"))
+        if spectral:
+            epoch.update(spectral)
+            epoch["band"] = spectral["detector"]
+        return epoch
+
+    def preview_provenance(self, obs_id: str) -> str:
+        """Label a resolved preview. Allowlisted files are not live and not samples."""
+        if resolve_allowed_fits(obs_id) is not None:
+            return PROVENANCE_LOCAL_REAL
+        return PROVENANCE_CACHED_SAMPLE
+
     def resolve_preview_fits(self, obs_id: str) -> Path | None:
         """Return local FITS path for ``obs_id`` when a real file exists.
 
         Resolution order (first hit wins):
-        1. In-process P4 ``fits_path`` registered from a live download
-        2. ``fits_sample`` relative path from ``epochs.json``
-        3. ``data/samples/{obs_id}.fits``
-        4. ``data/raw/{obs_id}.fits`` (optional drop-in for P4 cutouts)
+        1. Operator allowlist (``SPHEREX_P5_LOCAL_MANIFEST``), SHA-256 checked
+        2. In-process P4 ``fits_path`` registered from a live download
+        3. ``fits_sample`` relative path from ``epochs.json``
+        4. ``data/samples/{obs_id}.fits``
+        5. ``data/raw/{obs_id}.fits`` (optional drop-in for P4 cutouts)
 
-        Returns ``None`` when no file is present — callers must set
-        ``preview_url`` to null / respond 501 (never invent NASA products).
+        A claimed allowlist id with a bad hash does not fall through to
+        another file. Returns ``None`` when no file is present — callers
+        must set ``preview_url`` to null / respond 501 (never invent NASA
+        products). Client requests cannot pass a filesystem path.
         """
+        if manifest_claims(obs_id):
+            return resolve_allowed_fits(obs_id)
         from app.services.real_data_demo import DATA, verified_path
         if obs_id in DATA and os.environ.get('SPHEREX_REAL_DATA_DIR'):
             return verified_path(obs_id)
@@ -545,6 +618,11 @@ class CatalogService:
             if row.get("source_url"):
                 epoch["source_url"] = row["source_url"]
             return epoch
+        manifest = load_manifest()
+        if manifest is not None:
+            local = manifest.observation(obs_id)
+            if local is not None and resolve_allowed_fits(obs_id) is not None:
+                return self._epoch_from_local(local)
         return None
 
 

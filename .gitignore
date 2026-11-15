@@ -24,3 +24,5 @@ __pycache__/
 *.tmp
 *.temp
 .test-venv/
+.p5-dev/
+data/local/manifest.json

@@ -80,10 +80,8 @@ def get_preview(
         image.save(buf, format="PNG")
         png = buf.getvalue()
 
-    # Samples under data/samples are cached_sample; raw cutouts stay cached_sample
-    # until a live IRSA download path is proven end-to-end.
     from app.services.real_data_demo import PROVENANCE, verified_path
-    provenance = PROVENANCE if verified_path(obs_id) == fits_path else "cached_sample"
+    provenance = PROVENANCE if verified_path(obs_id) == fits_path else get_catalog_service().preview_provenance(obs_id)
     return Response(
         content=png,
         media_type="image/png",

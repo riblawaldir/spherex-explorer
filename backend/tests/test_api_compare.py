@@ -172,6 +172,10 @@ def test_compare_aligned_pair_comparable(tmp_path: Path):
     assert body["diff"]["status"] == "not_implemented"
     assert body["diff"]["provenance"] == "stub"
     assert "invented" in body["diff"]["detail"].lower() or "not present" in body["diff"]["detail"].lower()
+    assert body["science"]["photometric_equivalence"] is False
+    assert body["science"]["subtraction_validated"] is False
+    assert body["science"]["variability_assessed"] is False
+    assert "variable_detected" not in body["science"]
 
 
 def test_compare_units_incompatible_not_comparable(tmp_path: Path):

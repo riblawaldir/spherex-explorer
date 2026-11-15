@@ -4,6 +4,12 @@ conftest.py — Configuración de pytest para el módulo spherex-data.
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def _isolate_local_fits_manifest(monkeypatch):
+    """Ambient allowlists must not change fixture tests."""
+    monkeypatch.delenv("SPHEREX_P5_LOCAL_MANIFEST", raising=False)
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--run-real",

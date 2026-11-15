@@ -1,0 +1,15 @@
+{
+  "observations": [
+    {
+      "obs_id": "EXAMPLE_OBSID",
+      "path": "C:/absolute/path/outside/the/repo/example.fits",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "ra": 0.0,
+      "dec": 0.0,
+      "t_mjd": null,
+      "bandpass": "SPHEREx-D1",
+      "provenance": "local_real_fits"
+    }
+  ],
+  "pairs": []
+}

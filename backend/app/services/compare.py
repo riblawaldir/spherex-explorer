@@ -23,20 +23,6 @@ _WAVELENGTH_TOLERANCE_UM = 0.05
 STUB_PROVENANCE = PROVENANCE_STUB
 
 
-def _choose_image_hdu(fits_path: Path) -> int:
-    """Pick HDU via P5 inspect: prefer unique IMAGE, else first numeric 2-D."""
-    from app.science.fits_inspection import inspect_fits, select_image_hdu
-
-    inspection = inspect_fits(fits_path)
-    try:
-        return select_image_hdu(inspection)
-    except ValueError:
-        for hdu in inspection.hdus:
-            if hdu.is_numeric_2d_image and (hdu.valid_percent or 0) > 0:
-                return hdu.index
-        raise ValueError("No numeric 2-D image HDU with finite pixels")
-
-
 @dataclass(frozen=True)
 class CompareOutcome:
     payload: dict[str, Any]
@@ -44,7 +30,8 @@ class CompareOutcome:
 
 
 def _pair_provenance(epoch_a: dict[str, Any], epoch_b: dict[str, Any]) -> str:
-    ranks = {PROVENANCE_STUB: 0, PROVENANCE_CACHED_SAMPLE: 1, "irsa_verified_local": 2, "live": 3}
+    ranks = {PROVENANCE_STUB: 0, PROVENANCE_CACHED_SAMPLE: 1,
+             "local_real_fits": 2, "irsa_verified_local": 2, "live": 3}
     a = str(epoch_a.get("provenance", PROVENANCE_STUB))
     b = str(epoch_b.get("provenance", PROVENANCE_STUB))
     # Conservative label: weakest of the two (never promote to live).
@@ -81,13 +68,37 @@ def _epoch_snapshot(epoch: dict[str, Any]) -> dict[str, Any]:
     return snap
 
 
+def _alignment_from_science(science: dict[str, Any], *, status: str, detail: str) -> dict[str, Any]:
+    return {
+        "status": status,
+        "detail": detail,
+        "common_coverage_percent": science.get("common_coverage_percent"),
+        "units_compatible": science.get("units_compatible"),
+        "reference_unit": science.get("reference_unit"),
+        "target_unit": science.get("target_unit"),
+        "reference_hdu": science.get("reference_hdu"),
+        "target_hdu": science.get("target_hdu"),
+        "warnings": list(science.get("quality_warnings") or []),
+    }
+
+
 def _try_align(
-    path_a: Path, path_b: Path
-) -> tuple[dict[str, Any], bool]:
-    """Attempt P5 ``align_fits_images`` (+ optional quality). Returns report, ok."""
+    path_a: Path, path_b: Path, *, obs_id_a: str, obs_id_b: str
+) -> tuple[dict[str, Any], bool, dict[str, Any]]:
+    """Attempt P5 alignment and attach an honest scientific status."""
     try:
-        from app.science.image_reprojection import align_fits_images
+        from app.science.scientific_status import assess_pair, science_not_assessed
     except ImportError:
+        skipped = {
+            "assessed": False,
+            "detail": "P5 scientific status is not importable; alignment not run.",
+            "photometric_equivalence": False,
+            "subtraction_validated": False,
+            "variability_assessed": False,
+            "spectral_comparability": "not_certified",
+            "category": "not_classified",
+            "warnings": ["La evaluación científica no se ejecutó."],
+        }
         return (
             {
                 "status": "unavailable",
@@ -103,89 +114,44 @@ def _try_align(
                 "warnings": [],
             },
             False,
+            skipped,
         )
 
     try:
-        hdu_a = _choose_image_hdu(path_a)
-        hdu_b = _choose_image_hdu(path_b)
-    except (OSError, ValueError) as exc:
-        return (
-            {
-                "status": "failed",
-                "detail": f"Could not select IMAGE HDU for alignment: {exc}",
-                "common_coverage_percent": None,
-                "units_compatible": None,
-                "reference_unit": None,
-                "target_unit": None,
-                "reference_hdu": None,
-                "target_hdu": None,
-                "warnings": [],
-            },
-            False,
+        science = assess_pair(
+            path_a, path_b, obs_id_a=obs_id_a, obs_id_b=obs_id_b
         )
-
-    warnings: list[str] = []
-    units_compatible: bool | None = None
-    try:
-        # Prefer quality assessment when present (wraps align + unit check).
-        try:
-            from app.science.image_quality import assess_aligned_quality
-
-            quality = assess_aligned_quality(
-                path_a,
-                path_b,
-                reference_hdu=hdu_a,
-                target_hdu=hdu_b,
-            )
-            alignment = quality.alignment
-            units_compatible = quality.units_compatible
-            warnings = list(quality.warnings)
-        except ImportError:
-            alignment = align_fits_images(
-                path_a,
-                path_b,
-                reference_hdu=hdu_a,
-                target_hdu=hdu_b,
-            )
-            if alignment.reference_unit and alignment.target_unit:
-                units_compatible = (
-                    alignment.reference_unit == alignment.target_unit
-                )
-            warnings = [
-                "WCS alignment alone does not establish scientific comparability."
-            ]
     except Exception as exc:  # noqa: BLE001 — report honestly to client
+        failed = science_not_assessed(f"P5 alignment failed: {exc}")
         return (
-            {
-                "status": "failed",
-                "detail": f"P5 alignment failed: {exc}",
-                "common_coverage_percent": None,
-                "units_compatible": None,
-                "reference_unit": None,
-                "target_unit": None,
-                "reference_hdu": hdu_a,
-                "target_hdu": hdu_b,
-                "warnings": [],
-            },
+            _alignment_from_science(
+                failed, status="failed", detail=f"P5 alignment failed: {exc}"
+            ),
             False,
+            failed,
         )
 
-    return (
-        {
-            "status": "ok",
-            "detail": (
-                "P5 align_fits_images succeeded on local FITS "
-                f"(coverage={alignment.common_coverage_percent:.2f}%)."
+    if not science["assessed"] or science["geometric_alignment"] != "ok":
+        return (
+            _alignment_from_science(
+                science, status="failed", detail=str(science["detail"])
             ),
-            "common_coverage_percent": float(alignment.common_coverage_percent),
-            "units_compatible": units_compatible,
-            "reference_unit": alignment.reference_unit,
-            "target_unit": alignment.target_unit,
-            "reference_hdu": hdu_a,
-            "target_hdu": hdu_b,
-            "warnings": warnings,
-        },
+            False,
+            science,
+        )
+
+    coverage = float(science["common_coverage_percent"])
+    return (
+        _alignment_from_science(
+            science,
+            status="ok",
+            detail=(
+                "P5 align_fits_images succeeded on local FITS "
+                f"(coverage={coverage:.2f}%)."
+            ),
+        ),
         True,
+        science,
     )
 
 
@@ -292,6 +258,8 @@ def compare_observations(
 
     metadata_ok = band_ok and both_fits and wave_ok is not False
 
+    from app.science.scientific_status import science_not_assessed
+
     if not metadata_ok:
         alignment = {
             "status": "skipped",
@@ -305,9 +273,14 @@ def compare_observations(
             "warnings": [],
         }
         alignment_ok = False
+        science = science_not_assessed(
+            "Pair not metadata-compatible; scientific assessment not attempted."
+        )
     else:
         assert path_a is not None and path_b is not None
-        alignment, alignment_ok = _try_align(path_a, path_b)
+        alignment, alignment_ok, science = _try_align(
+            path_a, path_b, obs_id_a=obs_id_a, obs_id_b=obs_id_b
+        )
         if alignment_ok:
             reasons.append("alignment_ok")
             # Units unknown is allowed; explicit incompatibility blocks comparable.
@@ -346,6 +319,7 @@ def compare_observations(
         "epoch_b": _epoch_snapshot(epoch_b),
         "alignment": alignment,
         "diff": _diff_report(alignment_ok=alignment_ok, metadata_ok=metadata_ok),
+        "science": science,
         "checks": checks,
     }
     return CompareOutcome(payload=payload, http_status=200)
