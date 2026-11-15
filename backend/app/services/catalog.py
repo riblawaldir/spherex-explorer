@@ -309,7 +309,7 @@ class CatalogService:
                 if self.resolve_preview_fits(obs_id) is not None
                 else None
             )
-            rows.append(
+            epoch =
                 {
                     "obs_id": obs_id,
                     "ra": row.get("ra"),
@@ -320,7 +320,7 @@ class CatalogService:
                     "preview_url": preview_url,
                     "provenance": row.get("provenance", provenance),
                 }
-                        )
+
             epoch.update(get_timeline_metadata(epoch))
             spectral = classify_wavelength(epoch.get("wavelength_um"))
             if spectral:
