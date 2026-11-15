@@ -1,7 +1,13 @@
 import { FileText, ExternalLink } from "lucide-react";
 import { SimulatedBadge } from "@/components/layout/Header";
 import type { Observation } from "@/types/observation";
-export function MetadataPanel({ observation: o }: { observation?: Observation | undefined }) {
+export function MetadataPanel({
+  observation: o,
+  isSimulated = false,
+}: {
+  observation?: Observation | undefined;
+  isSimulated?: boolean;
+}) {
   return (
     <section className="glass-panel metadata-panel">
       <h2 className="panel-heading metadata-title">
@@ -14,15 +20,15 @@ export function MetadataPanel({ observation: o }: { observation?: Observation | 
             {o.preview_url ? (
               <img
                 src={o.preview_url}
-                alt="Campo estelar generado, imagen simulada"
+                alt={isSimulated ? "Vista previa simulada" : "Vista previa de la observación"}
                 className="preview-image"
                 width={280}
                 height={105}
               />
             ) : (
-              <div className="preview-image empty-state">Imagen simulada no disponible.</div>
+              <div className="preview-image empty-state">Vista previa no disponible.</div>
             )}
-            <SimulatedBadge />
+            {isSimulated && <SimulatedBadge />}
           </div>
           <table className="metadata-table">
             <tbody>
@@ -37,19 +43,19 @@ export function MetadataPanel({ observation: o }: { observation?: Observation | 
                         rel="noreferrer"
                         className="text-primary inline-flex items-center gap-1"
                       >
-                        NASA · misión
+                        Abrir fuente
                         <ExternalLink size={10} />
                       </a>
                     ) : k === "source_url" ? (
                       "No disponible"
                     ) : k === "preview_url" && v ? (
                       <a href={v} target="_blank" rel="noreferrer" className="text-primary">
-                        Ver imagen simulada ↗
+                        Abrir vista previa ↗
                       </a>
                     ) : k === "preview_url" ? (
                       "No disponible"
                     ) : typeof v === "number" ? (
-                      v.toFixed(5)
+                      String(v)
                     ) : (
                       v
                     )}
@@ -59,7 +65,9 @@ export function MetadataPanel({ observation: o }: { observation?: Observation | 
             </tbody>
           </table>
           <p className="text-muted-foreground text-[9px] px-4 pb-4">
-            Enlace de contexto de la misión, no procedencia de estos datos simulados.
+            {isSimulated
+              ? "Registro simulado. El enlace es contexto de la misión, no la procedencia de estos datos."
+              : "Valores entregados por la API. El enlace es la fuente indicada en source_url."}
           </p>
         </>
       ) : (

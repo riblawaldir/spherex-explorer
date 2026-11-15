@@ -8,6 +8,7 @@ import {
   mockObservations,
 } from "@/data/mockObservations";
 import { validateCoordinatesStrict } from "@/lib/coordinates";
+import { keepOrReplaceSelection, retainKnownIds } from "@/lib/selection";
 import { fetchObservations } from "@/services/observationsApi";
 import type { DiscardedEpoch } from "@/services/adapters/epochToObservation";
 import type { Coordinates, SearchFilters } from "@/types/search";
@@ -29,27 +30,31 @@ export function ExplorerWorkspace() {
   const [isSimulated, setIsSimulated] = useState(isMockMode);
   const [discarded, setDiscarded] = useState<DiscardedEpoch[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
-  const [status, setStatus] = useState<"ready" | "loading" | "error">(
-    isMockMode ? "ready" : "ready",
-  );
+  const [status, setStatus] = useState<"ready" | "loading" | "error">("ready");
   const [errors, setErrors] = useState<Partial<Record<keyof Coordinates, string>>>({});
-  const [selectedId, setSelectedId] = useState<string | undefined>(
-    isMockMode ? mockObservations[0]?.id : undefined,
-  );
-  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [hasSearched, setHasSearched] = useState(isMockMode);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const seededSelection = useRef(false);
   const navigate = useNavigate();
-  const { setComparison } = useExplorer();
+  const { setComparison, selectedId, setSelectedId, compareIds, setCompareIds, toggleCompareId } =
+    useExplorer();
 
   useEffect(() => () => clearTimeout(timer.current), []);
+
+  useEffect(() => {
+    if (seededSelection.current || !isMockMode) return;
+    seededSelection.current = true;
+    const first = mockObservations[0];
+    if (first) setSelectedId(first.id);
+  }, [isMockMode, setSelectedId]);
 
   function commitMock(c: Coordinates, f: SearchFilters) {
     const rows = filterMockObservations(c, f);
     setObservations(rows);
     setIsSimulated(true);
     setDiscarded([]);
-    setSelectedId((previous) => (rows.some((o) => o.id === previous) ? previous : rows[0]?.id));
-    setCompareIds((previous) => previous.filter((id) => rows.some((o) => o.id === id)));
+    setSelectedId((previous) => keepOrReplaceSelection(previous, rows));
+    setCompareIds((previous) => retainKnownIds(previous, rows));
   }
 
   async function search() {
@@ -60,6 +65,7 @@ export function ExplorerWorkspace() {
     clearTimeout(timer.current);
     setStatus("loading");
     setErrorMessage(undefined);
+    setHasSearched(true);
 
     // Si está explícitamente activado VITE_USE_MOCKS=true, usar fixtures locales
     if (isMockMode) {
@@ -117,7 +123,10 @@ export function ExplorerWorkspace() {
     } else {
       setObservations([]);
       setIsSimulated(false);
+      setSelectedId(undefined);
+      setCompareIds([]);
       setStatus("ready");
+      setHasSearched(false);
     }
     setSubmitted({ ...defaultCoordinates });
   }
@@ -159,12 +168,21 @@ export function ExplorerWorkspace() {
             />
           </Sidebar>
         </ResponsivePanel>
+
         <SkyMap2D
-          observations={status === "loading" ? [] : observations}
+          observations={observations}
           selectedId={selectedId}
           onSelect={setSelectedId}
           coordinates={submitted}
+          compareIds={compareIds}
+          onToggleCompare={toggleCompareId}
+          status={status}
+          discardedCount={discarded.length}
+          isSimulated={isSimulated}
+          errorMessage={errorMessage}
+          hasSearched={hasSearched}
         />
+
         <ResponsivePanel title="Observaciones y metadatos" kind="results">
           <aside className="right-sidebar">
             <ResultsPanel
@@ -175,11 +193,7 @@ export function ExplorerWorkspace() {
               discarded={discarded}
               errorMessage={errorMessage}
               onSelect={setSelectedId}
-              onCheck={(id) =>
-                setCompareIds((prev) =>
-                  prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id],
-                )
-              }
+              onCheck={toggleCompareId}
               onCompare={() => {
                 setComparison(
                   observations.filter((o) => compareIds.includes(o.id)),
@@ -188,8 +202,12 @@ export function ExplorerWorkspace() {
                 navigate("/comparacion");
               }}
               onRetry={search}
+              isSimulated={isSimulated}
             />
-            <MetadataPanel observation={observations.find((o) => o.id === selectedId)} />
+            <MetadataPanel
+              observation={observations.find((o) => o.id === selectedId)}
+              isSimulated={isSimulated}
+            />
           </aside>
         </ResponsivePanel>
       </div>
