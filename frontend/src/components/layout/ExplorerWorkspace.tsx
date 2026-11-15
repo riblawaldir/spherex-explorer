@@ -26,6 +26,7 @@ export function ExplorerWorkspace() {
   const [submitted, setSubmitted] = useState<Coordinates>({ ...defaultCoordinates });
   const [filters, setFilters] = useState<SearchFilters>({ ...emptyFilters });
   const [observations, setObservations] = useState(isMockMode ? mockObservations : []);
+  const [isSimulated, setIsSimulated] = useState(isMockMode);
   const [discarded, setDiscarded] = useState<DiscardedEpoch[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [status, setStatus] = useState<"ready" | "loading" | "error">(
@@ -45,6 +46,7 @@ export function ExplorerWorkspace() {
   function commitMock(c: Coordinates, f: SearchFilters) {
     const rows = filterMockObservations(c, f);
     setObservations(rows);
+    setIsSimulated(true);
     setDiscarded([]);
     setSelectedId((previous) => (rows.some((o) => o.id === previous) ? previous : rows[0]?.id));
     setCompareIds((previous) => previous.filter((id) => rows.some((o) => o.id === id)));
@@ -81,10 +83,12 @@ export function ExplorerWorkspace() {
       if (apiResult.status === "error") {
         setErrorMessage(apiResult.error);
         setObservations([]);
+        setIsSimulated(false);
         setDiscarded(apiResult.discarded);
         setStatus("error");
       } else {
         setObservations(apiResult.observations);
+        setIsSimulated(apiResult.isSimulated);
         setDiscarded(apiResult.discarded);
         setSelectedId(apiResult.observations[0]?.id);
         setCompareIds([]);
@@ -93,6 +97,7 @@ export function ExplorerWorkspace() {
       }
     } catch (error) {
       console.warn("Fallo al consultar /api/epochs:", error);
+      setIsSimulated(false);
       setErrorMessage(
         error instanceof Error ? error.message : "Error inesperado al conectar con el backend",
       );
@@ -111,6 +116,7 @@ export function ExplorerWorkspace() {
       commitMock(defaultCoordinates, filters);
     } else {
       setObservations([]);
+      setIsSimulated(false);
       setStatus("ready");
     }
     setSubmitted({ ...defaultCoordinates });
@@ -175,7 +181,10 @@ export function ExplorerWorkspace() {
                 )
               }
               onCompare={() => {
-                setComparison(observations.filter((o) => compareIds.includes(o.id)));
+                setComparison(
+                  observations.filter((o) => compareIds.includes(o.id)),
+                  isSimulated,
+                );
                 navigate("/comparacion");
               }}
               onRetry={search}
