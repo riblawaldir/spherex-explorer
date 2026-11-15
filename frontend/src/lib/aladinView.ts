@@ -95,14 +95,14 @@ export async function probeAladinSurvey(
 
 export function surveyBackgroundLabel(state: SurveyBackgroundState = "ready"): string {
   if (state === "unavailable") {
-    return "Fondo del cielo no disponible (DSS/HiPS). Los marcadores y la búsqueda siguen activos.";
+    return "Sky background unavailable; markers remain active.";
   }
   const survey = ALADIN_SURVEYS[DEFAULT_ALADIN_SURVEY];
   const place = `${survey?.name ?? "DSS2 Color"} (${DEFAULT_ALADIN_SURVEY})`;
   if (state === "loading") {
-    return `Cargando fondo… ${place}. Contexto visual; no son datos de SPHEREx.`;
+    return `Loading background… ${place}. Visual context; not SPHEREx data.`;
   }
-  return `Fondo: ${place}. Contexto visual; no son datos de SPHEREx.`;
+  return `Background: ${place}. Visual context; not SPHEREx data.`;
 }
 
 /**
@@ -145,7 +145,7 @@ export function computeAladinViewParams(
   options: AladinViewOptions = {},
 ): AladinViewParams {
   if (!Number.isFinite(ra) || !Number.isFinite(dec) || !Number.isFinite(radiusDeg)) {
-    throw new Error("RA, Dec y el radio deben ser números finitos.");
+    throw new Error("RA, Dec, and radius must be finite numbers.");
   }
 
   const margin = options.marginMultiplier ?? SEARCH_FOV_DIAMETER_MARGIN;

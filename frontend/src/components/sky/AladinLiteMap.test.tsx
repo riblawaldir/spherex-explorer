@@ -72,10 +72,10 @@ describe("AladinLiteMap", () => {
       await Promise.resolve();
     });
 
-    expect(container.textContent).toContain("Cargando fondo…");
+    expect(container.textContent).toContain("Loading background…");
     expect(container.textContent).toContain("DSS2 Color");
-    expect(container.textContent).toContain("Radio de búsqueda");
-    expect(container.textContent).not.toContain("DATOS SIMULADOS");
+    expect(container.textContent).toContain("Search radius");
+    expect(container.textContent).not.toContain("SIMULATED DATA");
     expect(mountAladinMap).toHaveBeenCalled();
 
     await act(async () => root.unmount());
@@ -99,8 +99,8 @@ describe("AladinLiteMap", () => {
       }));
     });
     await act(async () => { vi.advanceTimersByTime(8000); });
-    expect(container.textContent).toContain("Fondo del cielo no disponible");
-    expect(container.textContent).toContain("Los marcadores y la búsqueda siguen activos");
+    expect(container.textContent).toContain("Sky background unavailable");
+    expect(container.textContent).toContain("markers remain active");
     expect(controllers[0].clearSurvey).not.toHaveBeenCalled();
     vi.useRealTimers();
   });

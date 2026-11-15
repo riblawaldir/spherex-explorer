@@ -63,11 +63,11 @@ describe("ComparePanel", () => {
         ]}
       />,
     );
-    expect(html).toContain("Validar par");
+    expect(html).toContain("Validate pair");
     expect(html).toContain("/api/compare");
     expect(html).toContain("stub-wise0855-001");
     expect(html).toContain("stub-wise0855-002");
-    expect(html).toContain("sin imágenes residuales inventadas");
+    expect(html).toContain("no invented residual images");
     expect(html).not.toContain("<img");
   });
 });

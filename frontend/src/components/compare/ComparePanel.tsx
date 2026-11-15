@@ -27,22 +27,22 @@ async function scientificErrorMessage(response: Response): Promise<string> {
   }
   if (typeof detail === "string") {
     if (detail.startsWith("Invalid FITS image:")) {
-      return "No se pudo validar: el FITS no contiene una imagen científica compatible. Las muestras de prueba pueden no incluir la extensión IMAGE necesaria.";
+      return "Validation failed: the FITS file does not contain a compatible scientific image. Test samples may not include the required IMAGE extension.";
     }
     if (detail.startsWith("Invalid celestial WCS:")) {
-      return "No se pudo validar: el FITS no contiene coordenadas WCS celestes válidas para alinear las imágenes.";
+      return "Validation failed: the FITS file does not contain valid celestial WCS coordinates to align the images.";
     }
     if (detail.startsWith("FITS unavailable for observation:")) {
-      return "No se pudo validar: no hay un archivo FITS local disponible para una de las observaciones.";
+      return "Validation failed: no local FITS file is available for one of the observations.";
     }
     if (detail.startsWith("Observation not found:")) {
-      return "No se pudo validar: una de las observaciones no está disponible en el catálogo.";
+      return "Validation failed: one of the observations is not in the catalog.";
     }
     if (detail.startsWith("FITS read error:")) {
-      return "No se pudo validar: hubo un error al leer el archivo FITS.";
+      return "Validation failed: the FITS file could not be read.";
     }
   }
-  return `No se pudo completar la validación científica (HTTP ${response.status}).`;
+  return `Scientific validation could not be completed (HTTP ${response.status}).`;
 }
 
 function pickDefaults(preferred: string[], candidates: Observation[]): [string, string] {
@@ -160,7 +160,7 @@ export function ComparePanel({
           }
           return response.json();
         })
-        .catch(() => { setScientificError("No se pudo conectar con la API de validación científica."); return null; }),
+        .catch(() => { setScientificError("Could not reach the scientific validation API."); return null; }),
     ]);
     setResult(next);
     setScientific(science);
@@ -170,19 +170,19 @@ export function ComparePanel({
   return (
     <section
       className="glass-panel mt-6 p-5"
-      aria-label="Validación de par (API compare)"
+      aria-label="Pair validation (compare API)"
     >
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
           <h2 className="text-lg font-semibold tracking-tight flex items-center gap-2">
             <GitCompareArrows size={18} className="text-primary" />
-            Validar par
+            Validate pair
           </h2>
           <p className="text-muted-foreground text-sm mt-1 max-w-2xl">
-            Llama a <span className="font-mono text-xs">GET /api/compare</span>{" "}
-            con dos <span className="font-mono text-xs">obs_id</span>.
-            El resultado de compare describe la alineación técnica. La validación
-            científica se informa por separado y puede requerir revisión, sin imágenes residuales inventadas.
+            Calls <span className="font-mono text-xs">GET /api/compare</span>{" "}
+            with two <span className="font-mono text-xs">obs_id</span> values.
+            The compare result describes the technical alignment. Scientific
+            validation is reported separately and may require review, with no invented residual images.
           </p>
         </div>
       </div>
@@ -214,14 +214,14 @@ export function ComparePanel({
         </div>
       </div>
       {realData.length === 2 ? <div className="mt-4 rounded border border-border p-3 text-sm">
-        <h3 className="font-medium">Datos IRSA locales verificados</h3>
-        <p>Recortes verificados por SHA-256; los enlaces conducen a las imágenes originales de IRSA.</p>
-        <button type="button" className="underline" onClick={() => {setObsIdA(realData[0]!.obs_id); setObsIdB(realData[1]!.obs_id);}}>Seleccionar los dos recortes</button>
+        <h3 className="font-medium">Verified local IRSA data</h3>
+        <p>Cutouts verified by SHA-256; the links open the original IRSA images.</p>
+        <button type="button" className="underline" onClick={() => {setObsIdA(realData[0]!.obs_id); setObsIdB(realData[1]!.obs_id);}}>Select both cutouts</button>
         {realData.map(item => <details key={item.obs_id} className="mt-2"><summary>{item.obs_id} · {item.collection} · {item.detector}</summary>
           <p>{item.date_obs} · {item.size_bytes} bytes</p><p className="break-all">SHA-256: {item.sha256}</p>
-          <a href={item.source_url} target="_blank" rel="noreferrer" className="underline">Producto original IRSA</a>
+          <a href={item.source_url} target="_blank" rel="noreferrer" className="underline">Original IRSA product</a>
           <p>{item.extensions.map(h => `${h.name}${h.bunit ? ` (${h.bunit})` : ''} [${h.wcs_status}]`).join(' · ')}</p>
-          <img src={`/api/preview/${encodeURIComponent(item.obs_id)}`} alt={`Vista previa de ${item.obs_id}`} className="max-w-48" />
+          <img src={`/api/preview/${encodeURIComponent(item.obs_id)}`} alt={`Preview of ${item.obs_id}`} className="max-w-48" />
         </details>)}
       </div> : null}
       <datalist id="compare-obs-options">
@@ -239,33 +239,33 @@ export function ComparePanel({
           {status === "loading" ? (
             <>
               <RefreshCw className="animate-spin" />
-              Consultando…
+              Querying…
             </>
           ) : (
             <>
               <GitCompareArrows />
-              Comparar vía API
+              Compare via API
             </>
           )}
         </Button>
         {optionIds.length >= 2 ? (
           <p className="text-xs text-muted-foreground">
-            Sugerencias desde la selección actual ({optionIds.length}).
+            Suggestions from the current selection ({optionIds.length}).
           </p>
         ) : (
           <p className="text-xs text-muted-foreground">
-            Puedes pegar ids de fixtures conocidos aunque no estén en resultados.
+            You can paste known fixture ids even if they are not in the results.
           </p>
         )}
       </div>
 
       {result ? (
         <div className="mt-4 space-y-3">
-          <p className="text-sm font-medium">Resultado técnico — no certifica compatibilidad científica</p>
+          <p className="text-sm font-medium">Technical result — it does not certify scientific compatibility</p>
           <StatusBanner result={result} />
-          <div className="rounded border border-border px-3 py-2 text-sm" aria-label="Validación científica">
-            <h3 className="font-medium">Validación científica</h3>
-            {scientific ? <><p>{scientific.status}</p><ul>{scientific.criteria.map(c => <li key={c.name}><strong>{c.name}: {c.status}</strong> — {c.reason} {c.limitations.join(' ')}</li>)}</ul></> : <p>{scientificError || 'No disponible'}</p>}
+          <div className="rounded border border-border px-3 py-2 text-sm" aria-label="Scientific validation">
+            <h3 className="font-medium">Scientific validation</h3>
+            {scientific ? <><p>{scientific.status}</p><ul>{scientific.criteria.map(c => <li key={c.name}><strong>{c.name}: {c.status}</strong> — {c.reason} {c.limitations.join(' ')}</li>)}</ul></> : <p>{scientificError || 'Not available'}</p>}
           </div>
           {result.ok ? (
             <>
@@ -306,8 +306,8 @@ export function ComparePanel({
                   </div>
                   {result.data.diff.status === "not_implemented" ? (
                     <p className="mt-2 text-[0.7rem] text-muted-foreground">
-                      Sin imagen residual: el backend no implementa diferencia
-                      científica aún.
+                      No residual image: the backend does not implement a scientific
+                      difference yet.
                     </p>
                   ) : null}
                 </div>
@@ -315,7 +315,7 @@ export function ComparePanel({
 
               <details className="text-xs text-muted-foreground">
                 <summary className="cursor-pointer select-none font-medium text-foreground">
-                  checks (máquina)
+                  checks (machine)
                 </summary>
                 <pre className="mt-2 overflow-x-auto rounded border border-border bg-secondary/40 p-2 font-mono text-[0.65rem] leading-4">
                   {JSON.stringify(result.data.checks, null, 2)}

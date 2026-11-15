@@ -161,7 +161,7 @@ export function SkyMapFallback({
       className="sky-map-root"
       tabIndex={0}
       role="region"
-      aria-label="Vista de respaldo del mapa celeste. Flechas para desplazar, más y menos para el zoom, Inicio para restablecer."
+      aria-label="Fallback sky map view. Arrow keys to pan, plus and minus to zoom, Home to reset."
       onKeyDown={onKeyDown}
       onMouseMove={onMouseMove}
     >
@@ -169,7 +169,7 @@ export function SkyMapFallback({
         <img
           src={sky}
           className="sky-image"
-          alt="Imagen estática de respaldo. No es un survey HiPS ni datos de SPHEREx."
+          alt="Static fallback image. Not a HiPS survey and not SPHEREx data."
           width={1920}
           height={1088}
         />
@@ -193,8 +193,8 @@ export function SkyMapFallback({
             title={marker.label}
             aria-label={
               marker.isGrouped
-                ? `${marker.count} observaciones en RA ${marker.ra}° Dec ${marker.dec}°`
-                : `Seleccionar ${marker.label}`
+                ? `${marker.count} observations at RA ${marker.ra}° Dec ${marker.dec}°`
+                : `Select ${marker.label}`
             }
             aria-pressed={marker.hasSelected}
             className={`map-marker ${marker.hasSelected ? "selected" : ""} ${
@@ -215,11 +215,11 @@ export function SkyMapFallback({
 
       <div className="map-banner">
         <p>
-          Aladin Lite no está disponible ({failureMessage}). Vista de respaldo: las posiciones usan la RA/Dec
-          real en una proyección local. Fondo: imagen estática, no es un survey ni datos de SPHEREx.
+          Aladin Lite is unavailable ({failureMessage}). Fallback view: positions use the real RA/Dec in a
+          local projection. Background: static image, not a survey and not SPHEREx data.
         </p>
         <Button type="button" variant="ghost" size="sm" className="h-8" onClick={onRetry}>
-          Reintentar Aladin Lite
+          Retry Aladin Lite
         </Button>
       </div>
 
@@ -231,12 +231,12 @@ export function SkyMapFallback({
         discardedCount={discardedCount}
         skippedCount={built.skipped.length}
         errorMessage={errorMessage}
-        queryError={query ? undefined : "Coordenadas de búsqueda no válidas. El mapa no se ha movido."}
+        queryError={query ? undefined : "Invalid search coordinates. The map has not moved."}
       />
       {outside > 0 && (
         <p className="map-outside">
-          {outside} {outside === 1 ? "observación queda" : "observaciones quedan"} fuera de esta vista. Siguen
-          en el panel de resultados.
+          {outside} {outside === 1 ? "observation is" : "observations are"} outside this view. They remain
+          in the results panel.
         </p>
       )}
       {activeGroup && (
@@ -250,17 +250,17 @@ export function SkyMapFallback({
         />
       )}
       <div className="map-controls">
-        <Button type="button" variant="ghost" size="icon" aria-label="Acercar vista" onClick={() => setFov((current) => nextFov(current, "in"))}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Zoom in" onClick={() => setFov((current) => nextFov(current, "in"))}>
           <Plus />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Alejar vista" onClick={() => setFov((current) => nextFov(current, "out"))}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Zoom out" onClick={() => setFov((current) => nextFov(current, "out"))}>
           <Minus />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          aria-label="Restablecer vista"
+          aria-label="Reset view"
           onClick={() => {
             if (!query) return;
             const view = computeAladinViewParams(query.ra, query.dec, query.radiusDeg);
@@ -270,16 +270,16 @@ export function SkyMapFallback({
         >
           <LocateFixed />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Desplazar arriba" onClick={() => move("up")}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Pan up" onClick={() => move("up")}>
           <ChevronUp />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Desplazar abajo" onClick={() => move("down")}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Pan down" onClick={() => move("down")}>
           <ChevronDown />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Desplazar izquierda" onClick={() => move("left")}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Pan left" onClick={() => move("left")}>
           <ChevronLeft />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Desplazar derecha" onClick={() => move("right")}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Pan right" onClick={() => move("right")}>
           <ChevronRight />
         </Button>
       </div>
@@ -288,7 +288,7 @@ export function SkyMapFallback({
         center={center}
         cursor={cursor}
         isSimulated={isSimulated}
-        background="Fondo: imagen estática de respaldo. No es un survey HiPS ni datos de SPHEREx."
+        background="Background: static fallback image. Not a HiPS survey and not SPHEREx data."
       />
     </div>
   );

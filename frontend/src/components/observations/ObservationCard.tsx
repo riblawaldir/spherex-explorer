@@ -20,7 +20,7 @@ export function ObservationCard({
         type="checkbox"
         checked={checked}
         onChange={() => onCheck(o.id)}
-        aria-label={`Comparar ${o.id}`}
+        aria-label={`Compare ${o.id}`}
       />
       <Button
         variant="ghost"

@@ -119,7 +119,7 @@ export function transformObservationsToMarkers(
       hasSelected,
       hasCompared,
       primaryObservation: primary,
-      label: isGrouped ? `${count} observaciones en esta posición` : `${primary.id} · ${primary.band}`,
+      label: isGrouped ? `${count} observations at this position` : `${primary.id} · ${primary.band}`,
       color: style.color,
       shape: style.shape,
       size: style.size,

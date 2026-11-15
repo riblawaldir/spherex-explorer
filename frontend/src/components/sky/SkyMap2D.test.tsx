@@ -79,7 +79,7 @@ describe("SkyMap2D Component (Sprint 4.1)", () => {
 
   it("renderiza el encabezado del mapa celeste y el conmutador de vista", async () => {
     await renderComponent();
-    expect(container.textContent).toContain("Mapa celeste");
+    expect(container.textContent).toContain("Sky map");
     expect(container.textContent).toContain("2D");
     expect(container.textContent).toContain("3D");
   });

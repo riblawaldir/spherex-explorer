@@ -129,7 +129,7 @@ export default function AladinLiteMap({
       const current = queryRef.current;
       if (!current) {
         setLoading(false);
-        onErrorRef.current?.(new Error("La consulta no tiene RA, Dec y radio válidos."));
+        onErrorRef.current?.(new Error("The query does not have a valid RA, Dec, and radius."));
         return;
       }
       try {
@@ -350,29 +350,29 @@ export default function AladinLiteMap({
       className="sky-map-root"
       tabIndex={0}
       role="region"
-      aria-label="Mapa celeste Aladin Lite. Flechas para desplazar, más y menos para el zoom, Inicio para restablecer la búsqueda."
+      aria-label="Aladin Lite sky map. Arrow keys to pan, plus and minus to zoom, Home to reset to the search."
       onKeyDown={onKeyDown}
     >
       <div ref={containerRef} className="aladin-host" />
       {fitsLayerStatus !== "idle" && (
         <div className="absolute left-4 top-16 z-10 rounded bg-black/80 px-3 py-2 text-xs text-white" role="status">
-          {fitsLayerStatus === "loading" ? "Cargando recorte FITS…" : fitsLayerStatus === "ready" ? "Recorte FITS colocado por WCS" : "No se pudo mostrar el recorte FITS en el mapa."}
+          {fitsLayerStatus === "loading" ? "Loading FITS cutout…" : fitsLayerStatus === "ready" ? "FITS cutout placed by WCS" : "The FITS cutout could not be shown on the map."}
         </div>
       )}
       {loading && (
         <div className="map-loading" role="status">
           <Loader2 className="animate-spin text-primary" size={28} />
-          <p>Cargando mapa Aladin Lite…</p>
+          <p>Loading Aladin Lite map…</p>
         </div>
       )}
       {backgroundState === "loading" && (
         <div className="survey-status" role="status">
-          <p>Cargando fondo…</p>
+          <p>Loading background…</p>
         </div>
       )}
       {backgroundState === "unavailable" && (
         <div className="survey-status survey-status-fallback" role="status">
-          <p>Fondo del cielo no disponible (DSS/HiPS). Los marcadores y la búsqueda siguen activos.</p>
+          <p>Sky background unavailable; markers remain active.</p>
         </div>
       )}
       <MapNotices
@@ -382,7 +382,7 @@ export default function AladinLiteMap({
         discardedCount={discardedCount}
         skippedCount={built.skipped.length}
         errorMessage={errorMessage}
-        queryError={query ? undefined : "Coordenadas de búsqueda no válidas. El mapa no se ha movido."}
+        queryError={query ? undefined : "Invalid search coordinates. The map has not moved."}
       />
       {activeGroup && (
         <MarkerGroupPicker
@@ -395,25 +395,25 @@ export default function AladinLiteMap({
         />
       )}
       <div className="map-controls">
-        <Button type="button" variant="ghost" size="icon" aria-label="Acercar vista" onClick={() => zoom("in")}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Zoom in" onClick={() => zoom("in")}>
           <Plus />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Alejar vista" onClick={() => zoom("out")}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Zoom out" onClick={() => zoom("out")}>
           <Minus />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Restablecer vista" onClick={resetView}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Reset view" onClick={resetView}>
           <LocateFixed />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Desplazar arriba" onClick={() => move("up")}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Pan up" onClick={() => move("up")}>
           <ChevronUp />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Desplazar abajo" onClick={() => move("down")}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Pan down" onClick={() => move("down")}>
           <ChevronDown />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Desplazar izquierda" onClick={() => move("left")}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Pan left" onClick={() => move("left")}>
           <ChevronLeft />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Desplazar derecha" onClick={() => move("right")}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Pan right" onClick={() => move("right")}>
           <ChevronRight />
         </Button>
       </div>

@@ -11,5 +11,5 @@ export function ResponsivePanel({ children, title, kind }: { children: ReactNode
     return () => media.removeEventListener('change', update);
   }, []);
   if (!compact) return children;
-  return <div className={`mobile-panel-trigger ${kind}`}><Sheet><SheetTrigger asChild><Button variant="outline" className="w-full h-12">{kind === 'search' ? <Search/> : <ListFilter/>}{title}</Button></SheetTrigger><SheetContent side="bottom" className="mobile-drawer"><SheetTitle>{title}</SheetTitle><SheetDescription className="mb-5 text-xs">Coordenadas, filtros y resultados.</SheetDescription>{children}</SheetContent></Sheet></div>;
+  return <div className={`mobile-panel-trigger ${kind}`}><Sheet><SheetTrigger asChild><Button variant="outline" className="w-full">{kind === 'search' ? <Search/> : <ListFilter/>}{title}</Button></SheetTrigger><SheetContent side="bottom" className="mobile-drawer"><SheetTitle>{title}</SheetTitle><SheetDescription className="mb-5 text-xs">Coordinates, filters, and results.</SheetDescription>{children}</SheetContent></Sheet></div>;
 }

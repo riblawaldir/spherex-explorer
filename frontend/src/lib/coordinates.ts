@@ -29,57 +29,57 @@ export const PRESET_TARGETS: PresetTarget[] = [
   },
   {
     id: "SPX-NEP",
-    name: "Polo Eclíptico Norte (NEP)",
+    name: "North Ecliptic Pole (NEP)",
     category: "SPHEREx Deep Field",
     ra: 270.0,
     dec: 66.5607,
     radius: 0.05,
-    description: "Zona de cobertura profunda en el hemisferio norte (SPHEREx Deep Field North).",
+    description: "Deep-coverage area in the northern hemisphere (SPHEREx Deep Field North).",
   },
   {
     id: "SPX-SEP",
-    name: "Polo Eclíptico Sur (SEP)",
+    name: "South Ecliptic Pole (SEP)",
     category: "SPHEREx Deep Field",
     ra: 90.0,
     dec: -66.5607,
     radius: 0.05,
-    description: "Zona de cobertura profunda en el hemisferio sur (SPHEREx Deep Field South).",
+    description: "Deep-coverage area in the southern hemisphere (SPHEREx Deep Field South).",
   },
   {
     id: "M1",
-    name: "M1 · Nebulosa del Cangrejo",
-    category: "Calibración",
+    name: "M1 · Crab Nebula",
+    category: "Calibration",
     ra: 83.63308,
     dec: 22.0145,
     radius: 0.02,
-    description: "Remanente de supernova estándar de calibración fotométrica.",
+    description: "Supernova remnant used as a standard photometric calibrator.",
   },
   {
     id: "M42",
-    name: "M42 · Nebulosa de Orión",
-    category: "Región H II",
+    name: "M42 · Orion Nebula",
+    category: "H II region",
     ra: 83.82208,
     dec: -5.39111,
     radius: 0.03,
-    description: "Región masiva de formación estelar visible en infrarrojo.",
+    description: "Massive star-forming region visible in the infrared.",
   },
   {
     id: "M31",
-    name: "M31 · Galaxia de Andrómeda",
-    category: "Galaxia",
+    name: "M31 · Andromeda Galaxy",
+    category: "Galaxy",
     ra: 10.68471,
     dec: 41.26875,
     radius: 0.05,
-    description: "Galaxia espiral gigante del Grupo Local.",
+    description: "Giant spiral galaxy in the Local Group.",
   },
   {
     id: "SPX-SIM-DEFAULT",
-    name: "Región de prueba simulada",
-    category: "Datos Simulados",
+    name: "Simulated test region",
+    category: "Simulated data",
     ra: 127.69444,
     dec: -39.1776,
     radius: 0.01,
-    description: "Región con observaciones sintéticas para desarrollo (DATOS SIMULADOS).",
+    description: "Region with synthetic observations for development (SIMULATED DATA).",
   },
 ];
 
@@ -109,7 +109,7 @@ export function parseAndValidateRA(input: string): CoordinateParseResult {
     if (!hmsMatch) {
       return {
         valid: false,
-        error: "Formato sexagesimal de RA inválido. Use 'HH:MM:SS' o 'HHh MMm SSs'.",
+        error: "Invalid RA sexagesimal format. Use 'HH:MM:SS' or 'HHh MMm SSs'.",
       };
     }
 
@@ -129,7 +129,7 @@ export function parseAndValidateRA(input: string): CoordinateParseResult {
 
     const degrees = (hours + minutes / 60 + seconds / 3600) * 15;
     if (degrees < 0 || degrees > 360) {
-      return { valid: false, error: "RA debe estar entre 0° y 360°." };
+      return { valid: false, error: "RA must be between 0° and 360°." };
     }
 
     return { valid: true, degrees: Number(degrees.toFixed(6)), isSexagesimal: true };
@@ -138,11 +138,11 @@ export function parseAndValidateRA(input: string): CoordinateParseResult {
   // 2. Grados decimales directos
   const num = Number(trimmed);
   if (isNaN(num) || !Number.isFinite(num)) {
-    return { valid: false, error: "RA debe ser un número válido o formato sexagesimal." };
+    return { valid: false, error: "RA must be a valid number or sexagesimal value." };
   }
 
   if (num < 0 || num > 360) {
-    return { valid: false, error: "RA debe estar entre 0 y 360 grados." };
+    return { valid: false, error: "RA must be between 0 and 360 degrees." };
   }
 
   return { valid: true, degrees: num, isSexagesimal: false };
@@ -172,7 +172,7 @@ export function parseAndValidateDec(input: string): CoordinateParseResult {
     if (!dmsMatch) {
       return {
         valid: false,
-        error: "Formato sexagesimal de Dec inválido. Use '±DD:MM:SS' o '±DD° MM\\' SS\\\"'.",
+        error: "Invalid Dec sexagesimal format. Use '±DD:MM:SS' or '±DD° MM\\' SS\\\"'.",
       };
     }
 
@@ -182,7 +182,7 @@ export function parseAndValidateDec(input: string): CoordinateParseResult {
     const seconds = dmsMatch[4] ? Number(dmsMatch[4]) : 0;
 
     if (degPart < 0 || degPart > 90) {
-      return { valid: false, error: "Los grados de Dec deben estar entre 0 y 90." };
+      return { valid: false, error: "Dec degrees must be between 0 and 90." };
     }
     if (minutes < 0 || minutes >= 60) {
       return { valid: false, error: "Los minutos de Dec deben estar entre 0 y 59." };
@@ -193,7 +193,7 @@ export function parseAndValidateDec(input: string): CoordinateParseResult {
 
     const totalDeg = sign * (degPart + minutes / 60 + seconds / 3600);
     if (totalDeg < -90 || totalDeg > 90) {
-      return { valid: false, error: "Dec debe estar entre −90 y 90 grados." };
+      return { valid: false, error: "Dec must be between −90 and 90 degrees." };
     }
 
     return { valid: true, degrees: Number(totalDeg.toFixed(6)), isSexagesimal: true };
@@ -202,11 +202,11 @@ export function parseAndValidateDec(input: string): CoordinateParseResult {
   // Grados decimales directos
   const num = Number(trimmed);
   if (isNaN(num) || !Number.isFinite(num)) {
-    return { valid: false, error: "Dec debe ser un número válido o formato sexagesimal." };
+    return { valid: false, error: "Dec must be a valid number or sexagesimal value." };
   }
 
   if (num < -90 || num > 90) {
-    return { valid: false, error: "Dec debe estar entre −90 y 90 grados." };
+    return { valid: false, error: "Dec must be between −90 and 90 degrees." };
   }
 
   return { valid: true, degrees: num, isSexagesimal: false };
@@ -223,17 +223,17 @@ export function parseAndValidateRadius(input: string, maxRadius = 5.0): Coordina
 
   const num = Number(trimmed);
   if (isNaN(num) || !Number.isFinite(num)) {
-    return { valid: false, error: "El radio debe ser un número válido." };
+    return { valid: false, error: "Radius must be a valid number." };
   }
 
   if (num <= 0) {
-    return { valid: false, error: "El radio debe ser mayor que 0." };
+    return { valid: false, error: "Radius must be greater than 0." };
   }
 
   if (num > maxRadius) {
     return {
       valid: false,
-      error: `El radio máximo recomendado es de ${maxRadius}° para evitar sobrecargar la consulta.`,
+      error: `The recommended maximum radius is ${maxRadius}° to avoid overloading the query.`,
     };
   }
 

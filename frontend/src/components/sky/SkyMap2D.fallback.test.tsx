@@ -54,16 +54,16 @@ describe("respaldo del mapa 2D", () => {
       );
     });
     for (let attempt = 0; attempt < 20; attempt += 1) {
-      if (container.textContent?.includes("Aladin Lite no está disponible")) break;
+      if (container.textContent?.includes("Aladin Lite is unavailable")) break;
       await act(async () => {
         await new Promise((resolve) => setTimeout(resolve, 0));
       });
     }
 
-    expect(container.textContent).toContain("Aladin Lite no está disponible");
-    expect(container.textContent).toContain("imagen estática");
-    expect(container.textContent).toContain("Radio de búsqueda");
+    expect(container.textContent).toContain("Aladin Lite is unavailable");
+    expect(container.textContent).toContain("static image");
+    expect(container.textContent).toContain("Search radius");
     expect(container.querySelector("[aria-label*='OBS-001']")).not.toBeNull();
-    expect(container.textContent).not.toContain("DATOS SIMULADOS");
+    expect(container.textContent).not.toContain("SIMULATED DATA");
   });
 });

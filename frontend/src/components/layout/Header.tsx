@@ -4,7 +4,7 @@ export function SimulatedBadge({ prototype = false }: { prototype?: boolean }) {
   return (
     <span className="sim-badge">
       <span className="badge-dot" />
-      {prototype ? "PROTOTIPO · DATOS SIMULADOS" : "DATOS SIMULADOS"}
+      {prototype ? "PROTOTYPE · SIMULATED DATA" : "SIMULATED DATA"}
     </span>
   );
 }
@@ -12,7 +12,7 @@ export function Header() {
   const showSimulated = import.meta.env.VITE_USE_MOCKS === "true";
   return (
     <header className="app-header">
-      <Link to="/" className="brand" aria-label="SPHEREx Explorer, inicio">
+      <Link to="/" className="brand" aria-label="SPHEREx Explorer, home">
         <span className="brand-icon">
           <Orbit size={35} />
         </span>
@@ -20,24 +20,24 @@ export function Header() {
           SPHEREx <span>Explorer</span>
         </div>
       </Link>
-      <nav className="main-nav" aria-label="Navegación principal">
+      <nav className="main-nav" aria-label="Main navigation">
         <NavLink to="/" end className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
           <Compass size={15} />
-          Explorar
+          Explore
         </NavLink>
         <NavLink
           to="/comparacion"
           className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
         >
           <History size={15} />
-          Comparación temporal
+          Temporal comparison
         </NavLink>
         <NavLink
           to="/acerca"
           className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}
         >
           <Info size={15} />
-          Acerca de
+          About
         </NavLink>
       </nav>
       <div className="header-badge">{showSimulated ? <SimulatedBadge prototype /> : null}</div>

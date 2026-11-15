@@ -33,9 +33,9 @@ describe("AppShell footer mode", () => {
     await act(async () => {
       root.render(createElement(AppShell, null, createElement("main", null, "body")));
     });
-    expect(container.textContent).toContain("API local / fixtures");
-    expect(container.textContent).toContain("no live NASA IRSA");
-    expect(container.textContent).not.toContain("Entorno de simulación");
+    expect(container.textContent).toContain("Local API / fixtures");
+    expect(container.textContent).toContain("not live NASA IRSA");
+    expect(container.textContent).not.toContain("Simulation environment");
   });
 
   it("con VITE_USE_MOCKS declara simulación sin NASA", async () => {
@@ -44,7 +44,7 @@ describe("AppShell footer mode", () => {
     await act(async () => {
       root.render(createElement(AppShell, null, createElement("main", null, "body")));
     });
-    expect(container.textContent).toContain("Entorno de simulación");
-    expect(container.textContent).toContain("Sin conexión a servicios de NASA");
+    expect(container.textContent).toContain("Simulation environment");
+    expect(container.textContent).toContain("Not connected to NASA services");
   });
 });

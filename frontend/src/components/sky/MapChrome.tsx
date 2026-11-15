@@ -21,12 +21,12 @@ export function MarkerGroupPicker({
     <div
       className="absolute top-16 left-3 z-30 w-72 max-w-[calc(100%-1.5rem)] rounded-lg border border-primary/40 bg-card/95 p-3 text-sm leading-5 shadow-xl"
       role="dialog"
-      aria-label={`${marker.count} observaciones en la misma posición`}
+      aria-label={`${marker.count} observations at the same position`}
     >
       <div className="mb-2 flex items-center justify-between gap-2 border-b border-border pb-1.5">
-        <p className="font-medium text-foreground">{marker.count} observaciones en esta posición</p>
+        <p className="font-medium text-foreground">{marker.count} observations at this position</p>
         <Button type="button" variant="ghost" size="sm" className="h-8 px-2" onClick={onClose}>
-          Cerrar
+          Close
         </Button>
       </div>
       <p className="scientific mb-2 text-xs text-muted-foreground">
@@ -62,7 +62,7 @@ export function MarkerGroupPicker({
                   aria-pressed={compared}
                   onClick={() => onToggleCompare(observation.id)}
                 >
-                  {compared ? "En comparación" : "Comparar"}
+                  {compared ? "In comparison" : "Compare"}
                 </button>
               )}
             </li>
@@ -100,21 +100,21 @@ export function MapNotices({
   return (
     <div className={`map-notices ${className}`.trim()} aria-live="polite">
       {queryError && <p>{queryError}</p>}
-      {status === "loading" && <p>Buscando observaciones…</p>}
+      {status === "loading" && <p>Searching observations…</p>}
       {status === "error" && (
-        <p>Error al cargar resultados: {errorMessage || "no se pudo consultar la API."}</p>
+        <p>Could not load results: {errorMessage || "the API could not be reached."}</p>
       )}
-      {empty && <p>Sin observaciones en esta región.</p>}
+      {empty && <p>No observations in this region.</p>}
       {discardedCount > 0 && (
         <p>
-          {discardedCount} {discardedCount === 1 ? "observación descartada" : "observaciones descartadas"} por
-          el adaptador (datos incompletos). No se dibujan.
+          {discardedCount} {discardedCount === 1 ? "observation" : "observations"} discarded by the
+          adapter (incomplete data). Not drawn.
         </p>
       )}
       {skippedCount > 0 && (
         <p>
-          {skippedCount} {skippedCount === 1 ? "observación" : "observaciones"} sin RA/Dec finita: no se
-          dibujan.
+          {skippedCount} {skippedCount === 1 ? "observation" : "observations"} without a finite RA/Dec:
+          not drawn.
         </p>
       )}
     </div>
@@ -145,15 +145,15 @@ export function MapLegend({
       ))}
       <span>
         <i className="legend-dot" style={{ background: "#facc15" }} />
-        Seleccionada
+        Selected
       </span>
       <span>
         <i className="legend-dot" style={{ background: "#a855f7" }} />
-        En comparación
+        In comparison
       </span>
       {radiusDeg !== undefined && (
         <span>
-          Radio de búsqueda (<span className="scientific">{radiusDeg}°</span>)
+          Search radius (<span className="scientific">{radiusDeg}°</span>)
         </span>
       )}
     </div>
@@ -176,10 +176,10 @@ export function MapReadout({
   return (
     <div className="map-status z-10 flex-wrap gap-1">
       <div className="scientific flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span>{centerText ? `Centro: ${centerText.decimal}` : "Centro: —"}</span>
+        <span>{centerText ? `Center: ${centerText.decimal}` : "Center: —"}</span>
         {centerText && <span className="hidden md:inline">{centerText.sexagesimal}</span>}
         {cursorText && <span className="hidden sm:inline">Cursor: {cursorText.decimal}</span>}
-        {isSimulated && <span className="sim-badge">DATOS SIMULADOS</span>}
+        {isSimulated && <span className="sim-badge">SIMULATED DATA</span>}
       </div>
       <p className="max-w-full text-xs leading-5 text-muted-foreground">{background}</p>
     </div>

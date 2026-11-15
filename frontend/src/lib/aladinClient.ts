@@ -15,7 +15,7 @@ import type {
 
 export class AladinMountCancelled extends Error {
   constructor() {
-    super("Inicialización de Aladin Lite cancelada.");
+    super("Aladin Lite initialization was cancelled.");
     this.name = "AladinMountCancelled";
   }
 }
@@ -87,7 +87,7 @@ function readFov(value: unknown): { width: number; height: number } {
   const pair = readPair(value);
   if (pair) return { width: pair[0], height: pair[1] };
   if (typeof value === "number" && Number.isFinite(value)) return { width: value, height: value };
-  throw new Error("Aladin Lite no devolvió un campo de visión numérico.");
+  throw new Error("Aladin Lite did not return a numeric field of view.");
 }
 
 function readRaDec(payload: unknown): { ra: number; dec: number } | null {
@@ -177,7 +177,7 @@ export function createAladinController(
     },
     getCenter() {
       const center = readPair(instance.getRaDec());
-      if (!center) throw new Error("Aladin Lite no devolvió el centro RA/Dec.");
+      if (!center) throw new Error("Aladin Lite did not return the RA/Dec center.");
       return { ra: center[0], dec: center[1] };
     },
     getFov() {
@@ -206,7 +206,7 @@ export function createAladinController(
     },
     setSearchCircle(ra, dec, radiusDeg) {
       if (!overlay) {
-        overlay = A.graphicOverlay({ name: "Radio de búsqueda", color: "#22d3ee" });
+        overlay = A.graphicOverlay({ name: "Search radius", color: "#22d3ee" });
         instance.addOverlay(overlay);
       }
       overlay.removeAll();
@@ -356,7 +356,7 @@ export async function loadAladinNamespace(): Promise<AladinNamespace> {
   const imported = (await import("aladin-lite")) as { default?: AladinNamespace };
   const namespace = imported.default;
   if (!namespace || typeof namespace.aladin !== "function" || !namespace.init) {
-    throw new Error("Aladin Lite no expuso la API de inicialización.");
+    throw new Error("Aladin Lite did not expose its initialization API.");
   }
   return namespace;
 }

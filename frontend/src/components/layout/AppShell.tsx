@@ -5,13 +5,13 @@ function footerModeLabel(): { environment: string; connectivity: string } {
   const useMocks = import.meta.env.VITE_USE_MOCKS === "true";
   if (useMocks) {
     return {
-      environment: "Entorno de simulación (VITE_USE_MOCKS)",
-      connectivity: "Sin conexión a servicios de NASA",
+      environment: "Simulation environment (VITE_USE_MOCKS)",
+      connectivity: "Not connected to NASA services",
     };
   }
   return {
-    environment: "API local / fixtures",
-    connectivity: "Datos vía backend (no live NASA IRSA)",
+    environment: "Local API / fixtures",
+    connectivity: "Data via backend (not live NASA IRSA)",
   };
 }
 

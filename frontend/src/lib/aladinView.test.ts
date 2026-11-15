@@ -68,14 +68,15 @@ describe("consulta a vista de Aladin", () => {
   });
 
   it("no presenta DSS2 como activo si el fondo no llegó", () => {
-    expect(surveyBackgroundLabel("loading")).toContain("Cargando fondo…");
-    expect(surveyBackgroundLabel("ready")).toContain("Fondo: DSS2 Color");
+    expect(surveyBackgroundLabel("loading")).toContain("Loading background…");
+    expect(surveyBackgroundLabel("ready")).toContain("Background: DSS2 Color");
     expect(surveyBackgroundLabel("ready")).toContain("irsa.ipac.caltech.edu");
-    expect(surveyBackgroundLabel("unavailable")).toContain("Fondo del cielo no disponible");
-    expect(surveyBackgroundLabel("unavailable")).toContain("marcadores");
+    expect(surveyBackgroundLabel("unavailable")).toBe(
+      "Sky background unavailable; markers remain active.",
+    );
   });
 
-  it("sondea el manifiesto HiPS y trata errores de red como no disponible", async () => {
+  it("probes the HiPS manifest and treats network errors as unavailable", async () => {
     const okFetch = vi.fn(async () => ({ ok: true }) as Response);
     await expect(
       probeAladinSurvey("https://skies.esac.esa.int/DSSColor", { fetchImpl: okFetch }),

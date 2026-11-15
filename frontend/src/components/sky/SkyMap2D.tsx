@@ -52,11 +52,11 @@ export function SkyMap2D({
   };
 
   return (
-    <section className="map-panel" aria-label="Mapa celeste">
+    <section className="map-panel" aria-label="Sky map">
       <div className="map-toolbar">
         <ViewToggle view={view} onChange={setView} />
         <span className="map-title">
-          Mapa celeste <span className="mx-2">·</span> ICRS · J2000
+          Sky map <span className="mx-2">·</span> ICRS · J2000
         </span>
       </div>
 
@@ -102,7 +102,7 @@ export function SkyMap2D({
           fallback={
             <div className="map-loading" role="status">
               <Loader2 className="animate-spin text-primary" size={28} />
-              <p>Cargando mapa…</p>
+              <p>Loading map…</p>
             </div>
           }
         >

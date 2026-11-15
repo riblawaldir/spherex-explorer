@@ -47,7 +47,7 @@ export function adaptSingleEpoch(raw: unknown): {
     return {
       discarded: {
         obs_id: null,
-        reasons: ["El objeto Epoch es nulo o no es un objeto válido."],
+        reasons: ["The Epoch is null or not a valid object."],
       },
     };
   }
@@ -57,7 +57,7 @@ export function adaptSingleEpoch(raw: unknown): {
   // 1. obs_id -> id
   const obsId = typeof epoch.obs_id === "string" ? epoch.obs_id.trim() : null;
   if (!obsId) {
-    reasons.push("obs_id ausente o inválido (debe ser una cadena no vacía).");
+    reasons.push("obs_id missing or invalid (must be a non-empty string).");
   }
 
   // 2. t_mjd -> observed_at
@@ -67,7 +67,7 @@ export function adaptSingleEpoch(raw: unknown): {
     !Number.isFinite(epoch.t_mjd) ||
     Number.isNaN(epoch.t_mjd)
   ) {
-    reasons.push("t_mjd ausente, nulo o no numérico (se requiere MJD finito).");
+    reasons.push("t_mjd missing, null, or not numeric (a finite MJD is required).");
   } else {
     try {
       observedAt = mjdToIsoUtc(epoch.t_mjd);
@@ -79,7 +79,7 @@ export function adaptSingleEpoch(raw: unknown): {
   // 3. bandpass -> band
   const band = typeof epoch.bandpass === "string" ? epoch.bandpass.trim() : null;
   if (!band) {
-    reasons.push("bandpass ausente o inválido (debe ser una cadena no vacía).");
+    reasons.push("bandpass missing or invalid (must be a non-empty string).");
   }
 
   // 4. ra (0 a 360 grados) — nullable en OpenAPI; sin valor válido se descarta
@@ -91,7 +91,7 @@ export function adaptSingleEpoch(raw: unknown): {
     ra < 0 ||
     ra > 360
   ) {
-    reasons.push("ra ausente o fuera de rango [0, 360] grados.");
+    reasons.push("ra missing or outside the range [0, 360] degrees.");
   }
 
   // 5. dec (-90 a 90 grados)
@@ -103,7 +103,7 @@ export function adaptSingleEpoch(raw: unknown): {
     dec < -90 ||
     dec > 90
   ) {
-    reasons.push("dec ausente o fuera de rango [-90, 90] grados.");
+    reasons.push("dec missing or outside the range [-90, 90] degrees.");
   }
 
   // 6. collection (opcional: null si ausente/vacío; nunca se inventa DR1/QR3)
@@ -166,7 +166,7 @@ export function adaptEpochsToObservations(rawEpochs: unknown): AdaptationResult 
       discarded: [
         {
           obs_id: null,
-          reasons: ["La respuesta no contiene una lista válida de épocas."],
+          reasons: ["The response does not contain a valid list of epochs."],
         },
       ],
     };

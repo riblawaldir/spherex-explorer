@@ -18,9 +18,9 @@ export function TargetPresets({
       <div className="mb-2">
         <label className="field-label mb-1 flex items-center gap-1.5" htmlFor="target-preset-select">
           <Sparkles size={14} className="text-primary" />
-          Objetivos de referencia
+          Reference targets
         </label>
-        <span className="text-xs leading-5 text-muted-foreground">SPHEREx / calibración</span>
+        <span className="text-xs leading-5 text-muted-foreground">SPHEREx / calibration</span>
       </div>
 
       <select
@@ -43,7 +43,7 @@ export function TargetPresets({
         }}
       >
         <option value="" disabled>
-          Seleccionar objetivo conocido…
+          Select a known target…
         </option>
         {PRESET_TARGETS.map((t) => (
           <option key={t.id} value={t.id}>
