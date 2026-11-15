@@ -4,9 +4,9 @@ export function NotFoundPage() {
   return (
     <main className="min-h-[70vh] flex items-center justify-center px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Página no encontrada</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <h1 className="text-7xl font-semibold tracking-tight text-foreground">404</h1>
+        <h2 className="mt-4 text-2xl font-semibold tracking-tight text-foreground">Página no encontrada</h2>
+        <p className="mt-3 text-base leading-7 text-muted-foreground">
           La página que buscas no existe o se ha movido.
         </p>
         <div className="mt-6">

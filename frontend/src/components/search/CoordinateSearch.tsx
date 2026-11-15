@@ -97,7 +97,7 @@ export function CoordinateSearch({
             onClick={onReset}
             disabled={loading}
             title="Restablecer coordenadas predeterminadas"
-            className="text-muted-foreground hover:text-foreground text-[10px] flex items-center gap-1 transition-colors"
+            className="text-muted-foreground hover:text-foreground text-sm flex items-center gap-1 transition-colors"
           >
             <RotateCcw size={11} />
             Reset
@@ -105,7 +105,7 @@ export function CoordinateSearch({
         )}
       </div>
 
-      <p className="text-muted-foreground text-[11px] mt-1 mb-4">
+      <p className="text-muted-foreground text-sm leading-6 mt-2 mb-4">
         Consulta observaciones astronómicas en coordenadas ecuatoriales (ICRS · J2000).
       </p>
 
@@ -119,19 +119,12 @@ export function CoordinateSearch({
       <div className="grid grid-cols-2 gap-3 mt-4">
         {/* Campo RA */}
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label htmlFor="ra-input" className="field-label mb-0">
-              RA <span>/ grados (°)</span>
-            </label>
-            {hmsHint && (
-              <span className="text-[9px] font-mono text-muted-foreground" title="Equivalente HMS">
-                {hmsHint.split(" ")[0]}
-              </span>
-            )}
-          </div>
+          <label htmlFor="ra-input" className="field-label">
+            RA <span>/ grados (°)</span>
+          </label>
           <input
             id="ra-input"
-            className={`field ${errors.ra ? "field-error" : ""}`}
+            className={`field scientific ${errors.ra ? "field-error" : ""}`}
             type="text"
             inputMode="decimal"
             placeholder="0.0 a 360.0"
@@ -146,27 +139,20 @@ export function CoordinateSearch({
               {errors.ra}
             </p>
           ) : (
-            <span className="text-muted-foreground text-[9px] block mt-1">
-              Rango: 0° a 360° (o HH:MM:SS)
+            <span className="text-muted-foreground text-xs leading-5 block mt-1.5">
+              {hmsHint ? <span className="scientific">{hmsHint}</span> : "Rango: 0° a 360° (o HH:MM:SS)"}
             </span>
           )}
         </div>
 
         {/* Campo Dec */}
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label htmlFor="dec-input" className="field-label mb-0">
-              DEC <span>/ grados (°)</span>
-            </label>
-            {dmsHint && (
-              <span className="text-[9px] font-mono text-muted-foreground" title="Equivalente DMS">
-                {dmsHint.split(" ")[0]}
-              </span>
-            )}
-          </div>
+          <label htmlFor="dec-input" className="field-label">
+            DEC <span>/ grados (°)</span>
+          </label>
           <input
             id="dec-input"
-            className={`field ${errors.dec ? "field-error" : ""}`}
+            className={`field scientific ${errors.dec ? "field-error" : ""}`}
             type="text"
             inputMode="decimal"
             placeholder="-90.0 a +90.0"
@@ -181,8 +167,8 @@ export function CoordinateSearch({
               {errors.dec}
             </p>
           ) : (
-            <span className="text-muted-foreground text-[9px] block mt-1">
-              Rango: −90° a +90° (o ±DD:MM:SS)
+            <span className="text-muted-foreground text-xs leading-5 block mt-1.5">
+              {dmsHint ? <span className="scientific">{dmsHint}</span> : "Rango: −90° a +90° (o ±DD:MM:SS)"}
             </span>
           )}
         </div>
@@ -199,7 +185,7 @@ export function CoordinateSearch({
       <Button
         type="submit"
         variant="brand"
-        className="w-full mt-5 text-[11px] h-10 font-medium"
+        className="w-full mt-5 h-11 font-medium"
         disabled={loading}
       >
         {loading ? (

@@ -32,12 +32,12 @@ export function ObservationCard({
             <span className="observation-date">{o.observed_at.slice(0, 10)}</span>
             <div className="flex gap-1">
               <span className="data-chip">{o.band}</span>
-              <span className="text-muted-foreground text-[9px] font-mono pt-1">
+              <span className="scientific text-xs text-muted-foreground pt-0.5">
                 {o.collection}
               </span>
             </div>
           </div>
-          <p className="text-muted-foreground font-mono text-[9px] mt-2">
+          <p className="scientific text-xs text-muted-foreground mt-2">
             RA {o.ra.toFixed(5)}° <span className="mx-1">·</span> Dec {o.dec.toFixed(5)}°
           </p>
         </div>

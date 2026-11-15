@@ -18,12 +18,12 @@ export function ComparisonPage() {
 
   return (
     <main className="secondary-page">
-      <Link to="/" className="text-muted-foreground text-xs inline-flex items-center gap-2 mb-7">
+      <Link to="/" className="text-muted-foreground text-sm inline-flex items-center gap-2 mb-7">
         <ArrowLeft size={14} />
         Volver a explorar
       </Link>
-      <h1 className="text-[28px] font-medium">Comparación temporal</h1>
-      <p className="text-muted-foreground text-sm mt-3">
+      <h1 className="text-3xl font-semibold tracking-tight">Comparación temporal</h1>
+      <p className="text-muted-foreground text-base leading-7 mt-3">
         {getComparisonSummary(comparison.length)}
       </p>
       <TemporalViewerSlot observations={comparison} isSimulated={comparisonIsSimulated} />

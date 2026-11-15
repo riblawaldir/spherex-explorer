@@ -461,6 +461,7 @@ class CatalogService:
                 return found
         return None
 
+feat/spherex-data
     def resolve_observation(self, obs_id: str):
         """Resolve a previously discovered IRSA record or a labeled fixture.
 
@@ -481,6 +482,40 @@ class CatalogService:
                     ra=row.get('ra'), dec=row.get('dec'), t_min_mjd=row.get('t_mjd'),
                     band_label=row.get('bandpass'),
                 )
+    def get_epoch_by_obs_id(self, obs_id: str) -> dict[str, Any] | None:
+        """Return a known epoch row for ``obs_id``, or ``None`` if unknown.
+
+        Looks up labeled fixture rows in ``epochs.json`` only. Does not invent
+        NASA metadata. Live IRSA rows are not persisted across requests unless
+        already registered via a prior epochs call in-process (fits only).
+        """
+        payload = self._epochs_payload()
+        default_prov = str(payload.get("provenance", PROVENANCE_STUB))
+        for row in payload.get("epochs", []):
+            if str(row.get("obs_id")) != obs_id:
+                continue
+            preview_url = (
+                f"/api/preview/{obs_id}"
+                if self.resolve_preview_fits(obs_id) is not None
+                else None
+            )
+            epoch: dict[str, Any] = {
+                "obs_id": obs_id,
+                "ra": row.get("ra"),
+                "dec": row.get("dec"),
+                "t_mjd": row.get("t_mjd"),
+                "bandpass": row.get("bandpass"),
+                "wavelength_um": row.get("wavelength_um"),
+                "preview_url": preview_url,
+                "provenance": row.get("provenance", default_prov),
+            }
+            # Pass through only if the fixture/live row actually has them.
+            if row.get("collection"):
+                epoch["collection"] = row["collection"]
+            if row.get("source_url"):
+                epoch["source_url"] = row["source_url"]
+            return epoch
+ main
         return None
 
 

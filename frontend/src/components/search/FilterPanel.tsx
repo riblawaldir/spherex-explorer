@@ -16,7 +16,7 @@ export function FilterPanel({
         <h2>Filtros de observación</h2>
       </div>
       <label className="field-label" htmlFor="date-start">
-        RANGO DE FECHAS
+        Rango de fechas
       </label>
       <input
         aria-label="Fecha inicial"
@@ -27,7 +27,7 @@ export function FilterPanel({
         max={filters.end || undefined}
         onChange={(e) => onChange({ ...filters, start: e.target.value })}
       />
-      <div className="text-center text-muted-foreground text-[9px] my-1">hasta</div>
+      <div className="text-center text-muted-foreground text-sm my-1.5">hasta</div>
       <input
         aria-label="Fecha final"
         className="field"
@@ -36,7 +36,7 @@ export function FilterPanel({
         min={filters.start || undefined}
         onChange={(e) => onChange({ ...filters, end: e.target.value })}
       />
-      <p className="field-label mt-5">BANDAS ESPECTRALES</p>
+      <p className="field-label mt-5">Bandas espectrales</p>
       <div className="grid grid-cols-3 gap-2">
         {availableBands.map((b) => (
           <Button
@@ -58,7 +58,7 @@ export function FilterPanel({
         ))}
       </div>
       <label className="field-label mt-5" htmlFor="collection">
-        COLECCIÓN
+        Colección
       </label>
       <select
         id="collection"
@@ -72,7 +72,7 @@ export function FilterPanel({
       </select>
       <Button
         variant="ghost"
-        className="w-full mt-4 text-muted-foreground text-[11px]"
+        className="w-full mt-4 text-muted-foreground"
         onClick={() => onChange({ ...emptyFilters })}
       >
         <RotateCcw size={12} />

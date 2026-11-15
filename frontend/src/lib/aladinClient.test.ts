@@ -42,6 +42,7 @@ function fakeNamespace() {
     getFov: vi.fn(() => [0.35, 0.22] as [number, number]),
     getRaDec: vi.fn(() => [10, -5] as [number, number]),
     setImageSurvey: vi.fn(),
+    setCooGrid: vi.fn(),
     addCatalog: vi.fn(),
     removeCatalog: vi.fn(),
     addOverlay: vi.fn(),
@@ -145,6 +146,12 @@ describe("cliente de Aladin Lite", () => {
     expect(calls.aladin[0]?.cooFrame).toBe("ICRSd");
     expect(instance.gotoRaDec).toHaveBeenCalledWith(view.ra, view.dec);
     expect(instance.setFoV).toHaveBeenCalledWith(view.fov);
+    expect(instance.setCooGrid).toHaveBeenCalledWith({
+      enabled: true,
+      color: "#7eb8c9",
+      opacity: 0.42,
+      thickness: 1,
+    });
     container.remove();
   });
 

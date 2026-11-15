@@ -24,11 +24,14 @@ import {
   nextFov,
   panCenter,
   parseSubmittedQuery,
+  surveyBackgroundLabel,
+  surveyTileSeen,
   type PanDirection,
+  type SurveyBackgroundState,
 } from "@/lib/aladinView";
 import { transformObservationsToMarkers, type ObservationMarkerItem } from "@/lib/markerUtils";
 import { interpretMarkerClick } from "@/lib/selection";
-import { MapLegend, MapNotices, MapReadout, MarkerGroupPicker, surveyBackgroundLabel } from "./MapChrome";
+import { MapLegend, MapNotices, MapReadout, MarkerGroupPicker } from "./MapChrome";
 
 export default function AladinLiteMap({
   observations,
@@ -82,6 +85,7 @@ export default function AladinLiteMap({
 
   const [loading, setLoading] = useState(true);
   const [ready, setReady] = useState(false);
+  const [backgroundState, setBackgroundState] = useState<SurveyBackgroundState>("loading");
   const [center, setCenter] = useState<{ ra: number; dec: number } | null>(
     query ? { ra: query.ra, dec: query.dec } : null,
   );
@@ -185,6 +189,39 @@ export default function AladinLiteMap({
   }, []);
 
   useEffect(() => {
+    if (!ready) return;
+    let stopped = false;
+    let observer: PerformanceObserver | null = null;
+    let timer = 0;
+    const urls = () => performance.getEntriesByType("resource").map((entry) => entry.name);
+    const finish = (state: SurveyBackgroundState) => {
+      if (stopped) return;
+      stopped = true;
+      observer?.disconnect();
+      window.clearTimeout(timer);
+      setBackgroundState(state);
+    };
+    const mark = () => {
+      if (surveyTileSeen(urls(), DEFAULT_ALADIN_SURVEY)) finish("ready");
+    };
+    try {
+      observer = new PerformanceObserver(mark);
+      observer.observe({ type: "resource", buffered: true });
+    } catch {
+      observer = null;
+    }
+    mark();
+    timer = window.setTimeout(() => {
+      finish(surveyTileSeen(urls(), DEFAULT_ALADIN_SURVEY) ? "ready" : "unavailable");
+    }, 8000);
+    return () => {
+      stopped = true;
+      observer?.disconnect();
+      window.clearTimeout(timer);
+    };
+  }, [ready]);
+
+  useEffect(() => {
     const controller = controllerRef.current;
     const current = queryRef.current;
     if (!controller || !current) return;
@@ -279,6 +316,15 @@ export default function AladinLiteMap({
           <p>Cargando mapa Aladin Lite…</p>
         </div>
       )}
+      {backgroundState !== "ready" && (
+        <div className="survey-status" role="status">
+          <p>
+            {backgroundState === "loading"
+              ? "Cargando fondo…"
+              : "Fondo del cielo no disponible; los marcadores siguen activos."}
+          </p>
+        </div>
+      )}
       <MapNotices
         status={status}
         hasSearched={hasSearched}
@@ -326,7 +372,7 @@ export default function AladinLiteMap({
         center={center}
         cursor={cursor}
         isSimulated={isSimulated}
-        background={surveyBackgroundLabel()}
+        background={surveyBackgroundLabel(backgroundState)}
       />
     </div>
   );

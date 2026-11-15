@@ -3,8 +3,11 @@
  * No modifica las coordenadas de las observaciones: solo calcula la cámara.
  *
  * Documentación de Aladin Lite v3:
- * el survey inicial por defecto es "P/DSS2/color"
+ * el identificador por defecto es "P/DSS2/color"
  * (https://aladin.cds.unistra.fr/AladinLite/doc/API/).
+ * Ese identificador apunta a https://alasky.cds.unistra.fr/DSS/DSSColor,
+ * que en este entorno responde 404. El mismo HiPS (ivo://CDS/P/DSS2/color)
+ * sí se sirve desde el espejo de la ESA, host permitido por Aladin Lite.
  * setFoV(número) fija el campo de visión en grados.
  */
 
@@ -18,19 +21,46 @@ export interface AladinSurveyInfo {
 }
 
 /**
- * Survey HiPS por defecto documentado por Aladin Lite.
- * Es contexto visual (DSS2, óptico, CDS), no una imagen de SPHEREx.
+ * Mismo HiPS que P/DSS2/color (ivo://CDS/P/DSS2/color), servido por el espejo
+ * skies.esac.esa.int. Es contexto visual óptico, no una imagen de SPHEREx.
  */
-export const DEFAULT_ALADIN_SURVEY = "P/DSS2/color";
+export const DEFAULT_ALADIN_SURVEY = "https://skies.esac.esa.int/DSSColor";
 
 export const ALADIN_SURVEYS: Record<string, AladinSurveyInfo> = {
   [DEFAULT_ALADIN_SURVEY]: {
     id: DEFAULT_ALADIN_SURVEY,
     name: "DSS2 Color",
     description:
-      "Digitized Sky Survey 2 en color (CDS). Fondo visual de Aladin Lite, no datos de SPHEREx.",
+      "Digitized Sky Survey 2 en color, espejo ESA de ivo://CDS/P/DSS2/color. Fondo visual, no datos de SPHEREx.",
   },
 };
+
+export type SurveyBackgroundState = "loading" | "ready" | "unavailable";
+
+/** Una tesela HiPS real, no el fichero properties ni el HTML de respaldo. */
+export function surveyTileSeen(urls: readonly string[], surveyUrl: string): boolean {
+  let host = "";
+  try {
+    host = new URL(surveyUrl).host;
+  } catch {
+    return false;
+  }
+  return urls.some(
+    (url) => url.includes(host) && /\/Norder\d+\/.+\.(jpe?g|png|webp)(?:\?|$)/i.test(url),
+  );
+}
+
+export function surveyBackgroundLabel(state: SurveyBackgroundState = "ready"): string {
+  if (state === "unavailable") {
+    return "Fondo del cielo no disponible; los marcadores siguen activos.";
+  }
+  const survey = ALADIN_SURVEYS[DEFAULT_ALADIN_SURVEY];
+  const place = `${survey?.name ?? "DSS2 Color"} (${DEFAULT_ALADIN_SURVEY})`;
+  if (state === "loading") {
+    return `Cargando fondo… ${place}. Contexto visual; no son datos de SPHEREx.`;
+  }
+  return `Fondo: ${place}. Contexto visual; no son datos de SPHEREx.`;
+}
 
 /**
  * El diámetro angular del círculo de búsqueda es 2 × radio.
