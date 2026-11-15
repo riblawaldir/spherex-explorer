@@ -49,3 +49,48 @@ export interface ApiStubNotImplemented {
   detail: string;
   provenance: string;
 }
+
+export interface ApiEpochSnapshot {
+  obs_id: string;
+  ra?: number | null;
+  dec?: number | null;
+  t_mjd?: number | null;
+  bandpass?: string | null;
+  wavelength_um?: number | null;
+  preview_url?: string | null;
+  provenance: "stub" | "cached_sample" | "live" | string;
+  collection?: string | null;
+  source_url?: string | null;
+}
+
+export interface ApiAlignmentReport {
+  status: "ok" | "failed" | "skipped" | "unavailable" | string;
+  detail: string;
+  common_coverage_percent?: number | null;
+  units_compatible?: boolean | null;
+  reference_unit?: string | null;
+  target_unit?: string | null;
+  reference_hdu?: number | null;
+  target_hdu?: number | null;
+  warnings?: string[];
+}
+
+export interface ApiDiffReport {
+  status: "not_implemented" | "skipped" | "unavailable" | string;
+  detail: string;
+  provenance: string;
+}
+
+/** OpenAPI CompareResponse from GET /api/compare */
+export interface ApiCompareResponse {
+  obs_id_a: string;
+  obs_id_b: string;
+  status: "comparable" | "not_comparable";
+  provenance: "stub" | "cached_sample" | "live" | string;
+  reasons: string[];
+  epoch_a: ApiEpochSnapshot;
+  epoch_b: ApiEpochSnapshot;
+  alignment: ApiAlignmentReport;
+  diff: ApiDiffReport;
+  checks: Record<string, unknown>;
+}

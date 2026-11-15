@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ProvenanceChip } from "./ProvenanceChip";
 import type { Observation } from "@/types/observation";
 export function ObservationCard({
   observation: o,
@@ -30,11 +31,14 @@ export function ObservationCard({
         <div className="w-full">
           <div className="flex items-center justify-between gap-1">
             <span className="observation-date">{o.observed_at.slice(0, 10)}</span>
-            <div className="flex gap-1">
+            <div className="flex flex-wrap items-center justify-end gap-1">
+              <ProvenanceChip provenance={o.provenance} />
               <span className="data-chip">{o.band}</span>
-              <span className="scientific text-xs text-muted-foreground pt-0.5">
-                {o.collection}
-              </span>
+              {o.collection ? (
+                <span className="scientific text-xs text-muted-foreground pt-0.5">
+                  {o.collection}
+                </span>
+              ) : null}
             </div>
           </div>
           <p className="scientific text-xs text-muted-foreground mt-2">
