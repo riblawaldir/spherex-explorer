@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.routers import comparability, compare, epochs, preview, search, scientific_validation, targets
 
 from app.routers import comparability, compare, epochs, preview, search, targets
 
@@ -26,6 +27,7 @@ app.include_router(search.router)
 app.include_router(epochs.router)
 app.include_router(preview.router)
 app.include_router(comparability.router)
+app.include_router(scientific_validation.router)
 app.include_router(compare.router)
 
 
