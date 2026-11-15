@@ -90,6 +90,15 @@ describe("TemporalViewerSlot", () => {
     expect(container.textContent).toContain("1 observación · one");
   });
 
+  it("provides zoom and recenter controls for the displayed image", async () => {
+    await render([observation("one", "2026-08-15T00:00:00Z")]);
+
+    expect(button("Acercar imagen").disabled).toBe(false);
+    expect(button("Alejar imagen").disabled).toBe(true);
+    expect(button("Centrar imagen").disabled).toBe(false);
+    expect(container.textContent).toContain("1.0×");
+  });
+
   it("plays at the selected speed and pauses cleanly", async () => {
     vi.useFakeTimers();
     await render([
