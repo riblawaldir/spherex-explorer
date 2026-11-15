@@ -17,7 +17,7 @@ function Axis({
   return (
     <group>
       <Polyline positions={positions} color={color} />
-      <Html position={end} center distanceFactor={6} style={{ pointerEvents: "none" }}>
+      <Html position={end} center zIndexRange={[1, 0]} style={{ pointerEvents: "none" }}>
         <span className="sky3d-grid-label">{label}</span>
       </Html>
     </group>

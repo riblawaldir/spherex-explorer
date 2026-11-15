@@ -115,7 +115,7 @@ export function CelestialSphere({
         GRID_LABELS.map((label) => {
           const point = observationToMarker(label, 1.08);
           return (
-            <Html key={label.text} position={[point.x, point.y, point.z]} center distanceFactor={8} style={{ pointerEvents: "none" }}>
+            <Html key={label.text} position={[point.x, point.y, point.z]} center zIndexRange={[1, 0]} style={{ pointerEvents: "none" }}>
               <span className="sky3d-grid-label">{label.text}</span>
             </Html>
           );
