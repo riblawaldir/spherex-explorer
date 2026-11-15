@@ -136,4 +136,35 @@ describe("observationsApi Service (Sprint Adaptador Epoch)", () => {
     expect(res.isSimulated).toBe(true);
     expect(res.observations.length).toBeGreaterThan(0);
   });
+
+  it("no marca como simulada una respuesta local_real_fits", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        provenance: "local_real_fits",
+        epochs: [
+          {
+            obs_id: "2026W15_2A_0124_1",
+            ra: 139.98,
+            dec: 55.0,
+            t_mjd: 61080.0,
+            bandpass: "SPHEREx-D1",
+            wavelength_um: null,
+            preview_url: "/api/preview/2026W15_2A_0124_1",
+            provenance: "local_real_fits",
+          },
+        ],
+      }),
+    });
+
+    const res = await fetchObservations(dummyCoords, {
+      fetchImpl: mockFetch as unknown as typeof fetch,
+    });
+
+    expect(res.status).toBe("ready");
+    expect(res.isSimulated).toBe(false);
+    expect(res.provenance).toBe("local_real_fits");
+    expect(res.observations[0]?.provenance).toBe("local_real_fits");
+  });
 });

@@ -1,6 +1,6 @@
 /** Honest provenance labels for API Epoch.provenance — never invent NASA live. */
 
-export type KnownProvenance = "stub" | "cached_sample" | "live" | "irsa_verified_local";
+export type KnownProvenance = "stub" | "cached_sample" | "live" | "irsa_verified_local" | "local_real_fits";
 export type ProvenanceKind = KnownProvenance | "unknown";
 
 export interface ProvenanceInfo {
@@ -11,7 +11,7 @@ export interface ProvenanceInfo {
   title: string;
 }
 
-const KNOWN: ReadonlySet<string> = new Set(["stub", "cached_sample", "live", "irsa_verified_local"]);
+const KNOWN: ReadonlySet<string> = new Set(["stub", "cached_sample", "live", "irsa_verified_local", "local_real_fits"]);
 
 /**
  * Normalize a raw provenance string from the API.
@@ -52,6 +52,14 @@ export function describeProvenance(
       };
     case "irsa_verified_local":
       return { kind, token: "IRSA local verificado", title: "Recorte IRSA local verificado por SHA-256; no es una consulta en vivo" };
+    case "local_real_fits":
+      return {
+        kind,
+        token: "local_real_fits",
+        title:
+          "FITS real autorizado en esta máquina — no es una consulta IRSA en vivo",
+      };
+
     default:
       return {
         kind: "unknown",

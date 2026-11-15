@@ -7,6 +7,8 @@ describe("normalizeProvenance", () => {
     expect(normalizeProvenance("cached_sample")).toBe("cached_sample");
     expect(normalizeProvenance("live")).toBe("live");
     expect(normalizeProvenance("irsa_verified_local")).toBe("irsa_verified_local");
+    expect(normalizeProvenance("local_real_fits")).toBe("local_real_fits");
+
   });
 
   it("does not invent values for empty or opaque strings", () => {
@@ -29,5 +31,10 @@ describe("describeProvenance", () => {
     expect(describeProvenance("live").token).toBe("live");
     expect(describeProvenance("irsa_verified_local").token).toBe("IRSA local verificado");
     expect(describeProvenance("irsa_verified_local").title).toContain("no es una consulta en vivo");
+    expect(describeProvenance("local_real_fits").token).toBe("local_real_fits");
+    expect(describeProvenance("local_real_fits").title.toLowerCase()).toContain(
+      "no es una consulta irsa",
+    );
+
   });
 });

@@ -92,5 +92,21 @@ export interface ApiCompareResponse {
   epoch_b: ApiEpochSnapshot;
   alignment: ApiAlignmentReport;
   diff: ApiDiffReport;
+  science?: ApiScienceReport;
   checks: Record<string, unknown>;
+}
+
+/** P5 status. Geometric alignment is not a photometric detection. */
+export interface ApiScienceReport {
+  assessed: boolean;
+  detail?: string;
+  geometric_alignment?: string;
+  common_coverage_percent?: number | null;
+  units_compatible?: boolean | null;
+  photometric_equivalence: boolean;
+  subtraction_validated: boolean;
+  variability_assessed: boolean;
+  spectral_comparability?: string;
+  category?: string;
+  warnings?: string[];
 }

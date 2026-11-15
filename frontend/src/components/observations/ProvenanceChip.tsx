@@ -6,6 +6,8 @@ const toneClass: Record<ProvenanceKind, string> = {
   cached_sample: "border-border bg-secondary text-muted-foreground",
   live: "border-success/30 bg-success/10 text-success",
   irsa_verified_local: "border-success/30 bg-success/10 text-success",
+  local_real_fits: "border-primary/40 bg-primary/10 text-primary",
+
   unknown: "border-border bg-muted/40 text-muted-foreground",
 };
 

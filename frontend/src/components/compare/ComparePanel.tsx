@@ -47,7 +47,8 @@ function StatusBanner({ result }: { result: CompareApiResult }) {
   }
 
   const { data } = result;
-  const comparable = data.status === "comparable";
+  const geometricOnly = data.science?.photometric_equivalence === false;
+  const comparable = data.status === "comparable" && !geometricOnly;
   return (
     <div
       className={
@@ -69,6 +70,12 @@ function StatusBanner({ result }: { result: CompareApiResult }) {
         </span>
         <ProvenanceChip provenance={data.provenance} />
       </div>
+      {geometricOnly ? (
+        <p className="mt-2 text-muted-foreground text-xs">
+          El estado {data.status} describe metadatos y geometría. No es
+          equivalencia fotométrica ni variabilidad.
+        </p>
+      ) : null}
       <p className="mt-2 text-muted-foreground text-xs">
         Par <span className="font-mono text-foreground">{data.obs_id_a}</span>
         {" · "}
@@ -149,6 +156,8 @@ export function ComparePanel({
             con dos <span className="font-mono text-xs">obs_id</span>.
             El resultado de compare describe la alineación técnica. La validación
             científica se informa por separado y puede requerir revisión, sin imágenes residuales inventadas.
+            Comparable no es equivalencia fotométrica ni una detección de variabilidad.
+
           </p>
         </div>
       </div>
@@ -278,6 +287,30 @@ export function ComparePanel({
                   ) : null}
                 </div>
               </div>
+
+              {result.data.science ? (
+                <div className="rounded border border-warning/30 bg-warning/5 px-3 py-2 text-sm">
+                  <h3 className="text-sm font-medium mb-1">
+                    Estado científico
+                    {result.data.science.category
+                      ? ` · categoría ${result.data.science.category}`
+                      : ""}
+                  </h3>
+                  <p className="text-muted-foreground text-xs leading-5">
+                    Espectro: {result.data.science.spectral_comparability ?? "not_certified"}.
+                    Resta validada: {result.data.science.subtraction_validated ? "sí" : "no"}.
+                    Variabilidad evaluada:{" "}
+                    {result.data.science.variability_assessed ? "sí" : "no"}.
+                  </p>
+                  {result.data.science.warnings && result.data.science.warnings.length > 0 ? (
+                    <ul className="mt-2 list-disc pl-4 text-xs text-muted-foreground">
+                      {result.data.science.warnings.map((warning) => (
+                        <li key={warning}>{warning}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              ) : null}
 
               <details className="text-xs text-muted-foreground">
                 <summary className="cursor-pointer select-none font-medium text-foreground">
