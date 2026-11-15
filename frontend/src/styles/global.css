@@ -74,9 +74,11 @@ svg {
   justify-content: space-between;
   gap: 16px;
   padding: 0 16px;
-  border-bottom: 1px solid rgb(255 255 255 / 0.08);
-  background: color-mix(in oklch, var(--background) 58%, transparent);
-  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--glass-border);
+  background: var(--glass-fill);
+  box-shadow: var(--glass-highlight);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   position: sticky;
   top: 0;
   z-index: 40;
@@ -98,9 +100,15 @@ svg {
   font-size: var(--fs-brand);
   letter-spacing: -0.022em;
   line-height: 1.2;
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 .brand-name span {
   font-weight: 400;
+  background: none;
+  -webkit-text-fill-color: var(--muted-foreground);
   color: var(--muted-foreground);
 }
 .main-nav {
@@ -110,8 +118,67 @@ svg {
   align-items: center;
   padding: 4px;
   border-radius: 999px;
-  border: 1px solid rgb(255 255 255 / 0.08);
+  border: 1px solid var(--glass-border);
   background: rgb(255 255 255 / 0.04);
+  box-shadow: var(--glass-highlight);
+}
+.map-controls button,
+.search-panel button,
+.results-panel button,
+.metadata-panel button,
+.temporal-slot button,
+.mobile-panel-trigger button,
+.secondary-page button {
+  border-radius: var(--control-radius);
+}
+.search-panel button.border,
+.results-panel button.border,
+.metadata-panel button.border,
+.temporal-slot button.border,
+.mobile-panel-trigger button,
+.secondary-page button.border,
+.sky3d-reset {
+  background: var(--glass-fill-strong);
+  border-color: var(--glass-border);
+  box-shadow: var(--glass-highlight);
+  transition:
+    border-color var(--motion) var(--ease),
+    background-color var(--motion) var(--ease),
+    color var(--motion) var(--ease),
+    box-shadow var(--motion) var(--ease);
+}
+.search-panel button.border:hover:not(:disabled),
+.results-panel button.border:hover:not(:disabled),
+.metadata-panel button.border:hover:not(:disabled),
+.temporal-slot button.border:hover:not(:disabled),
+.mobile-panel-trigger button:hover,
+.secondary-page button.border:hover:not(:disabled),
+.sky3d-reset:hover {
+  border-color: var(--glass-border-hover);
+  color: var(--foreground);
+}
+.search-panel button:focus-visible,
+.results-panel button:focus-visible,
+.metadata-panel button:focus-visible,
+.mobile-panel-trigger button:focus-visible,
+.map-controls button:focus-visible,
+.view-toggle > button:focus-visible,
+.sky3d-reset:focus-visible,
+.sky3d-panel-toggle:focus-visible,
+.observation-card input:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  box-shadow: var(--glow-active);
+}
+.map-controls button,
+.sky3d-panel-toggle {
+  transition:
+    background-color var(--motion) var(--ease),
+    color var(--motion) var(--ease),
+    box-shadow var(--motion) var(--ease);
+}
+.map-controls button:hover {
+  background: var(--hover-fill);
 }
 .nav-link {
   font-size: var(--fs-ui);
@@ -126,8 +193,11 @@ svg {
   border-radius: 999px;
   position: relative;
   transition:
-    color 200ms ease,
-    background-color 200ms ease;
+    color var(--motion) var(--ease),
+    background-color var(--motion) var(--ease);
+}
+.nav-link:hover {
+  color: var(--foreground);
 }
 .nav-link.active {
   color: var(--foreground);
@@ -144,23 +214,7 @@ svg {
   background: var(--brand-gradient);
 }
 .sim-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--warning);
-  background: color-mix(in oklch, var(--warning) 8%, transparent);
-  border: 1px solid color-mix(in oklch, var(--warning) 18%, transparent);
-  padding: 4px 8px;
-  border-radius: 20px;
-  font: 500 var(--fs-label) / 1.35 var(--font-sans);
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-.badge-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--warning);
+  display: none;
 }
 .explore-stage {
   height: calc(100dvh - 92px);
@@ -190,13 +244,34 @@ svg {
   flex: 1;
   min-height: 0;
 }
+/* Only the header, the 2D/3D switch and the map controls may blur: max three at once over the map. */
+.glass {
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+.glass-strong,
 .glass-panel {
-  background: oklch(0.16 0.028 268 / 0.72);
-  border: 1px solid rgb(255 255 255 / 0.08);
-  border-radius: 16px;
-  backdrop-filter: blur(16px);
-  box-shadow: 0 16px 40px oklch(0 0 0 / 0.28);
-  animation: panel-rise 220ms ease;
+  background: var(--glass-fill-strong);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight);
+}
+.glass-panel {
+  border-radius: var(--glass-radius);
+  box-shadow: var(--glass-highlight), var(--panel-shadow);
+}
+.glow-active,
+.band-chip.selected,
+.view-toggle .selected,
+.observation-card.selected {
+  color: var(--foreground);
+  border-color: transparent;
+  background:
+    linear-gradient(var(--glass-fill-strong), var(--glass-fill-strong)) padding-box,
+    var(--iris-border) border-box;
+  box-shadow: var(--glow-active);
 }
 .panel-heading {
   display: flex;
@@ -212,7 +287,19 @@ svg {
   color: var(--muted-foreground);
 }
 .search-panel {
+  position: relative;
+}
+.search-panel-body {
   padding: var(--panel-pad);
+}
+.search-panel-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  padding: 10px var(--panel-pad) var(--panel-pad);
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 var(--glass-radius) var(--glass-radius);
+  background: var(--glass-fill-strong);
 }
 .eyebrow {
   font-family: var(--font-sans);
@@ -236,19 +323,30 @@ svg {
   font-weight: 400;
 }
 .field {
-  border: 1px solid var(--border);
-  background: var(--background);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-fill-strong);
+  box-shadow: var(--glass-highlight);
   width: 100%;
   min-width: 0;
   height: var(--control-h);
-  border-radius: 7px;
-  padding: 0 10px;
+  border-radius: var(--control-radius);
+  padding: 0 14px;
   color: var(--foreground);
   font-family: var(--font-sans);
   font-size: var(--fs-ui);
   font-weight: 400;
   letter-spacing: -0.006em;
   color-scheme: dark;
+  transition:
+    border-color var(--motion) var(--ease),
+    box-shadow var(--motion) var(--ease);
+}
+.field:hover:not(:disabled):not(:focus) {
+  border-color: var(--glass-border-hover);
+}
+.field:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .field.scientific {
   font-family: var(--font-mono);
@@ -256,9 +354,26 @@ svg {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
 }
+select.field option,
+select.field optgroup {
+  background-color: var(--glass-fill-solid);
+  color: var(--foreground);
+}
+select.field option:disabled {
+  color: var(--muted-foreground);
+}
+select.field option:checked {
+  background-color: oklch(0.3 0.07 225);
+  color: var(--foreground);
+}
 .field:focus {
   outline: 2px solid var(--primary);
-  outline-offset: 1px;
+  outline-offset: 2px;
+  border-color: transparent;
+  background:
+    linear-gradient(var(--glass-fill-strong), var(--glass-fill-strong)) padding-box,
+    var(--iris-border) border-box;
+  box-shadow: var(--glow-active);
 }
 .field-error {
   border-color: var(--destructive);
@@ -268,14 +383,26 @@ svg {
   margin: 16px calc(-1 * var(--panel-pad)) 14px;
 }
 .brand-button {
-  background: linear-gradient(110deg, oklch(0.84 0.12 205), oklch(0.7 0.16 293));
-  color: oklch(0.16 0.02 265);
-  border-radius: 12px;
-  box-shadow: 0 8px 24px oklch(0.58 0.16 280 / 0.35);
+  background: var(--brand-gradient);
+  color: oklch(0.18 0.03 265);
+  font-weight: 600;
+  border-radius: var(--control-radius);
+  box-shadow: var(--glass-highlight);
+  transition:
+    box-shadow var(--motion) var(--ease),
+    filter var(--motion) var(--ease);
+}
+.brand-button:focus-visible,
+.brand-button:active:not(:disabled) {
+  box-shadow: var(--glass-highlight), var(--glow-active);
+}
+.brand-button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
 }
 .band-chip {
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--control-radius);
   font-family: var(--font-mono);
   font-size: var(--fs-data);
   font-weight: 500;
@@ -283,12 +410,66 @@ svg {
   padding: 0 10px;
   height: 28px;
   color: var(--muted-foreground);
+  transition:
+    border-color var(--motion) var(--ease),
+    color var(--motion) var(--ease),
+    box-shadow var(--motion) var(--ease);
 }
-.band-chip.selected {
-  color: var(--primary);
-  border-color: color-mix(in oklch, var(--primary) 55%, transparent);
-  background: color-mix(in oklch, var(--primary) 12%, transparent);
-  box-shadow: 0 0 16px oklch(0.797 0.134 211 / 0.35);
+.band-chip:hover:not(.selected) {
+  border-color: var(--glass-border-hover);
+  color: var(--foreground);
+  background: transparent;
+}
+.search-panel button.scientific {
+  border: 1px solid var(--glass-border);
+  background: var(--glass-fill-strong);
+  color: var(--muted-foreground);
+  transition:
+    border-color var(--motion) var(--ease),
+    color var(--motion) var(--ease),
+    box-shadow var(--motion) var(--ease);
+}
+.search-panel button.scientific:hover:not(:disabled) {
+  border-color: var(--glass-border-hover);
+  color: var(--foreground);
+}
+.search-panel button.scientific[class~="border-primary"] {
+  color: var(--foreground);
+  border-color: transparent;
+  background:
+    linear-gradient(var(--glass-fill-strong), var(--glass-fill-strong)) padding-box,
+    var(--iris-border) border-box;
+  box-shadow: var(--glow-active);
+}
+.results-panel > .rounded {
+  border-radius: var(--inner-radius);
+}
+.sky-map-root > [role="dialog"] {
+  border-radius: var(--glass-radius);
+  border-color: var(--glass-border);
+  background: var(--glass-fill-strong);
+  box-shadow: var(--glass-highlight), var(--panel-shadow);
+}
+.sky-map-root > [role="dialog"] button {
+  border-radius: var(--control-radius);
+  transition:
+    border-color var(--motion) var(--ease),
+    background-color var(--motion) var(--ease),
+    box-shadow var(--motion) var(--ease);
+}
+.sky-map-root > [role="dialog"] li > button:first-child[class~="border-primary/50"] {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--glass-fill-strong), var(--glass-fill-strong)) padding-box,
+    var(--iris-border) border-box;
+  box-shadow: var(--glow-active);
+}
+.sky-map-root > [role="dialog"] button[aria-pressed="true"] {
+  box-shadow: var(--glow-violet);
+}
+.sky-map-root > [role="dialog"] button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 .sidebar-note {
   font-size: var(--fs-help);
@@ -383,10 +564,12 @@ svg {
 .view-toggle {
   display: flex;
   padding: 4px;
-  border-radius: 999px;
-  background: oklch(0.16 0.028 268 / 0.78);
-  border: 1px solid rgb(255 255 255 / 0.08);
-  backdrop-filter: blur(16px);
+  border-radius: var(--control-radius);
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 .view-toggle > button {
   display: inline-flex;
@@ -394,16 +577,26 @@ svg {
   gap: 6px;
   height: auto;
   padding: 6px 12px;
-  border-radius: 999px;
+  border: 1px solid transparent;
+  border-radius: var(--control-radius);
   color: var(--muted-foreground);
   font: 500 var(--fs-ui) / 1.2 var(--font-sans);
   letter-spacing: -0.006em;
   white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--motion) var(--ease),
+    background-color var(--motion) var(--ease),
+    box-shadow var(--motion) var(--ease);
 }
-.view-toggle .selected {
-  background: oklch(0.22 0.04 268);
-  color: var(--primary);
-  box-shadow: 0 0 16px oklch(0.797 0.134 211 / 0.35);
+.view-toggle > button:not(.selected):hover {
+  color: var(--foreground);
+  background: var(--hover-fill);
+}
+.sky3d-toolbar .view-toggle {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--glass-fill-strong);
 }
 .map-title {
   font-family: var(--font-sans);
@@ -418,11 +611,13 @@ svg {
   right: 18px;
   display: flex;
   flex-direction: column;
-  background: oklch(0.16 0.028 268 / 0.78);
-  border: 1px solid rgb(255 255 255 / 0.08);
-  border-radius: 12px;
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--glass-highlight);
   padding: 4px;
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 .map-status {
   position: absolute;
@@ -439,8 +634,7 @@ svg {
   line-height: var(--lh-ui);
   letter-spacing: -0.006em;
   color: var(--muted-foreground);
-  background: oklch(0.12 0.02 265 / 0.72);
-  backdrop-filter: blur(16px);
+  background: var(--glass-fill-strong);
 }
 .map-marker {
   position: absolute;
@@ -629,8 +823,8 @@ svg {
 .map-banner p,
 .map-outside {
   margin: 0;
-  padding: 6px 8px;
-  border-radius: 6px;
+  padding: 6px 10px;
+  border-radius: var(--inner-radius);
   background: color-mix(in oklch, var(--background) 92%, transparent);
   border: 1px solid var(--border);
   color: var(--foreground);
@@ -710,20 +904,21 @@ svg {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  border: 1px solid rgb(255 255 255 / 0.08);
-  background: oklch(0.22 0.03 268 / 0.4);
-  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-fill);
+  border-radius: 16px;
   padding: 10px;
   margin-top: 6px;
   transition:
-    border-color 200ms ease,
-    background-color 200ms ease,
-    box-shadow 200ms ease;
+    border-color var(--motion) var(--ease),
+    background-color var(--motion) var(--ease),
+    box-shadow var(--motion) var(--ease);
 }
-.observation-card.selected {
-  border-color: var(--primary);
-  background: oklch(0.797 0.134 211 / 0.1);
-  box-shadow: 0 0 24px oklch(0.797 0.134 211 / 0.35);
+.observation-card:not(.selected):hover {
+  border-color: var(--glass-border-hover);
+}
+.observation-card .card-select:hover {
+  background: transparent;
 }
 .observation-card input {
   accent-color: var(--primary);
@@ -753,8 +948,8 @@ svg {
   font-size: var(--fs-label);
   font-weight: 500;
   letter-spacing: 0;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 2px 8px;
+  border-radius: var(--control-radius);
 }
 .metadata-panel {
   margin-top: 0;
@@ -775,13 +970,7 @@ svg {
   position: relative;
   border: 1px solid var(--border);
   overflow: hidden;
-  border-radius: 6px;
-}
-.preview-wrap .sim-badge {
-  position: absolute;
-  bottom: 6px;
-  left: 6px;
-  background: var(--background);
+  border-radius: var(--inner-radius);
 }
 .metadata-table {
   width: calc(100% - 2 * var(--panel-pad));
@@ -829,7 +1018,7 @@ svg {
 .shimmer {
   height: 73px;
   margin: 8px 0;
-  border-radius: 8px;
+  border-radius: 16px;
   background: linear-gradient(90deg, var(--secondary), var(--card), var(--secondary));
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
@@ -857,7 +1046,7 @@ svg {
   background: color-mix(in oklch, var(--warning) 7%, transparent);
   color: var(--warning);
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: var(--inner-radius);
   font-size: var(--fs-ui);
   line-height: var(--lh-ui);
   display: flex;
@@ -879,7 +1068,7 @@ svg {
   touch-action: none;
 }
 .sky3d-toolbar,
-.sky3d-status,
+.sky3d-bottom,
 .sky3d-panel-slot {
   position: absolute;
   z-index: 6;
@@ -914,17 +1103,57 @@ svg {
   align-items: center;
   gap: 6px;
   padding: var(--button-py) 12px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: color-mix(in oklch, var(--card) 72%, transparent);
+  border-radius: var(--control-radius);
+  border: 1px solid var(--glass-border);
   color: var(--foreground);
   font: 500 var(--fs-ui) / 1.2 var(--font-sans);
   white-space: nowrap;
+  cursor: pointer;
 }
-.sky3d-status {
+.sky3d-bottom {
   left: 18px;
   right: 18px;
   bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.sky3d-gizmo {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  overflow: visible;
+}
+.sky3d-gizmo-axis line {
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+.sky3d-gizmo-axis text {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+}
+.sky3d-gizmo-axis.axis-x line { stroke: var(--primary); }
+.sky3d-gizmo-axis.axis-x text { fill: var(--primary); }
+.sky3d-gizmo-axis.axis-y line { stroke: var(--violet); }
+.sky3d-gizmo-axis.axis-y text { fill: var(--violet); }
+.sky3d-gizmo-axis.axis-z line { stroke: var(--muted-foreground); }
+.sky3d-gizmo-axis.axis-z text { fill: var(--muted-foreground); }
+.sky3d-labels {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  pointer-events: none;
+}
+.sky3d-labels > span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+}
+.sky3d-status {
+  align-self: stretch;
   display: flex;
   flex-wrap: wrap;
   gap: 8px 16px;
@@ -939,35 +1168,75 @@ svg {
 .sky3d-panel-slot {
   top: 116px;
   right: 18px;
-  width: min(280px, calc(100% - 36px));
-  transition: opacity 200ms ease;
-}
-.sky3d-root[data-density="focus"] .sky3d-panel-slot {
-  opacity: 0;
-  visibility: hidden;
+  width: min(224px, calc(100% - 36px));
+  display: flex;
+  justify-content: flex-end;
 }
 .sky3d-panel {
   pointer-events: auto;
-  padding: 12px var(--panel-pad);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  width: 100%;
   color: var(--foreground);
   font-size: var(--fs-help);
   line-height: var(--lh-ui);
-  max-height: min(420px, calc(100% - 180px));
-  overflow: auto;
+  border-radius: var(--glass-radius);
+  overflow: hidden;
 }
-.sky3d-panel p {
-  margin: 0;
+.sky3d-panel[data-open="false"] {
+  width: auto;
 }
-.sky3d-legend {
+.sky3d-panel-toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 12px;
+  color: var(--foreground);
+  font: 500 var(--fs-help) / var(--lh-tight) var(--font-sans);
+}
+.sky3d-panel-toggle svg {
+  color: var(--muted-foreground);
+  transition: transform var(--motion) var(--ease);
+}
+.sky3d-panel-toggle[aria-expanded="false"] svg {
+  transform: rotate(-90deg);
+}
+.sky3d-panel-body {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+  padding: 2px 12px 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+.sky3d-panel-body[hidden] {
+  display: none;
+}
+.sky3d-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 10px;
+  margin: 0;
+}
+.sky3d-facts dt {
+  color: var(--muted-foreground);
+}
+.sky3d-facts dd {
+  margin: 0;
+  text-align: right;
+  font-size: var(--fs-label);
+  white-space: nowrap;
+}
+.sky3d-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 8px;
   margin: 0;
   padding: 0;
   list-style: none;
+  color: var(--muted-foreground);
+  font-size: var(--fs-label);
+  white-space: nowrap;
 }
 .sky3d-legend li {
   display: flex;
@@ -1010,16 +1279,6 @@ svg {
   inset: 72px 24px 72px;
   border-radius: 16px;
 }
-@keyframes panel-rise {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
 @keyframes marker-pulse {
   50% {
     box-shadow: 0 0 0 8px oklch(0.797 0.134 211 / 0.06);
@@ -1047,12 +1306,12 @@ svg {
   }
   .map-status,
   .sky3d-toolbar,
-  .sky3d-status {
+  .sky3d-bottom {
     left: 352px;
     right: 352px;
   }
   .sky3d-panel-slot {
-    right: 368px;
+    right: 352px;
   }
   .results-list {
     max-height: 240px;
@@ -1122,9 +1381,6 @@ svg {
   .sky3d-panel-slot {
     top: 156px;
   }
-  .sky3d-panel {
-    max-height: 240px;
-  }
   .survey-status {
     top: 96px;
     bottom: auto;
@@ -1174,5 +1430,34 @@ svg {
   *:after {
     animation: none !important;
     transition: none !important;
+  }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-reduced-motion: reduce) {
+  .glass,
+  .glass-strong,
+  .app-header,
+  .view-toggle,
+  .map-controls,
+  .glass-panel,
+  .map-status,
+  .mobile-drawer,
+  .field:not(:focus),
+  .observation-card:not(.selected),
+  .sky3d-reset,
+  .search-panel-footer,
+  .search-panel button.border,
+  .results-panel button.border,
+  .mobile-panel-trigger button {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--glass-fill-solid);
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass,
+  .app-header,
+  .view-toggle,
+  .map-controls {
+    background: var(--glass-fill-solid);
   }
 }

@@ -1,10 +1,10 @@
 .mobile-drawer {
   max-height: 88dvh;
   overflow-y: auto;
-  border-radius: 16px 16px 0 0;
-  border-top: 1px solid rgb(255 255 255 / 0.08);
-  background: oklch(0.14 0.024 268 / 0.92);
-  backdrop-filter: blur(16px);
+  border-radius: var(--glass-radius) var(--glass-radius) 0 0;
+  border-top: 1px solid var(--glass-border);
+  background: var(--glass-fill-strong);
+  box-shadow: var(--glass-highlight);
 }
 .mobile-panel-trigger.search { order: 2; }
 .mobile-panel-trigger.results { order: 3; }

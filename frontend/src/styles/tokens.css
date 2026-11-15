@@ -38,6 +38,12 @@
   --button-py: 8px;
   --panel-pad: 14px;
   --panel-gap: 10px;
+  --glass-radius: 18px;
+  --inner-radius: 12px;
+  --control-radius: 999px;
+  --glass-blur: 16px;
+  --motion: 200ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
 }
 
 :root:root,
@@ -63,7 +69,18 @@
   --destructive: oklch(0.645 0.215 16);
   --success: oklch(0.765 0.153 163);
   --violet: oklch(0.606 0.219 293);
-  --brand-gradient: linear-gradient(110deg, var(--primary), var(--violet));
+  --brand-gradient: linear-gradient(100deg, oklch(0.89 0.13 195), oklch(0.8 0.12 240));
+  --iris-border: linear-gradient(120deg, oklch(0.89 0.13 195), oklch(0.68 0.18 295));
+  --glass-fill: oklch(0.16 0.028 268 / 0.88);
+  --glass-fill-strong: oklch(0.15 0.026 268 / 0.94);
+  --glass-fill-solid: oklch(0.16 0.028 268);
+  --glass-highlight: inset 0 1px 0 rgb(255 255 255 / 0.16);
+  --glass-border: rgb(255 255 255 / 0.14);
+  --glass-border-hover: rgb(255 255 255 / 0.26);
+  --hover-fill: rgb(255 255 255 / 0.06);
+  --glow-active: 0 0 16px oklch(0.86 0.13 200 / 0.42);
+  --glow-focus: 0 0 0 3px oklch(0.86 0.13 200 / 0.28);
+  --glow-violet: 0 0 14px oklch(0.68 0.18 295 / 0.4);
   --panel-shadow: 0 12px 40px oklch(0 0 0 / 0.2);
   --active-shadow: 0 0 24px oklch(0.797 0.134 211 / 0.1);
   --radius: 0.75rem;
