@@ -108,6 +108,20 @@ def test_unknown_unit_and_invalid_wcs(tmp_path):
     with pytest.raises(InvalidWCS): run(a,bad)
 
 
+def test_signed_flags_keep_only_bits_stored_in_their_type(tmp_path):
+    a, b = tmp_path/'a.fits', tmp_path/'b.fits'
+    make_file(a); make_file(b)
+    stored = np.zeros((16, 16), dtype=np.int16)
+    stored[1, 1] = np.int16(-32768)  # bit 15 only; bits 16 and above are not stored
+    for path in (a, b):
+        with fits.open(path, mode='update') as hdus:
+            hdus['FLAGS'].data = stored.copy()
+    outside = run(a, b, reject_bits=1 << 16, flags_share_image_grid=True)
+    assert outside.science_quality_evaluated and outside.quality_mask[1, 1]
+    bit15 = run(a, b, reject_bits=1 << 15, flags_share_image_grid=True)
+    assert not bit15.quality_mask[1, 1]
+
+
 def test_bad_flags_shape_and_bitmask(tmp_path):
     a, b = tmp_path/'a.fits', tmp_path/'b.fits'
     make_file(a); make_file(b)

@@ -62,12 +62,22 @@ def _variance_info(hdu) -> VarianceInfo:
                         nonnegative_finite_pixels=int((finite & (data >= 0)).sum()))
 
 
+def _stored_flag_bits(flags: np.ndarray) -> np.ndarray:
+    """Bit pattern stored in the FITS integer, without sign-extending it."""
+    width = int(flags.dtype.itemsize * 8)
+    if flags.dtype.kind == 'i':
+        # Same-width unsigned cast keeps the stored bits; a direct cast to
+        # uint64 would sign-extend and invent bits the file does not contain.
+        flags = flags.astype(np.dtype(f'uint{width}'), casting='unsafe')
+    return flags.astype(np.uint64, casting='unsafe')
+
+
 def _flags_mask(hdu, shape, reject_bits: int) -> np.ndarray:
     flags = hdu.data
     if flags is None or flags.ndim != 2 or flags.shape != shape or not np.issubdtype(flags.dtype, np.integer):
         raise ValueError('FLAGS must be a 2-D integer array on the selected image grid')
-    # Interpret signed integer storage as bit patterns; no implicit bit meanings.
-    return (flags.astype(np.uint64) & np.uint64(reject_bits)) == 0
+    # Explicit caller mask only. Signed values are not given extra high bits.
+    return (_stored_flag_bits(flags) & np.uint64(reject_bits)) == 0
 
 
 def _unit_compatibility(first: str | None, second: str | None) -> bool | None:
@@ -92,7 +102,9 @@ def assess_aligned_quality(
 
     Both FLAGS HDUs and an explicit rejection bitmask are required to report
     quality acceptance. The caller must also confirm that both FLAGS planes
-    are registered to their selected IMAGE grids. No bits are inferred. A
+    are registered to their selected IMAGE grids. No SPHEREx bit meanings are
+    inferred; reject_bits must come from the official product documentation.
+    Signed integers expose only the bits stored in their FITS type. A
     nearest-neighbour mask cannot certify all bilinear contributors: the
     reported quality is a diagnostic, not a conservative science mask.
     Percentages use all reference-grid pixels as denominator. Variance is
