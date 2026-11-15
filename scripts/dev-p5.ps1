@@ -1,4 +1,4 @@
-﻿# Arranque local del worktree. No mata procesos ajenos.
+# Arranque local del worktree. No mata procesos ajenos.
 # Detener solo lo que este script inició: .\scripts\dev-p5.ps1 -Stop
 param(
     [switch]$Stop
@@ -8,8 +8,6 @@ $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $StateDir = Join-Path $Root ".p5-dev"
 $PidFile = Join-Path $StateDir "pids.json"
-$BackendPort = 8000
-$FrontendPort = 5173
 
 function Get-CommandLine([int]$ProcessId) {
     $row = Get-CimInstance Win32_Process -Filter "ProcessId=$ProcessId" -ErrorAction SilentlyContinue
@@ -17,13 +15,13 @@ function Get-CommandLine([int]$ProcessId) {
     return [string]$row.CommandLine
 }
 
-function Stop-OwnedProcess([int]$ProcessId) {
+function Test-OwnedProcess([int]$ProcessId) {
     $command = Get-CommandLine $ProcessId
-    if (-not $command) {
-        Write-Host "PID $ProcessId ya no existe."
-        return
-    }
-    if ($command -notlike "*$Root*") {
+    return ($command -and $command -like "*$Root*")
+}
+
+function Stop-OwnedProcess([int]$ProcessId) {
+    if (-not (Test-OwnedProcess $ProcessId)) {
         Write-Host "PID $ProcessId no pertenece a este worktree. No se detiene."
         return
     }
@@ -45,17 +43,46 @@ if ($Stop) {
     exit 0
 }
 
-function Test-Listening([int]$Port) {
-    $listeners = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
-    return $null -ne $listeners
+function Get-Listeners([int]$Port) {
+    return @(Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue)
 }
 
-foreach ($port in @($BackendPort, $FrontendPort)) {
-    if (Test-Listening $port) {
-        Write-Host "El puerto $port ya está en uso. No se detiene ese proceso."
-        Write-Host "Libera el puerto o ejecuta .\scripts\dev-p5.ps1 -Stop si lo inició este script."
-        exit 1
+function Resolve-Port([int]$Start, [int]$Span) {
+    for ($port = $Start; $port -lt ($Start + $Span); $port++) {
+        $listeners = @(Get-Listeners $port)
+        if ($listeners.Count -eq 0) {
+            return @{ Port = $port; Owned = $false }
+        }
+        $foreign = @($listeners | Where-Object { -not (Test-OwnedProcess $_.OwningProcess) })
+        if ($foreign.Count -eq 0) {
+            return @{ Port = $port; Owned = $true }
+        }
+        Write-Host "Puerto $port ocupado por otro proceso. No se detiene."
     }
+    return $null
+}
+
+function Stop-OwnedPort([int]$Port) {
+    foreach ($listener in (Get-Listeners $Port)) {
+        Stop-OwnedProcess ([int]$listener.OwningProcess)
+    }
+    for ($i = 0; $i -lt 40; $i++) {
+        if ((Get-Listeners $Port).Count -eq 0) { return $true }
+        Start-Sleep -Milliseconds 250
+    }
+    return ((Get-Listeners $Port).Count -eq 0)
+}
+
+$nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+if (-not $nodeCmd) {
+    Write-Host "No hay Node.js en PATH."
+    exit 1
+}
+$nodeExe = $nodeCmd.Source
+$npmCmd = Join-Path (Split-Path -Parent $nodeExe) "npm.cmd"
+if (-not (Test-Path $npmCmd)) {
+    Write-Host "No se encontró npm.cmd junto a node.exe. No se usa npm.ps1."
+    exit 1
 }
 
 $pythonCmd = Get-Command py -ErrorAction SilentlyContinue
@@ -67,12 +94,6 @@ else {
 }
 if (-not $python) {
     Write-Host "No hay Python en PATH."
-    exit 1
-}
-$node = Get-Command node -ErrorAction SilentlyContinue
-$npm = Get-Command npm -ErrorAction SilentlyContinue
-if (-not $node -or -not $npm) {
-    Write-Host "No hay Node.js o npm en PATH."
     exit 1
 }
 
@@ -99,13 +120,30 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $nodeModules = Join-Path $Root "frontend\node_modules"
-if (-not (Test-Path $nodeModules)) {
+$viteJs = Join-Path $Root "frontend\node_modules\vite\bin\vite.js"
+if (-not (Test-Path $viteJs)) {
     Write-Host "Instalando dependencias del frontend"
     Push-Location (Join-Path $Root "frontend")
-    & npm ci
+    & $npmCmd ci
     $npmCode = $LASTEXITCODE
     Pop-Location
     if ($npmCode -ne 0) { exit $npmCode }
+}
+if (-not (Test-Path $viteJs)) {
+    Write-Host "No está el ejecutable de Vite: $viteJs"
+    exit 1
+}
+
+$backendChoice = Resolve-Port -Start 8000 -Span 20
+$frontendChoice = Resolve-Port -Start 5173 -Span 20
+if (-not $backendChoice -or -not $frontendChoice) {
+    Write-Host "No hay puertos libres junto a 8000 y 5173. No se detuvo ningún proceso ajeno."
+    exit 1
+}
+$BackendPort = [int]$backendChoice.Port
+$FrontendPort = [int]$frontendChoice.Port
+if ($BackendPort -ne 8000 -or $FrontendPort -ne 5173) {
+    Write-Host "Puertos de este worktree: backend $BackendPort, frontend $FrontendPort"
 }
 
 $manifest = Join-Path $env:USERPROFILE "Downloads\spherex_real_fits_p5\manifiesto_local_p5.json"
@@ -116,26 +154,77 @@ if ($LASTEXITCODE -ne 0) {
     Remove-Item Env:SPHEREX_P5_LOCAL_MANIFEST -ErrorAction SilentlyContinue
 }
 
+$env:VITE_API_PROXY = "http://127.0.0.1:$BackendPort"
+
 New-Item -ItemType Directory -Force -Path $StateDir | Out-Null
 $backendLog = Join-Path $StateDir "backend.log"
 $frontendLog = Join-Path $StateDir "frontend.log"
 
-$backend = Start-Process -FilePath $venvPython `
-    -ArgumentList @("-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "$BackendPort") `
-    -WorkingDirectory (Join-Path $Root "backend") `
-    -RedirectStandardOutput $backendLog `
-    -RedirectStandardError (Join-Path $StateDir "backend.err.log") `
-    -PassThru -WindowStyle Hidden
+$backendPid = 0
+if ($backendChoice.Owned) {
+    try {
+        $existing = Invoke-WebRequest -Uri "http://127.0.0.1:$BackendPort/health" -UseBasicParsing -TimeoutSec 3
+        if ($existing.StatusCode -eq 200) {
+            $backendPid = [int]@(Get-Listeners $BackendPort)[0].OwningProcess
+            Write-Host "Reutilizando el backend de este worktree en el puerto $BackendPort (PID $backendPid)"
+        }
+    } catch { }
+    if ($backendPid -eq 0) {
+        if (-not (Stop-OwnedPort $BackendPort)) {
+            Write-Host "No se pudo liberar el puerto $BackendPort de este worktree."
+            exit 1
+        }
+    }
+}
+if ($backendPid -eq 0) {
+    $backend = Start-Process -FilePath $venvPython `
+        -ArgumentList @("-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "$BackendPort") `
+        -WorkingDirectory (Join-Path $Root "backend") `
+        -RedirectStandardOutput $backendLog `
+        -RedirectStandardError (Join-Path $StateDir "backend.err.log") `
+        -PassThru -WindowStyle Hidden
+    $backendPid = [int]$backend.Id
+}
 
-$npmCmd = (Get-Command npm).Source
-$frontend = Start-Process -FilePath $npmCmd `
-    -ArgumentList @("run", "dev", "--", "--host", "127.0.0.1", "--port", "$FrontendPort", "--strictPort") `
-    -WorkingDirectory (Join-Path $Root "frontend") `
-    -RedirectStandardOutput $frontendLog `
-    -RedirectStandardError (Join-Path $StateDir "frontend.err.log") `
-    -PassThru -WindowStyle Hidden
+$frontendPid = 0
+$reuseFrontend = $false
+if ($frontendChoice.Owned -and (Test-Path $PidFile)) {
+    $saved = Get-Content $PidFile -Raw | ConvertFrom-Json
+    $sameApi = [string]$saved.api -eq $env:VITE_API_PROXY
+    $samePort = [int]$saved.frontendPort -eq $FrontendPort
+    $recorded = 0
+    try { $recorded = [int]$saved.frontend } catch { $recorded = 0 }
+    if ($sameApi -and $samePort -and $recorded -gt 0 -and (Test-OwnedProcess $recorded)) {
+        $reuseFrontend = $true
+        $frontendPid = $recorded
+        Write-Host "Reutilizando Vite de este worktree en el puerto $FrontendPort (PID $frontendPid)"
+    }
+}
+if (-not $reuseFrontend -and $frontendChoice.Owned) {
+    Write-Host "Reiniciando Vite de este worktree en el puerto $FrontendPort para usar $env:VITE_API_PROXY"
+    if (-not (Stop-OwnedPort $FrontendPort)) {
+        Write-Host "El puerto $FrontendPort sigue ocupado por un proceso que no se puede detener."
+        exit 1
+    }
+}
+if ($frontendPid -eq 0) {
+    $frontend = Start-Process -FilePath $nodeExe `
+        -ArgumentList @($viteJs, "--host", "127.0.0.1", "--port", "$FrontendPort", "--strictPort") `
+        -WorkingDirectory (Join-Path $Root "frontend") `
+        -RedirectStandardOutput $frontendLog `
+        -RedirectStandardError (Join-Path $StateDir "frontend.err.log") `
+        -PassThru -WindowStyle Hidden
+    $frontendPid = [int]$frontend.Id
+}
 
-@{ backend = $backend.Id; frontend = $frontend.Id } | ConvertTo-Json | Set-Content $PidFile -Encoding utf8
+@{
+    backend = $backendPid
+    frontend = $frontendPid
+    backendPort = $BackendPort
+    frontendPort = $FrontendPort
+    api = $env:VITE_API_PROXY
+    root = $Root
+} | ConvertTo-Json | Set-Content $PidFile -Encoding utf8
 
 $healthy = $false
 for ($i = 0; $i -lt 40; $i++) {
@@ -165,7 +254,19 @@ if (-not $frontendOk) {
     exit 1
 }
 
+$proxyOk = $false
+try {
+    $proxied = Invoke-WebRequest -Uri "http://127.0.0.1:$FrontendPort/health" -UseBasicParsing -TimeoutSec 5
+    $proxyOk = ($proxied.StatusCode -eq 200 -and $proxied.Content -match "ok")
+} catch { }
+if (-not $proxyOk) {
+    Write-Host "El frontend no reenvía /health al backend de este worktree."
+    exit 1
+}
+
 Write-Host "Backend  http://127.0.0.1:$BackendPort/health"
 Write-Host "Frontend http://127.0.0.1:$FrontendPort/"
+Write-Host "Proxy    $env:VITE_API_PROXY"
 Start-Process "http://127.0.0.1:$FrontendPort/"
 Write-Host "Servidores en marcha. Para detenerlos: .\scripts\dev-p5.ps1 -Stop"
+
