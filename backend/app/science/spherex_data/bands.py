@@ -76,4 +76,5 @@ def classify_band(wavelength_min_m: float | None, wavelength_max_m: float | None
         return None
     if not (math.isfinite(low) and math.isfinite(high) and 0 < low <= high):
         return None
-    return classify_wavelength((low + high) / 2)
+    matches = [b for b in BANDS if b.wavelength_min_um <= low and high <= b.wavelength_max_um]
+    return get_band_metadata(matches[0].detector) if len(matches) == 1 else None

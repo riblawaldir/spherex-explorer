@@ -46,14 +46,21 @@ def assess_candidate_pair(first, second, *, minimum_coverage_percent=None):
     times = [r.t_min_mjd for r in records]
     if all(mjd_to_utc(t) is not None for t in times):
         result['temporal']['delta_days'] = abs(times[1] - times[0])
-        # Existing organizer uses rounded MJD days as epoch keys.
-        different = round(times[0]) != round(times[1])
-        result['temporal']['different_epoch'] = different
-        if not different: failed = True
+        # Distinct timestamps alone do not establish distinct scientific epochs.
+        result['warnings'].append('Scientific epoch separation requires an explicit policy.')
+        pending = True
     else:
         pending = True
     ranges = [(r.em_min_m, r.em_max_m) for r in records]
-    if all(a is not None and b is not None and math.isfinite(a) and math.isfinite(b) and 0 < a <= b for a,b in ranges):
+    spectral_warnings = [o['spectral_metadata_warning'] for o in result['observations']
+                         if o.get('spectral_metadata_warning')]
+    if spectral_warnings:
+        result['warnings'].extend(spectral_warnings)
+        result['spectral']['reason'] = 'Spectral metadata require review before interpreting catalog intervals.'
+        pending = True
+    elif all(not isinstance(a, bool) and not isinstance(b, bool)
+             and isinstance(a, (int, float)) and isinstance(b, (int, float))
+             and math.isfinite(a) and math.isfinite(b) and 0 < a < b for a,b in ranges):
         if max(ranges[0][0], ranges[1][0]) >= min(ranges[0][1], ranges[1][1]):
             result['spectral'].update(compatible=False, reason='Detector-wide catalog intervals do not overlap.')
             failed = True

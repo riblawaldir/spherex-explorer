@@ -55,6 +55,7 @@ class SearchResult:
 class EpochsResult:
     epochs: list[dict[str, Any]]
     provenance: str
+    warning: str | None = None
 
 
 def _env_flag(name: str, default: bool = False) -> bool:
@@ -279,7 +280,8 @@ class CatalogService:
                                   'wavelength_um': None, 'collection': r.collection,
                                   'source_url': r.access_url, 'provenance': PROVENANCE,
                                   'preview_url': f'/api/preview/{r.obs_id}'})
-        if demo_rows:
+        # An explicit opt-in keeps configured cutouts from masking live searches.
+        if _env_flag('SPHEREX_DEMO_EXCLUSIVE'):
             return EpochsResult(epochs=demo_rows, provenance=PROVENANCE)
 
         if self._use_irsa:
@@ -291,6 +293,9 @@ class CatalogService:
                 logger.warning(
                     "IRSA epochs failed; falling back to fixtures: %s", exc
                 )
+                fallback = self._epochs_fixtures(ra=ra, dec=dec, radius=radius, band=band)
+                return EpochsResult(fallback.epochs, fallback.provenance,
+                                    'IRSA query failed; returned fixture data instead.')
 
         return self._epochs_fixtures(ra=ra, dec=dec, radius=radius, band=band)
 
@@ -404,6 +409,9 @@ class CatalogService:
             # P4 provides these; include only when present (do not invent).
             if rec.collection:
                 epoch["collection"] = rec.collection
+            spectral_warning = getattr(rec, 'extra', {}).get('spectral_metadata_warning')
+            if spectral_warning:
+                epoch['spectral_metadata_warning'] = spectral_warning
             access = (rec.access_url or "").strip()
             if access:
                 epoch["source_url"] = access

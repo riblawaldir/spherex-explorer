@@ -109,6 +109,11 @@ export async function fetchObservations(
       };
     }
 
+    if (json.warning) {
+      return { status: "error", observations: [], discarded: [],
+        provenance: json.provenance, isSimulated: true, error: json.warning };
+    }
+
     const { observations, discarded } = adaptEpochsToObservations(json.epochs);
     const provenance = json.provenance ?? "stub";
     const isSimulated =

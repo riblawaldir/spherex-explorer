@@ -11,11 +11,12 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional
 
+import numpy as np
 from astropy.table import Table
 from astropy.time import Time
 
 from .client import IRSAClient
-from .bands import classify_band
+from .bands import classify_band, get_band_metadata
 from .timing import normalize_timing
 from .config import (
     DEC_MAX, DEC_MIN,
@@ -64,7 +65,7 @@ class ObservationRecord:
 
     def to_dict(self) -> dict:
         """Serializa el registro a dict JSON-compatible."""
-        return {
+        result = {
             "id": self.obs_id,
             "collection": self.collection,
             "access_url": self.access_url,
@@ -87,6 +88,9 @@ class ObservationRecord:
             "facility_name": self.facility_name,
             "fits_path": self.fits_path,
         }
+        if self.extra.get('spectral_metadata_warning'):
+            result['spectral_metadata_warning'] = self.extra['spectral_metadata_warning']
+        return result
 
 
 # ---------------------------------------------------------------------------
@@ -202,8 +206,14 @@ def normalize_sia2_row(row, available_columns: list[str]) -> ObservationRecord:
     t_max = _safe_get(row, "t_max")
     em_min = _safe_get(row, "em_min")
     em_max = _safe_get(row, "em_max")
-    detector_raw = _safe_get(row, "instrument_name")
-    band_metadata = classify_band(_finite_float(em_min), _finite_float(em_max), detector_raw)
+    bandpass_raw = _safe_get(row, "energy_bandpassname")
+    instrument_raw = _safe_get(row, "instrument_name")
+    explicit_band = get_band_metadata(bandpass_raw)
+    explicit_instrument = get_band_metadata(instrument_raw)
+    detector_conflict = bool(explicit_band and explicit_instrument and
+                             explicit_band['detector'] != explicit_instrument['detector'])
+    detector_raw = bandpass_raw if explicit_band else instrument_raw if explicit_instrument else None
+    band_metadata = None if detector_conflict else classify_band(_finite_float(em_min), _finite_float(em_max), detector_raw)
     timing = normalize_timing(
         obs_id=str(obs_id), t_min_mjd=_finite_float(t_min), t_max_mjd=_finite_float(t_max),
         exposure_seconds=_finite_float(_safe_get(row, "t_exptime")),
@@ -219,6 +229,12 @@ def normalize_sia2_row(row, available_columns: list[str]) -> ObservationRecord:
         for col in available_columns
         if col not in standard_cols and _safe_get(row, col) is not None
     }
+    low, high = _finite_float(em_min), _finite_float(em_max)
+    if detector_conflict:
+        extra['spectral_metadata_warning'] = f"Conflicting detector identifiers: {bandpass_raw} and {instrument_raw}."
+    if (get_band_metadata(detector_raw) and band_metadata and low is not None and high is not None and low < high
+            and (low * 1e6 < band_metadata['wavelength_min_um'] or high * 1e6 > band_metadata['wavelength_max_um'])):
+        extra['spectral_metadata_warning'] = 'Catalog interval extends outside the detector design coverage; review metadata definitions and calibration.'
 
     return ObservationRecord(
         obs_id=str(obs_id),
@@ -250,7 +266,7 @@ def normalize_sia2_row(row, available_columns: list[str]) -> ObservationRecord:
 
 def _finite_float(value) -> Optional[float]:
     """Convert a table scalar to a finite float, omitting NaN and infinity."""
-    if value is None:
+    if value is None or isinstance(value, (bool, np.bool_)):
         return None
     try:
         number = float(value)

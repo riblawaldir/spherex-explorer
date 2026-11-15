@@ -6,7 +6,7 @@
 |---|---|---|---|
 | Espacial | Validación WCS y reproyección en rejilla de referencia | Política de cobertura útil, resolución y huella cuando no hay píxeles finitos | WCS, huella muestreada y porcentajes |
 | Espectral | Intervalos de catálogo y detección de WCS-WAVE | Calibración local y respuestas espectrales | Límites generales y presencia de tabla aproximada |
-| Temporal | MJD y diferencia; agrupación por MJD redondeado | Criterio contextual, control de consistencia temporal | Fechas del catálogo |
+| Temporal | MJD y diferencia, que puede ser cero; candidatos de productos distintos dentro de los grupos correspondientes | Criterio contextual, control de consistencia temporal | Fechas del catálogo |
 | Calidad | Conteos finitos y presencia de extensiones | Política de aceptación y diagnóstico científico | IMAGE, FLAGS y VARIANCE |
 | Calibración | Identificación de colecciones | Evidencia de procesamiento y calibraciones aplicables | Etiqueta de colección |
 | Incertidumbre | Inspección VARIANCE | Propagación y covarianza de remuestreo | Unidades y estadísticas de varianza |

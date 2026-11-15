@@ -97,13 +97,33 @@ def extract_metadata(fits_path: str | Path) -> dict:
             # PRIMARY puede estar vacío en un MEF. Conservamos su cabecera para
             # metadatos generales y elegimos por separado la extensión con imagen.
             primary_hdr = hdul[0].header
-            image_hdu = next(
-                (ext for ext in hdul
-                 if isinstance(ext, (fits.PrimaryHDU, fits.ImageHDU))
-                 and ext.data is not None and getattr(ext.data, "ndim", 0) >= 2),
-                None,
-            )
+            images = [ext for ext in hdul if ext.name.upper() == 'IMAGE']
+            if len(images) > 1:
+                raise ValueError('Ambiguous IMAGE extensions')
+            if images:
+                image_hdu = images[0]
+                if not isinstance(image_hdu, (fits.ImageHDU, fits.CompImageHDU)) or image_hdu.data is None or image_hdu.data.ndim != 2:
+                    raise ValueError('IMAGE must contain a 2-D image')
+            elif primary_hdr.get('NAXIS', 0) >= 2:
+                image_hdu = hdul[0]
+            else:
+                candidates = [ext for ext in hdul[1:] if isinstance(ext, (fits.ImageHDU, fits.CompImageHDU))
+                              and ext.name.upper() not in {'FLAGS', 'VARIANCE', 'ZODI'}
+                              and ext.data is not None and ext.data.ndim == 2]
+                if len(candidates) > 1:
+                    raise ValueError('Ambiguous science image extensions')
+                image_hdu = candidates[0] if candidates else None
             image_hdr = image_hdu.header if image_hdu is not None else primary_hdr
+            metadata['header_conflicts'] = {}
+
+            def selected_value(key):
+                # IMAGE has precedence for its own observation; preserve both
+                # values when PRIMARY disagrees so callers can review them.
+                if key in image_hdr and key in primary_hdr and image_hdr[key] != primary_hdr[key]:
+                    metadata['header_conflicts'][key] = {'primary': primary_hdr[key], 'image': image_hdr[key]}
+                if key in image_hdr:
+                    return image_hdr[key]
+                return primary_hdr.get(key)
 
             # Extraer campos conocidos (solo los que existen en la cabecera)
             primary_dict = {}
@@ -118,6 +138,7 @@ def extract_metadata(fits_path: str | Path) -> dict:
 
             # 3. Información de observación
             obs_info = {}
+            obs_sources = {}
             for key_fits, key_out in [
                 ("DATE-OBS", "date_obs"),
                 ("DATE-BEG", "date_begin"),
@@ -130,9 +151,17 @@ def extract_metadata(fits_path: str | Path) -> dict:
                 ("OBJECT", "object"),
                 ("TARGNAME", "target_name"),
             ]:
-                if key_fits in primary_hdr:
-                    obs_info[key_out] = primary_hdr[key_fits]
+                value = selected_value(key_fits)
+                priority = 1 if key_fits in image_hdr else 0
+                if value is not None and priority > obs_sources.get(key_out, -1):
+                    obs_info[key_out] = value
+                    obs_sources[key_out] = priority
             metadata["observation"] = obs_info
+            aliases = {f'{source}.{key}': header[key]
+                       for source, header in (('primary', primary_hdr), ('image', image_hdr))
+                       for key in ('OBSID', 'OBS_ID') if key in header}
+            if len(set(aliases.values())) > 1:
+                metadata['header_conflicts']['obs_id'] = aliases
 
             # 4. Información de instrumento
             instr_info = {}
@@ -146,8 +175,9 @@ def extract_metadata(fits_path: str | Path) -> dict:
                 ("SPX_BAND", "spherex_band"),
                 ("SPX_CHAN", "spherex_channel"),
             ]:
-                if key_fits in primary_hdr:
-                    instr_info[key_out] = primary_hdr[key_fits]
+                value = selected_value(key_fits)
+                if value is not None:
+                    instr_info[key_out] = value
             metadata["instrument"] = instr_info
 
             # 5. Dimensiones de imagen

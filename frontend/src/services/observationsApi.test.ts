@@ -4,6 +4,14 @@ import { fetchObservations } from "./observationsApi";
 describe("observationsApi Service (Sprint Adaptador Epoch)", () => {
   const dummyCoords = { ra: 127.69, dec: -39.17 };
 
+  it("muestra errores IRSA aunque el backend devuelva fixtures", async () => {
+    const mockFetch = vi.fn().mockResolvedValue({ok: true, status: 200,
+      json: async () => ({epochs: [], provenance: "cached_sample", warning: "IRSA query failed"})});
+    const result = await fetchObservations(dummyCoords, {fetchImpl: mockFetch as unknown as typeof fetch});
+    expect(result.status).toBe("error");
+    expect(result.error).toContain("IRSA query failed");
+  });
+
   it("gestiona una lista vacía de épocas devolviendo status 'empty'", async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,

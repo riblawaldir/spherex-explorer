@@ -22,6 +22,7 @@ export interface ApiEpoch {
 export interface ApiEpochsResponse {
   epochs: ApiEpoch[];
   provenance: "stub" | "cached_sample" | string;
+  warning?: string;
 }
 
 export interface ApiTarget {
