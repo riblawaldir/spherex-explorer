@@ -44,7 +44,7 @@ class CompareOutcome:
 
 
 def _pair_provenance(epoch_a: dict[str, Any], epoch_b: dict[str, Any]) -> str:
-    ranks = {PROVENANCE_STUB: 0, PROVENANCE_CACHED_SAMPLE: 1, "live": 2}
+    ranks = {PROVENANCE_STUB: 0, PROVENANCE_CACHED_SAMPLE: 1, "irsa_verified_local": 2, "live": 3}
     a = str(epoch_a.get("provenance", PROVENANCE_STUB))
     b = str(epoch_b.get("provenance", PROVENANCE_STUB))
     # Conservative label: weakest of the two (never promote to live).

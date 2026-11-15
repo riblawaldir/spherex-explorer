@@ -5,6 +5,7 @@ const toneClass: Record<ProvenanceKind, string> = {
   stub: "border-warning/30 bg-warning/10 text-warning",
   cached_sample: "border-border bg-secondary text-muted-foreground",
   live: "border-success/30 bg-success/10 text-success",
+  irsa_verified_local: "border-success/30 bg-success/10 text-success",
   unknown: "border-border bg-muted/40 text-muted-foreground",
 };
 
