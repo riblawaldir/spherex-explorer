@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
   title: SPHEREx Explorer API
-  version: 0.3.0-sprint3
+  version: 0.4.0-sprint4
   description: |
-    Sprint 3 contract for SPHEREx Explorer.
+    Sprint 4 contract for SPHEREx Explorer.
     Default search/epochs path uses labeled fixtures under `data/metadata/`
     with provenance `stub` or `cached_sample` (offline demo / CI).
     When `SPHEREX_USE_IRSA=1` (or CatalogService `use_irsa=True`), the
@@ -17,6 +17,12 @@ info:
     data/samples/, fits_sample, data/raw/{obs_id}.fits, or a P4 fits_path
     already on disk). GET /api/preview/{obs_id} uses P5 inspect_fits +
     fits_to_png; otherwise 501 / null preview_url.
+    GET /api/compare validates a pair of known obs_ids and returns
+    comparable / not_comparable with provenance. When both local FITS
+    resolve, P5 align_fits_images (and assess_aligned_quality when present)
+    is attempted. Scientific difference / subtraction is not shipped by P5
+    yet — `diff.status` is an honest stub (`not_implemented` / skipped),
+    never an invented residual image.
 servers:
   - url: http://127.0.0.1:8000
     description: Local uvicorn
@@ -181,6 +187,49 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StubNotImplemented"
+  /api/compare:
+    get:
+      summary: Compare two known obs_ids (metadata + optional P5 align)
+      operationId: compareObservations
+      tags: [compare]
+      parameters:
+        - in: query
+          name: obs_id_a
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          description: First observation id (labeled fixture or known catalog row)
+        - in: query
+          name: obs_id_b
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          description: Second observation id (must differ from obs_id_a)
+      responses:
+        "200":
+          description: |
+            Pair assessment. `status` is comparable only when bandpass matches,
+            both local FITS resolve, wavelength is not an explicit mismatch, and
+            P5 WCS alignment succeeds (units compatible or unknown). Diff is
+            never invented — see `diff.status`.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompareResponse"
+        "404":
+          description: One or both obs_ids are unknown in labeled fixtures
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StubNotImplemented"
+        "422":
+          description: Identical obs_ids or missing/invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StubNotImplemented"
 components:
   schemas:
     Target:
@@ -307,3 +356,133 @@ components:
         provenance:
           type: string
           example: stub
+    EpochSnapshot:
+      type: object
+      required:
+        [obs_id, ra, dec, t_mjd, bandpass, wavelength_um, preview_url, provenance]
+      description: |
+        Known fields only for one side of a compare pair. collection /
+        source_url included only when the underlying row actually has them
+        (never invented for fixtures).
+      properties:
+        obs_id:
+          type: string
+        ra:
+          type: number
+          nullable: true
+        dec:
+          type: number
+          nullable: true
+        t_mjd:
+          type: number
+          nullable: true
+        bandpass:
+          type: string
+          nullable: true
+        wavelength_um:
+          type: number
+          nullable: true
+        preview_url:
+          type: string
+          nullable: true
+        provenance:
+          type: string
+          enum: [stub, cached_sample, live]
+        collection:
+          type: string
+          nullable: true
+        source_url:
+          type: string
+          nullable: true
+    AlignmentReport:
+      type: object
+      required: [status, detail]
+      properties:
+        status:
+          type: string
+          enum: [ok, failed, skipped, unavailable]
+        detail:
+          type: string
+        common_coverage_percent:
+          type: number
+          nullable: true
+        units_compatible:
+          type: boolean
+          nullable: true
+        reference_unit:
+          type: string
+          nullable: true
+        target_unit:
+          type: string
+          nullable: true
+        reference_hdu:
+          type: integer
+          nullable: true
+        target_hdu:
+          type: integer
+          nullable: true
+        warnings:
+          type: array
+          items:
+            type: string
+    DiffReport:
+      type: object
+      required: [status, detail, provenance]
+      description: |
+        Honest stub until P5 ships a scientific difference API. Never a
+        fabricated residual PNG or NASA discovery claim.
+      properties:
+        status:
+          type: string
+          enum: [not_implemented, skipped, unavailable]
+        detail:
+          type: string
+        provenance:
+          type: string
+          enum: [stub, cached_sample, live]
+          example: stub
+    CompareResponse:
+      type: object
+      required:
+        [
+          obs_id_a,
+          obs_id_b,
+          status,
+          provenance,
+          reasons,
+          epoch_a,
+          epoch_b,
+          alignment,
+          diff,
+          checks,
+        ]
+      properties:
+        obs_id_a:
+          type: string
+        obs_id_b:
+          type: string
+        status:
+          type: string
+          enum: [comparable, not_comparable]
+          description: |
+            comparable only after metadata gates and successful P5 alignment.
+        provenance:
+          type: string
+          enum: [stub, cached_sample, live]
+          description: Weakest provenance of the two epochs (never promoted).
+        reasons:
+          type: array
+          items:
+            type: string
+        epoch_a:
+          $ref: "#/components/schemas/EpochSnapshot"
+        epoch_b:
+          $ref: "#/components/schemas/EpochSnapshot"
+        alignment:
+          $ref: "#/components/schemas/AlignmentReport"
+        diff:
+          $ref: "#/components/schemas/DiffReport"
+        checks:
+          type: object
+          additionalProperties: true
+          description: Machine-readable gate results (bandpass, fits, align).
