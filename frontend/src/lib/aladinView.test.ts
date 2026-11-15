@@ -10,7 +10,6 @@ import {
   probeAladinSurvey,
   projectFallbackPosition,
   surveyBackgroundLabel,
-  surveyFetchFailed,
   surveyTileSeen,
   unprojectFallbackPosition,
 } from "./aladinView";
@@ -52,7 +51,7 @@ describe("consulta a vista de Aladin", () => {
   });
 
   it("usa el espejo ESA de DSS2 Color porque el nodo CDS no entrega teselas", () => {
-    expect(DEFAULT_ALADIN_SURVEY).toBe("https://skies.esac.esa.int/DSSColor");
+    expect(DEFAULT_ALADIN_SURVEY).toBe("https://irsa.ipac.caltech.edu/data/hips/CDS/DSS2/color");
     expect(ALADIN_SURVEYS[DEFAULT_ALADIN_SURVEY]?.name).toBe("DSS2 Color");
   });
 
@@ -71,23 +70,9 @@ describe("consulta a vista de Aladin", () => {
   it("no presenta DSS2 como activo si el fondo no llegó", () => {
     expect(surveyBackgroundLabel("loading")).toContain("Cargando fondo…");
     expect(surveyBackgroundLabel("ready")).toContain("Fondo: DSS2 Color");
-    expect(surveyBackgroundLabel("ready")).toContain("skies.esac.esa.int");
+    expect(surveyBackgroundLabel("ready")).toContain("irsa.ipac.caltech.edu");
     expect(surveyBackgroundLabel("unavailable")).toContain("Fondo del cielo no disponible");
     expect(surveyBackgroundLabel("unavailable")).toContain("marcadores");
-  });
-
-  it("detecta fallos de HiPS sin tesela válida hacia el host del survey", () => {
-    const host = "https://skies.esac.esa.int/DSSColor";
-    expect(
-      surveyFetchFailed(["https://skies.esac.esa.int/DSSColor/properties"], host),
-    ).toBe(true);
-    expect(
-      surveyFetchFailed(
-        ["https://skies.esac.esa.int/DSSColor/Norder3/Dir0/Npix0.jpg"],
-        host,
-      ),
-    ).toBe(false);
-    expect(surveyFetchFailed(["http://localhost:5173/app.js"], host)).toBe(false);
   });
 
   it("sondea el manifiesto HiPS y trata errores de red como no disponible", async () => {

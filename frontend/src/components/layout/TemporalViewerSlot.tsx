@@ -87,6 +87,7 @@ export function TemporalViewerSlot({
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isBlinking, setIsBlinking] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
+  const [displayContrast, setDisplayContrast] = useState<"clear" | "original">("clear");
   const [blinkSecondId, setBlinkSecondId] = useState<string | undefined>(
     blinkOptions[1]?.id,
   );
@@ -260,7 +261,8 @@ export function TemporalViewerSlot({
                         key={previewKey}
                         src={displayedObservation.preview_url ?? undefined}
                         alt={`Previsualización de ${displayedObservation.id}, ${formatDate(displayedObservation.observed_at)}`}
-                        className="max-h-full max-w-full object-contain"
+                        className="h-full w-full object-contain"
+                        style={{ filter: displayContrast === "clear" ? "contrast(1.5) brightness(0.85)" : "none" }}
                         onError={() => setFailedPreviewKey(previewKey)}
                         onLoad={() => {
                           setFailedPreviewKey((failed) => (failed === previewKey ? undefined : failed));
@@ -462,6 +464,20 @@ export function TemporalViewerSlot({
           <span className="min-w-12 text-right text-xs text-muted-foreground" aria-live="polite">
             {count === 0 ? "0 / 0" : `${Math.max(activeIndex, 0) + 1} / ${count}`}
           </span>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <label htmlFor="temporal-display-contrast" className="text-xs text-muted-foreground">Contraste de visualización</label>
+          <select
+            id="temporal-display-contrast"
+            className="field w-auto"
+            value={displayContrast}
+            onChange={(event) => setDisplayContrast(event.target.value as "clear" | "original")}
+          >
+            <option value="clear">Resaltar estrellas</option>
+            <option value="original">Vista original</option>
+          </select>
+          <span className="text-xs text-muted-foreground">Solo presentación; no modifica los datos FITS.</span>
         </div>
 
         <p className="text-muted-foreground text-xs mt-4">

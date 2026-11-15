@@ -65,6 +65,20 @@ describe("TemporalViewerSlot", () => {
     return container.querySelector("img")?.getAttribute("alt") ?? null;
   }
 
+  it("permite alternar el contraste de presentación sin cambiar la imagen", async () => {
+    await render([observation("star", "2026-08-15T00:00:00Z")]);
+    const image = container.querySelector("img")!;
+    const source = image.getAttribute("src");
+    expect(image.style.filter).toContain("contrast(1.5)");
+    const select = container.querySelector("#temporal-display-contrast") as HTMLSelectElement;
+    await act(async () => {
+      select.value = "original";
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    expect(image.style.filter).toBe("none");
+    expect(image.getAttribute("src")).toBe(source);
+  });
+
   it("orders observations by date and supports previous/next navigation", async () => {
     await render([
       observation("later", "2026-08-20T00:00:00Z"),

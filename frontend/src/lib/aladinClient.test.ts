@@ -116,6 +116,21 @@ function marker(ra: number, dec: number, id: string): ObservationMarkerItem {
 }
 
 describe("cliente de Aladin Lite", () => {
+  it("añade y retira la capa FITS local", () => {
+    const { namespace, instance } = fakeNamespace();
+    const image = { id: "image" };
+    instance.createImageFITS = vi.fn(() => image);
+    instance.setOverlayImageLayer = vi.fn();
+    const controller = createAladinController(namespace, instance);
+    const loaded = vi.fn();
+    const failed = vi.fn();
+    controller.showFitsOverlay?.("blob:local", loaded, failed);
+    expect(instance.createImageFITS).toHaveBeenCalledWith("blob:local", { name: "Recorte FITS local" }, loaded, failed);
+    expect(instance.setOverlayImageLayer).toHaveBeenCalledWith(image, "spherex-fits");
+    controller.clearFitsOverlay?.();
+    expect(instance.removeImageLayer).toHaveBeenCalledWith("spherex-fits");
+    controller.destroy();
+  });
   it("no crea el visor si el montaje se cancela durante la inicialización", async () => {
     const { namespace, calls, ready } = fakeNamespace();
     const container = document.createElement("div");

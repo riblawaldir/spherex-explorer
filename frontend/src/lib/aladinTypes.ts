@@ -38,6 +38,8 @@ export interface AladinInstance {
   setBaseImageLayer?(surveyId: string): void;
   getBaseImageLayer?(): AladinImageLayer | undefined;
   removeImageLayer?(layerId?: string): void;
+  createImageFITS?(url: string, options: Record<string, unknown>, onLoad?: () => void, onError?: (error: unknown) => void): unknown;
+  setOverlayImageLayer?(image: unknown, layerName: string): unknown;
   /** https://cds-astro.github.io/aladin-lite/Aladin.html — setCooGrid({ color, opacity, thickness, enabled }) */
   setCooGrid(options: {
     color?: string;
