@@ -78,6 +78,33 @@ describe("TemporalViewerSlot", () => {
     expect(imageAlt()).toContain("earlier");
   });
 
+  it("lets the timeline select an observation in chronological order", async () => {
+    await render([
+      observation("later", "2026-08-20T00:00:00Z"),
+      observation("earlier", "2026-08-15T00:00:00Z"),
+    ]);
+
+    const timeline = container.querySelector(
+      '[aria-label="Línea temporal de observaciones"]',
+    ) as HTMLInputElement;
+    expect(timeline.value).toBe("0");
+    expect(timeline.getAttribute("aria-valuetext")).toContain("15 ago de 2026");
+
+    await act(async () => {
+      const valueSetter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value",
+      )?.set;
+      valueSetter?.call(timeline, "1");
+      timeline.dispatchEvent(new Event("input", { bubbles: true }));
+      timeline.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    expect(imageAlt()).toContain("later");
+    expect(container.textContent).toContain("2 / 2");
+    expect(timeline.getAttribute("aria-valuetext")).toContain("20 ago de 2026");
+  });
+
   it("labels fixtures as simulated and leaves API observations unmarked", async () => {
     const rows = [observation("one", "2026-08-15T00:00:00Z")];
 
