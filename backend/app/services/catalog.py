@@ -461,7 +461,6 @@ class CatalogService:
                 return found
         return None
 
-feat/spherex-data
     def resolve_observation(self, obs_id: str):
         """Resolve a previously discovered IRSA record or a labeled fixture.
 
@@ -482,6 +481,8 @@ feat/spherex-data
                     ra=row.get('ra'), dec=row.get('dec'), t_min_mjd=row.get('t_mjd'),
                     band_label=row.get('bandpass'),
                 )
+        return None
+
     def get_epoch_by_obs_id(self, obs_id: str) -> dict[str, Any] | None:
         """Return a known epoch row for ``obs_id``, or ``None`` if unknown.
 
@@ -515,7 +516,6 @@ feat/spherex-data
             if row.get("source_url"):
                 epoch["source_url"] = row["source_url"]
             return epoch
- main
         return None
 
 
