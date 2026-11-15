@@ -12,6 +12,7 @@ from astropy.wcs import WCS
 
 from app.science.local_manifest import (
     ManifestError,
+    cutout_center_radec,
     read_manifest,
     resolve_allowed_fits,
     sha256_file,
@@ -243,6 +244,29 @@ _HASH_B = "550c012a64114b84d99ed26330171c706b0b511a86faa6c99718eb5c8eac568d"
     not (_FIELD_P_A.is_file() and _FIELD_P_B.is_file()),
     reason="Los FITS del campo P no están en esta máquina",
 )
+def test_cutout_center_ignores_reference_pixel_outside_the_image():
+    header = fits.Header()
+    header["CTYPE1"] = "RA---TAN"
+    header["CTYPE2"] = "DEC--TAN"
+    header["CRPIX1"] = 5.5
+    header["CRPIX2"] = 5.5
+    header["CRVAL1"] = 140.0
+    header["CRVAL2"] = 55.0
+    header["CDELT1"] = -0.01
+    header["CDELT2"] = 0.01
+    header["CUNIT1"] = "deg"
+    header["CUNIT2"] = "deg"
+    ra, dec = cutout_center_radec(header, 10, 10)
+    assert ra == pytest.approx(140.0)
+    assert dec == pytest.approx(55.0)
+
+    header["CRPIX1"] = -20
+    header["CRPIX2"] = 40
+    ra, dec = cutout_center_radec(header, 10, 10)
+    assert abs(ra - 140.0) > 0.01
+    assert abs(dec - 55.0) > 0.01
+
+
 def test_field_p_files_stay_intact():
     assert sha256_file(_FIELD_P_A) == _HASH_A
     assert sha256_file(_FIELD_P_B) == _HASH_B

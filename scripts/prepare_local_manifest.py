@@ -16,6 +16,9 @@ from pathlib import Path
 from astropy.io import fits
 from astropy.time import Time
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
+from app.science.local_manifest import cutout_center_radec  # noqa: E402
+
 AUTHORIZED = {
     "2026W15_2A_0124_1": {
         "filename": "campoP_dr1_2026W15_2A_0124_1.fits",
@@ -55,8 +58,9 @@ def header_row(path: Path, obs_id: str, meta: dict) -> dict:
         if image is None:
             raise SystemExit(f"{obs_id} no tiene extensión IMAGE")
         header = image.header
-        ra = header.get("CRVAL1")
-        dec = header.get("CRVAL2")
+        naxis1 = int(header["NAXIS1"])
+        naxis2 = int(header["NAXIS2"])
+        ra, dec = cutout_center_radec(header, naxis1, naxis2)
         mjd = header.get("MJD-OBS")
         if mjd is None and header.get("DATE-OBS"):
             mjd = Time(str(header["DATE-OBS"]), format="isot", scale="utc").mjd

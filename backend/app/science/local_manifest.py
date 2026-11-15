@@ -72,6 +72,18 @@ class LocalManifest:
         return None
 
 
+def cutout_center_radec(header, naxis1: int, naxis2: int) -> tuple[float, float]:
+    """Sky position of the image center, in degrees.
+
+    A SPHEREx cutout keeps the detector reference pixel. That pixel can fall
+    outside the cutout, so CRVAL is not the coordinate a user should search.
+    """
+    from astropy.wcs import WCS
+
+    sky = WCS(header).pixel_to_world((naxis1 + 1) / 2 - 1, (naxis2 + 1) / 2 - 1)
+    return float(sky.ra.deg), float(sky.dec.deg)
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
