@@ -203,6 +203,7 @@ export function ExplorerWorkspace() {
               }}
               onRetry={search}
               isSimulated={isSimulated}
+              hasSearched={hasSearched}
             />
             <MetadataPanel
               observation={observations.find((o) => o.id === selectedId)}

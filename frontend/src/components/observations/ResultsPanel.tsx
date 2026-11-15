@@ -18,6 +18,7 @@ export function ResultsPanel({
   onCompare,
   onRetry,
   isSimulated = false,
+  hasSearched = false,
 }: {
   observations: Observation[];
   selectedId?: string | undefined;
@@ -30,6 +31,7 @@ export function ResultsPanel({
   onCompare: () => void;
   onRetry: () => void;
   isSimulated?: boolean;
+  hasSearched?: boolean;
 }) {
   return (
     <section className="glass-panel results-panel" aria-label="Panel de observaciones">
@@ -102,6 +104,11 @@ export function ResultsPanel({
               onCheck={onCheck}
             />
           ))
+        ) : !hasSearched ? (
+          <div className="empty-state">
+            <p>Aún no has buscado.</p>
+            <p className="mt-2">Introduce coordenadas y pulsa Buscar.</p>
+          </div>
         ) : (
           <div className="empty-state">
             <SearchX className="mx-auto mb-3" />
