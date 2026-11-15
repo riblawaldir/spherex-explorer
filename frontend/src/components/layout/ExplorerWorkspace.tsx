@@ -140,7 +140,7 @@ export function ExplorerWorkspace() {
         </div>
         <div className="eyebrow flex items-center gap-2">
           <Crosshair size={14} className="text-primary" />
-          EXPLORACIÓN POR COORDENADAS
+          Exploración por coordenadas
         </div>
       </div>
       <div className="workspace-layout">

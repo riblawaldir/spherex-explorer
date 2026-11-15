@@ -20,7 +20,7 @@ export function Header() {
           <div className="brand-name">
             SPHEREx <span>Explorer</span>
           </div>
-          <div className="brand-caption">NASA SPACE APPS CHALLENGE 2026</div>
+          <div className="brand-caption">NASA Space Apps Challenge 2026</div>
         </div>
       </Link>
       <nav className="main-nav" aria-label="Navegación principal">

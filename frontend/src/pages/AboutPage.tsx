@@ -4,7 +4,7 @@ export function AboutPage() {
   return (
     <main className="secondary-page">
       <Orbit size={42} className="text-primary mb-6" />
-      <h1 className="text-[40px] font-medium mt-6">SPHEREx Explorer</h1>
+      <h1 className="text-4xl font-semibold tracking-tight mt-6">SPHEREx Explorer</h1>
       <p className="text-muted-foreground text-base mt-4 max-w-2xl leading-7">
         Interfaz para explorar observaciones por coordenadas, bandas y fechas en el desafío “Planet
         X and SPHEREx” de NASA Space Apps Challenge 2026. Las posiciones del mapa son las RA/Dec que
@@ -14,8 +14,9 @@ export function AboutPage() {
       <div className="border-t border-border mt-10 pt-8">
         <h2 className="text-xl">Alcance</h2>
         <p className="text-muted-foreground text-sm leading-7 mt-4 max-w-2xl">
-          Los datos simulados solo aparecen si la aplicación se ejecuta con VITE_USE_MOCKS=true, y
-          en ese caso llevan la etiqueta DATOS SIMULADOS. Esta interfaz no declara hallazgos
+          Los datos simulados solo aparecen si la aplicación se ejecuta con{" "}
+          <span className="scientific">VITE_USE_MOCKS=true</span>, y en ese caso llevan la etiqueta
+          DATOS SIMULADOS. Esta interfaz no declara hallazgos
           astronómicos. La vista 3D todavía es un espacio reservado.
         </p>
         <a

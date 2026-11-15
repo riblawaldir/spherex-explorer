@@ -41,13 +41,13 @@ export function ResultsPanel({
         </h2>
         {isSimulated && <SimulatedBadge />}
       </div>
-      <p className="px-[18px] text-[10px] text-muted-foreground">
+      <p className="px-[18px] text-sm text-muted-foreground">
         Selecciona observaciones para comparar.
       </p>
 
       {/* Aviso discreto de observaciones descartadas por datos incompletos de la API */}
       {discarded && discarded.length > 0 && (
-        <div className="mx-3 my-2 text-[10px] rounded border border-warning/30 bg-warning/5 px-2.5 py-1.5 text-muted-foreground">
+        <div className="mx-3 my-2 text-sm leading-5 rounded border border-warning/30 bg-warning/5 px-2.5 py-1.5 text-muted-foreground">
           <details className="group">
             <summary className="cursor-pointer select-none font-medium flex items-center justify-between text-warning/90 hover:text-warning">
               <span className="flex items-center gap-1.5">
@@ -55,14 +55,14 @@ export function ResultsPanel({
                 {discarded.length} observación{discarded.length > 1 ? "es" : ""} descartada
                 {discarded.length > 1 ? "s" : ""} por datos incompletos
               </span>
-              <span className="text-[9px] text-muted-foreground group-open:rotate-180 transition-transform">
+              <span className="text-xs text-muted-foreground group-open:rotate-180 transition-transform">
                 ▼
               </span>
             </summary>
-            <ul className="mt-2 space-y-1.5 pl-1 max-h-28 overflow-y-auto text-[9px] border-t border-border/50 pt-1.5">
+            <ul className="mt-2 space-y-1.5 pl-1 max-h-28 overflow-y-auto text-xs leading-5 border-t border-border/50 pt-1.5">
               {discarded.map((d, idx) => (
                 <li key={idx} className="leading-tight">
-                  <span className="font-mono text-foreground font-semibold">
+                  <span className="scientific text-foreground font-medium">
                     {d.obs_id || "Sin obs_id"}
                   </span>
                   : <span className="text-muted-foreground">{d.reasons.join(" · ")}</span>
@@ -83,7 +83,7 @@ export function ResultsPanel({
         ) : status === "error" ? (
           <div className="empty-state">
             <p className="text-destructive font-medium mb-1">Error al consultar observaciones</p>
-            <p className="text-muted-foreground text-[10px] mb-3">
+            <p className="text-muted-foreground text-sm mb-3">
               {errorMessage || "No se pudo conectar con el backend FastAPI (/api)."}
             </p>
             <Button variant="ghost" onClick={onRetry}>
@@ -112,13 +112,13 @@ export function ResultsPanel({
       </div>
 
       <div className="border-t border-border p-3">
-        <div className="text-muted-foreground text-[10px] mb-3 flex justify-between">
+        <div className="text-muted-foreground text-sm mb-3 flex justify-between">
           <span>{compareIds.length} seleccionadas</span>
           <span>Mínimo 2 observaciones</span>
         </div>
         <Button
           variant="outline"
-          className="w-full text-[10px] h-9 bg-transparent"
+          className="w-full h-10 bg-transparent"
           disabled={!canCompare(compareIds) || status === "loading"}
           onClick={onCompare}
         >

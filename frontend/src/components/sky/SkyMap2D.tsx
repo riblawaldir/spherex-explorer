@@ -55,7 +55,7 @@ export function SkyMap2D({
       <div className="map-toolbar">
         <ViewToggle view={view} onChange={setView} />
         <span className="map-title">
-          MAPA CELESTE <span className="mx-2">/</span> ICRS · J2000
+          Mapa celeste <span className="mx-2">·</span> ICRS · J2000
         </span>
       </div>
 

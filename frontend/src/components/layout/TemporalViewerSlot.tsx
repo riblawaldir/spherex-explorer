@@ -312,22 +312,22 @@ export function TemporalViewerSlot({
                       >
                         <LocateFixed size={14} />
                       </Button>
-                      <span className="min-w-9 pr-1 text-right text-[10px]" aria-live="polite">
+                      <span className="scientific min-w-9 pr-1 text-right text-xs" aria-live="polite">
                         {zoomScale.toFixed(1)}×
                       </span>
                     </div>
                   </>
                 )}
               </TransformWrapper>
-              <div className="absolute bottom-3 left-3 rounded bg-black/70 px-3 py-2 text-left text-xs text-white">
+              <div className="scientific absolute bottom-3 left-3 rounded bg-black/70 px-3 py-2 text-left text-sm leading-5 text-white">
                 <div>{formatDate(displayedObservation.observed_at)}</div>
                 <div className="mt-1 opacity-80">
                   {displayedObservation.band} · {displayedObservation.collection}
                 </div>
               </div>
               {isBlinking && (
-                <span className="absolute right-3 top-3 rounded bg-black/70 px-2 py-1 text-[10px] text-white">
-                  BLINK · {blinkFrame === 0 ? "A" : "B"}
+                <span className="absolute right-3 top-3 rounded bg-black/70 px-2 py-1 text-xs text-white">
+                  Blink · {blinkFrame === 0 ? "A" : "B"}
                 </span>
               )}
             </>

@@ -14,7 +14,7 @@ export function ViewToggle({
           key={v}
           variant="ghost"
           size="sm"
-          className={`text-[10px] h-7 ${view === v ? "selected" : "text-muted-foreground"}`}
+          className={`h-8 px-3 text-sm ${view === v ? "selected" : "text-muted-foreground"}`}
           aria-pressed={view === v}
           onClick={() => onChange(v)}
         >

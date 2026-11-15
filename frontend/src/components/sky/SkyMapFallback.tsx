@@ -218,7 +218,7 @@ export function SkyMapFallback({
           Aladin Lite no está disponible ({failureMessage}). Vista de respaldo: las posiciones usan la RA/Dec
           real en una proyección local. Fondo: imagen estática, no es un survey ni datos de SPHEREx.
         </p>
-        <Button type="button" variant="ghost" size="sm" className="h-7 text-[10px]" onClick={onRetry}>
+        <Button type="button" variant="ghost" size="sm" className="h-8" onClick={onRetry}>
           Reintentar Aladin Lite
         </Button>
       </div>
