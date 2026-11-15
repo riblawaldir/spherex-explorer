@@ -25,7 +25,7 @@ function AxisGizmo({ colors }: { colors: ThemeColors }) {
   const arm = (end: [number, number, number], color: string, label: string) => (
     <group key={label}>
       <Polyline positions={[0, 0, 0, ...end]} color={color} />
-      <Html position={end} center style={{ pointerEvents: "none" }}>
+      <Html position={end} center zIndexRange={[1, 0]} style={{ pointerEvents: "none" }}>
         <span className="sky3d-grid-label">{label}</span>
       </Html>
     </group>
