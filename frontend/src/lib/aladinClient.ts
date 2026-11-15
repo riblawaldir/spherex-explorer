@@ -64,6 +64,7 @@ const ALADIN_OPTIONS = {
   showProjectionControl: false,
   showContextMenu: false,
   showReticle: false,
+  backgroundColor: "#070b16",
 } as const;
 
 function readPair(value: unknown): [number, number] | null {

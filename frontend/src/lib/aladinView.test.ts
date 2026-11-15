@@ -8,6 +8,8 @@ import {
   panCenter,
   parseSubmittedQuery,
   projectFallbackPosition,
+  surveyBackgroundLabel,
+  surveyTileSeen,
   unprojectFallbackPosition,
 } from "./aladinView";
 
@@ -47,9 +49,30 @@ describe("consulta a vista de Aladin", () => {
     expect(parseSubmittedQuery({ ra: "", dec: "0", radius: "1" })).toBeNull();
   });
 
-  it("documenta DSS2 Color como fondo por defecto de Aladin Lite", () => {
-    expect(DEFAULT_ALADIN_SURVEY).toBe("P/DSS2/color");
+  it("usa el espejo ESA de DSS2 Color porque el nodo CDS no entrega teselas", () => {
+    expect(DEFAULT_ALADIN_SURVEY).toBe("https://skies.esac.esa.int/DSSColor");
     expect(ALADIN_SURVEYS[DEFAULT_ALADIN_SURVEY]?.name).toBe("DSS2 Color");
+  });
+
+  it("reconoce una tesela JPEG del survey y no el HTML local", () => {
+    const host = "https://skies.esac.esa.int/DSSColor";
+    expect(
+      surveyTileSeen(
+        ["https://skies.esac.esa.int/DSSColor/Norder3/Dir0/Npix0.jpg"],
+        host,
+      ),
+    ).toBe(true);
+    expect(surveyTileSeen(["http://localhost:5173/P/DSS2/color/properties"], host)).toBe(false);
+    expect(surveyTileSeen(["https://skies.esac.esa.int/DSSColor/properties"], host)).toBe(false);
+  });
+
+  it("no presenta DSS2 como activo si el fondo no llegó", () => {
+    expect(surveyBackgroundLabel("loading")).toContain("Cargando fondo…");
+    expect(surveyBackgroundLabel("ready")).toContain("Fondo: DSS2 Color");
+    expect(surveyBackgroundLabel("ready")).toContain("skies.esac.esa.int");
+    expect(surveyBackgroundLabel("unavailable")).toBe(
+      "Fondo del cielo no disponible; los marcadores siguen activos.",
+    );
   });
 
   it("formatea el centro en grados y en sexagesimal", () => {

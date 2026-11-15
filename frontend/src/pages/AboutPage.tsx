@@ -8,8 +8,8 @@ export function AboutPage() {
       <p className="text-muted-foreground text-base mt-4 max-w-2xl leading-7">
         Interfaz para explorar observaciones por coordenadas, bandas y fechas en el desafío “Planet
         X and SPHEREx” de NASA Space Apps Challenge 2026. Las posiciones del mapa son las RA/Dec que
-        entrega la API. El fondo del mapa 2D es el survey HiPS DSS2 Color de Aladin Lite: es
-        contexto visual, no una imagen de SPHEREx.
+        entrega la API. El fondo del mapa 2D es DSS2 Color, el HiPS ivo://CDS/P/DSS2/color
+        servido por el espejo ESA de Aladin Lite: es contexto visual, no una imagen de SPHEREx.
       </p>
       <div className="border-t border-border mt-10 pt-8">
         <h2 className="text-xl">Alcance</h2>

@@ -1,8 +1,4 @@
-import {
-  ALADIN_SURVEYS,
-  DEFAULT_ALADIN_SURVEY,
-  formatCoordinatesDisplay,
-} from "@/lib/aladinView";
+import { formatCoordinatesDisplay } from "@/lib/aladinView";
 import { collectionColor, type ObservationMarkerItem } from "@/lib/markerUtils";
 import { Button } from "@/components/ui/button";
 
@@ -158,8 +154,6 @@ export function MapLegend({
   );
 }
 
-const DEFAULT_SURVEY = ALADIN_SURVEYS[DEFAULT_ALADIN_SURVEY];
-
 export function MapReadout({
   center,
   cursor,
@@ -184,9 +178,4 @@ export function MapReadout({
       <p className="max-w-full text-xs leading-5 text-muted-foreground">{background}</p>
     </div>
   );
-}
-
-export function surveyBackgroundLabel(): string {
-  const survey = DEFAULT_SURVEY;
-  return `Fondo: ${survey?.name ?? "DSS2 Color"} (${DEFAULT_ALADIN_SURVEY}). Contexto visual; no son datos de SPHEREx.`;
 }
