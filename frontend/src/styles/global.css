@@ -308,6 +308,8 @@ svg {
   gap: 12px;
   overflow: auto;
   pointer-events: none;
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.45 0.03 268 / 0.7) transparent;
 }
 .left-sidebar {
   left: 16px;
@@ -644,12 +646,13 @@ svg {
   }
   .map-controls {
     right: 8px;
-    bottom: 86px;
+    bottom: 72px;
   }
   .map-legend {
+    top: 64px;
+    bottom: auto;
     left: 8px;
     right: 56px;
-    bottom: 86px;
   }
   .map-banner,
   .map-notices {
@@ -983,8 +986,8 @@ svg {
     display: block;
   }
   .map-panel {
-    height: 72dvh;
-    min-height: 420px;
+    height: calc(100dvh - 360px);
+    min-height: 360px;
   }
   .metadata-panel {
     margin-top: 12px;
