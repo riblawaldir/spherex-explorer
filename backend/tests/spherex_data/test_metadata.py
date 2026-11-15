@@ -192,3 +192,36 @@ class TestExtractMetadataReal:
         print(f"  Observación: {meta['observation']}")
         print(f"  Instrumento: {meta['instrument']}")
 
+
+
+def test_image_metadata_precedence_and_conflicts(tmp_path):
+    primary = fits.PrimaryHDU(); primary.header['OBSID'] = 'PRIMARY-ID'
+    image = fits.ImageHDU(np.ones((4,4)), name='IMAGE')
+    image.header['OBSID'] = 'IMAGE-ID'; image.header['DETECTOR'] = 1
+    image.header['DATE-OBS'] = '2025-05-22T02:03:12.109'
+    path = tmp_path / 'metadata.fits'; fits.HDUList([primary, image]).writeto(path)
+    meta = extract_metadata(path)
+    assert meta['primary_header']['OBSID'] == 'PRIMARY-ID'
+    assert meta['observation']['obs_id'] == 'IMAGE-ID'
+    assert meta['instrument']['detector'] == 1
+    assert meta['header_conflicts']['OBSID'] == {'primary':'PRIMARY-ID', 'image':'IMAGE-ID'}
+
+
+def test_ambiguous_image_rejected(tmp_path):
+    path = tmp_path/'ambiguous.fits'
+    fits.HDUList([fits.PrimaryHDU(), fits.ImageHDU(np.ones((2,2)),name='IMAGE'), fits.ImageHDU(np.ones((2,2)),name='IMAGE')]).writeto(path)
+    with pytest.raises(ValueError, match='Ambiguous IMAGE'):
+        extract_metadata(path)
+
+
+@pytest.mark.parametrize('primary_id,image_id,conflict',[('same','same',False),('a','b',True)])
+def test_alias_conflicts_across_headers(tmp_path, primary_id, image_id, conflict):
+    primary=fits.PrimaryHDU(); primary.header['OBS_ID']=primary_id
+    image=fits.ImageHDU(np.ones((2,2)),name='IMAGE'); image.header['OBSID']=image_id
+    path=tmp_path/'aliases.fits'; fits.HDUList([primary,image]).writeto(path)
+    result=extract_metadata(path)
+    assert result['observation']['obs_id']==image_id
+    assert ('obs_id' in result['header_conflicts']) == conflict
+    if conflict:
+        assert result['header_conflicts']['obs_id']['primary.OBS_ID']==primary_id
+        assert result['header_conflicts']['obs_id']['image.OBSID']==image_id

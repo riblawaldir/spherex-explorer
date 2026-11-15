@@ -84,6 +84,9 @@ def validate_scientific_pair(assessment: dict) -> dict:
     quality = assessment.get('quality') or {}
     collection = assessment.get('collection') or {}
     observations = assessment.get('observations') or []
+    spectral_warnings = [o.get('spectral_metadata_warning') for o in observations
+                         if o.get('spectral_metadata_warning')]
+    spectral_disjoint = not spectral_warnings and _disjoint_catalog_intervals(observations)
     geometric = spatial.get('geometric_coverage_percent')
     finite = spatial.get('finite_coverage_percent')
     # Failure to produce a footprint may be due to missing data, not disjoint sky.
@@ -98,13 +101,15 @@ def validate_scientific_pair(assessment: dict) -> dict:
                   spatial_reason,
                   ['No scientific coverage threshold or resolution-matching policy is specified.',
                    'A missing footprint is not proof of disjoint geometry.']),
-        criterion('spectral', INVALID if _disjoint_catalog_intervals(observations) else REVIEW_REQUIRED,
+        criterion('spectral', INVALID if spectral_disjoint else REVIEW_REQUIRED,
                   {'catalog_intervals_m': [[o.get('em_min_m'), o.get('em_max_m')] for o in observations],
                    'detectors': [o.get('detector') for o in observations],
-                   'wcs_wave_present': spectral.get('wcs_wave_present')},
+                   'wcs_wave_present': spectral.get('wcs_wave_present'),
+                   'metadata_warnings': spectral_warnings},
                   'Compatible local spectral responses supported by calibration data.',
                   'IRSA catalog ranges and FITS WCS-WAVE presence.',
-                  ('Valid catalog intervals do not overlap.' if _disjoint_catalog_intervals(observations) else 'Local spectral response is not established.'),
+                  ('Metadata conflict prevents reliable spectral interpretation.' if spectral_warnings else
+                   'Valid catalog intervals do not overlap.' if spectral_disjoint else 'Local spectral response is not established.'),
                   ['WCS-WAVE is approximate; CWAVE, CBAND and response information are not assessed.']),
         criterion('temporal', REVIEW_REQUIRED,
                   {'mjd': [o.get('t_min_mjd') for o in observations],
@@ -113,7 +118,7 @@ def validate_scientific_pair(assessment: dict) -> dict:
                   'Temporal separation appropriate to an explicit scientific objective.',
                   'ObservationRecord t_min_mjd; Sprint 3 timing.',
                   'No objective-specific temporal requirement was supplied or validated.',
-                  ['Sprint 3 uses rounded MJD days as an epoch grouping, not a physical threshold.']),
+                  ['Distinct timestamps do not establish scientifically distinct epochs.']),
         criterion('collection', REVIEW_REQUIRED, collection,
                   'Compatible processing and calibration for the comparison.',
                   'Sprint 3 collection metadata and compatibility rules.',

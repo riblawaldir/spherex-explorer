@@ -84,6 +84,7 @@ def _check_collection_compatibility(collections: set[str]) -> list[str]:
 
 def organize_observations(
     observations: list[ObservationRecord],
+    *, max_pairs: int = 10000,
 ) -> dict:
     """
     Organiza observaciones SPHEREx cronológicamente e identifica pares comparables.
@@ -99,6 +100,8 @@ def organize_observations(
         - 'warnings': avisos de incompatibilidad entre colecciones.
         - 'statistics': resumen estadístico.
     """
+    if isinstance(max_pairs, bool) or not isinstance(max_pairs, int) or max_pairs < 0:
+        raise ValueError('max_pairs must be a nonnegative integer')
     if not observations:
         logger.info("organize_observations: lista de observaciones vacía.")
         return {
@@ -106,7 +109,9 @@ def organize_observations(
             "groups": [],
             "comparable_pairs": [],
             "warnings": [],
-            "statistics": {"total": 0, "comparable_pairs": 0},
+            "statistics": {"total": 0, "groups": 0, "comparable_pairs": 0,
+                           "candidate_pairs_total": 0, "candidate_pairs_truncated": False,
+                           "collections_present": [], "date_range_mjd": None},
         }
 
     # 1. Ordenar cronológicamente (observaciones sin fecha van al final)
@@ -119,6 +124,7 @@ def organize_observations(
     # 2. Detectar colecciones presentes y verificar compatibilidad
     all_collections = {o.collection for o in sorted_obs}
     warnings = _check_collection_compatibility(all_collections)
+    warnings.append('Grupos y pares son candidatos por tiempo y banda, no comparabilidad científica validada.')
     for w in warnings:
         logger.warning(w)
 
@@ -130,15 +136,29 @@ def organize_observations(
 
     groups = []
     comparable_pairs = []
+    total_candidates = 0
 
     for (band_label, coll_group), obs_list in groups_dict.items():
-        # Un grupo es comparable si tiene ≥2 observaciones de épocas distintas
-        unique_epochs = set()
+        # A URL identifies the product; without one, OBSID + detector +
+        # collection is sufficient. Never deduplicate an unknown identity.
+        unique_products = []
+        seen = set()
         for o in obs_list:
-            if o.t_min_mjd is not None:
-                # Redondear a días para agrupar por época
-                unique_epochs.add(round(o.t_min_mjd))
-        is_comparable = len(unique_epochs) >= 2
+            if o.t_min_mjd is None:
+                continue
+            if o.access_url:
+                identity = ('url', o.collection, o.access_url)
+            elif o.obs_id and o.collection and o.detector:
+                identity = ('product', o.collection, o.obs_id, o.detector)
+            else:
+                identity = None
+                warnings.append('Product identity incomplete; observation retained without deduplication.')
+            if identity is not None and identity in seen:
+                continue
+            if identity is not None:
+                seen.add(identity)
+            unique_products.append(o)
+        is_comparable = len(unique_products) >= 2
 
         group = ObservationGroup(
             band_label=band_label,
@@ -148,19 +168,16 @@ def organize_observations(
         )
         groups.append(group)
 
-        # Generar pares comparables (combinaciones de 2 épocas distintas)
+        # Generar pares candidatos de productos distintos, incluso con igual MJD.
         if is_comparable:
-            epoch_obs: dict[int, ObservationRecord] = {}
-            for o in obs_list:
-                if o.t_min_mjd is not None:
-                    epoch_key = round(o.t_min_mjd)
-                    # Tomar la primera observación de cada época
-                    if epoch_key not in epoch_obs:
-                        epoch_obs[epoch_key] = o
-
-            epoch_sorted = sorted(epoch_obs.values(), key=lambda o: o.t_min_mjd)
+            epoch_sorted = sorted(unique_products, key=lambda o: o.t_min_mjd)
+            total_candidates += len(epoch_sorted) * (len(epoch_sorted) - 1) // 2
             for i in range(len(epoch_sorted)):
+                if len(comparable_pairs) >= max_pairs:
+                    break
                 for j in range(i + 1, len(epoch_sorted)):
+                    if len(comparable_pairs) >= max_pairs:
+                        break
                     comparable_pairs.append({
                         "band_label": band_label,
                         "collection_group": coll_group,
@@ -168,11 +185,13 @@ def organize_observations(
                         "observation_2": epoch_sorted[j].to_dict(),
                         "delta_days": (
                             epoch_sorted[j].t_min_mjd - epoch_sorted[i].t_min_mjd
-                            if epoch_sorted[i].t_min_mjd and epoch_sorted[j].t_min_mjd
+                            if epoch_sorted[i].t_min_mjd is not None and epoch_sorted[j].t_min_mjd is not None
                             else None
                         ),
                     })
 
+    if total_candidates > len(comparable_pairs):
+        warnings.append(f'Candidate pair list truncated: {len(comparable_pairs)} of {total_candidates}; max_pairs={max_pairs}.')
     logger.info(
         "Grupos: %d | Pares comparables: %d",
         len(groups), len(comparable_pairs),
@@ -187,6 +206,8 @@ def organize_observations(
             "total": len(sorted_obs),
             "groups": len(groups),
             "comparable_pairs": len(comparable_pairs),
+            "candidate_pairs_total": total_candidates,
+            "candidate_pairs_truncated": total_candidates > len(comparable_pairs),
             "collections_present": list(all_collections),
             "date_range_mjd": {
                 "first": sorted_obs[0].t_min_mjd,

@@ -347,6 +347,9 @@ components:
           type: string
           enum: [stub, cached_sample, live, irsa_verified_local]
           example: cached_sample
+        warning:
+          type: string
+          description: Present when an IRSA query failed and fixture data were returned.
     StubNotImplemented:
       type: object
       required: [detail, provenance]

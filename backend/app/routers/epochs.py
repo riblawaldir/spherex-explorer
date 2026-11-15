@@ -33,4 +33,7 @@ def get_epochs(
     result = get_catalog_service().epochs(
         ra=ra, dec=dec, radius_arcsec=radius_arcsec, band=band
     )
-    return {"epochs": result.epochs, "provenance": result.provenance}
+    payload = {"epochs": result.epochs, "provenance": result.provenance}
+    if result.warning:
+        payload['warning'] = result.warning
+    return payload

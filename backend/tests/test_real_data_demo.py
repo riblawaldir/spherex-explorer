@@ -12,6 +12,7 @@ from app.routers import real_data_demo as demo_router
 @pytest.fixture
 def configured(tmp_path, monkeypatch):
     monkeypatch.setenv('SPHEREX_REAL_DATA_DIR', str(tmp_path))
+    monkeypatch.setenv('SPHEREX_DEMO_EXCLUSIVE', '1')
     entries = {}
     w = WCS(naxis=2); w.wcs.crpix = [3, 3]; w.wcs.cdelt = [-.01, .01]
     w.wcs.crval = [10, 0]; w.wcs.ctype = ['RA---TAN', 'DEC--TAN']
@@ -71,3 +72,24 @@ def test_invalid_fits_with_matching_digest_is_unavailable(configured):
     response = TestClient(app).get('/api/real-data-demo')
     assert response.status_code == 200
     assert response.json()['unavailable'] == ['obs0']
+
+
+def test_configured_files_do_not_mask_general_search(configured, monkeypatch):
+    from app.services.catalog import CatalogService
+    monkeypatch.delenv('SPHEREX_DEMO_EXCLUSIVE')
+    calls = []
+    def search(*args):
+        calls.append(args)
+        return {'_records': []}
+    result = CatalogService(use_irsa=True, search_observations_fn=search).epochs(ra=10, dec=0)
+    assert calls and result.provenance == 'live' and result.epochs == []
+
+
+def test_general_search_failure_exposes_warning(configured, monkeypatch):
+    from app.services.catalog import CatalogService
+    monkeypatch.delenv('SPHEREX_DEMO_EXCLUSIVE')
+    def fail(*args):
+        raise ConnectionError('network unavailable')
+    result = CatalogService(use_irsa=True, search_observations_fn=fail).epochs(ra=10, dec=0)
+    assert result.provenance != 'live'
+    assert result.warning == 'IRSA query failed; returned fixture data instead.'

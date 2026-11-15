@@ -145,3 +145,66 @@ class TestOrganizeObservations:
             assert key in pair, f"Falta '{key}' en comparable_pair"
         assert pair["observation_1"]["id"] != pair["observation_2"]["id"]
 
+
+
+def test_candidate_groups_do_not_round_timestamps():
+    result = organize_observations([_make_obs('a','spherex_dr1',60000.0),
+                                    _make_obs('b','spherex_dr1',60000.4)])
+    assert result['comparable_pairs'][0]['delta_days'] == pytest.approx(.4)
+    assert any('no comparabilidad científica' in w for w in result['warnings'])
+
+
+def test_pair_limit_reports_truncation_and_deduplicates_timestamps():
+    items=[_make_obs(str(i),'spherex_dr1',60000.0+i) for i in range(200)]
+    items.append(_make_obs('0','spherex_dr1',60000.0))
+    result=organize_observations(items,max_pairs=10)
+    assert len(result['comparable_pairs'])==10
+    assert result['statistics']['candidate_pairs_total']==19900
+    assert result['statistics']['candidate_pairs_truncated'] is True
+    assert any('truncated' in w for w in result['warnings'])
+
+
+def test_product_identity_repeated_times_and_empty():
+    first=_make_obs('a','spherex_dr1',60000.0)
+    second=_make_obs('b','spherex_dr1',60000.0)
+    third=_make_obs('c','spherex_dr1',60001.0)
+    result=organize_observations([first, second, third, first],max_pairs=2)
+    assert result['statistics']['candidate_pairs_total']==3
+    assert result['statistics']['candidate_pairs_truncated'] is True
+    assert result['comparable_pairs'][0]['delta_days']==0
+    single=organize_observations([first, first])['statistics']
+    assert single['candidate_pairs_total']==0 and single['candidate_pairs_truncated'] is False
+    empty=organize_observations([])['statistics']
+    assert empty['candidate_pairs_total']==0 and empty['candidate_pairs_truncated'] is False
+
+
+def test_same_collection_and_url_deduplicates_distinct_internal_ids():
+    first = _make_obs('first', 'spherex_dr1', 60000.0)
+    duplicate = _make_obs('other-id', 'spherex_dr1', 60001.0)
+    duplicate.access_url = first.access_url
+    result = organize_observations([first, duplicate])
+    assert result['statistics']['candidate_pairs_total'] == 0
+    assert result['statistics']['candidate_pairs_truncated'] is False
+
+
+def test_identity_without_url_uses_collection_obsid_and_detector():
+    first = _make_obs('same', 'spherex_dr1', 60000.0)
+    duplicate = _make_obs('same', 'spherex_dr1', 60001.0)
+    other = _make_obs('same', 'spherex_dr1', 60000.0)
+    for record in (first, duplicate, other):
+        record.access_url = ''
+        record.detector = 'SPHEREx-D1'
+    other.detector = 'SPHEREx-D2'
+    result = organize_observations([first, duplicate, other])
+    assert result['statistics']['candidate_pairs_total'] == 1
+    assert result['comparable_pairs'][0]['delta_days'] == 0
+
+
+def test_unknown_identity_is_retained_with_warning():
+    first = _make_obs('same', 'spherex_dr1', 60000.0)
+    second = _make_obs('same', 'spherex_dr1', 60000.0)
+    first.access_url = second.access_url = ''
+    result = organize_observations([first, second])
+    assert result['statistics']['candidate_pairs_total'] == 1
+    assert result['statistics']['candidate_pairs_truncated'] is False
+    assert any('identity incomplete' in warning for warning in result['warnings'])

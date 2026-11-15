@@ -16,6 +16,9 @@ porque los MEF pueden superar varios GB. Siempre usamos el servicio de recortes.
 import hashlib
 import logging
 import time
+import os
+import tempfile
+import warnings
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse, urlencode, urlunparse, parse_qsl
@@ -70,13 +73,28 @@ def _url_to_filename(url: str, ra: float, dec: float, size_deg: float) -> str:
 
 
 def _is_valid_fits(path: Path) -> bool:
-    """Verifica que el archivo FITS exista y sea legible con AstroPy."""
+    """Comprueba límites de HDU y checksums presentes, sin certificar contenido.
+
+    No descomprime imágenes ni verifica descriptores de heaps variables. Un HDU
+    final ausente por completo requiere conocer el contrato del producto.
+    """
     if not path.exists() or path.stat().st_size == 0:
         return False
     try:
-        with fits.open(path) as hdul:
-            # Verificar que tiene al menos un HDU
-            return len(hdul) >= 1
+        if path.stat().st_size % 2880:
+            return False
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter('always')
+            # Map unscaled on-disk data rather than loading all image HDUs into RAM.
+            with fits.open(path, memmap=True, do_not_scale_image_data=True,
+                           lazy_load_hdus=False, checksum=True) as hdul:
+                hdul.verify('exception')
+                for hdu in hdul:
+                    info = hdu.fileinfo()
+                    if info and info['datLoc'] + info['datSpan'] > path.stat().st_size:
+                        return False
+                valid = len(hdul) >= 1
+            return valid and not any('truncat' in str(w.message).lower() or 'checksum verification failed' in str(w.message).lower() or 'datasum verification failed' in str(w.message).lower() for w in caught)
     except Exception as exc:
         logger.warning("El archivo %s no es un FITS válido: %s", path, exc)
         return False
@@ -141,6 +159,8 @@ def download_cutout(
 
     last_error: Optional[Exception] = None
     for attempt in range(1, MAX_RETRIES + 1):
+        temp_path = None
+        response = None
         try:
             response = requests.get(
                 cutout_url,
@@ -151,12 +171,15 @@ def download_cutout(
             response.raise_for_status()
 
             # Descargar en streaming para no saturar memoria
-            with open(output_path, "wb") as f:
+            with tempfile.NamedTemporaryFile(mode='wb', dir=out_dir, prefix='.spherex-', suffix='.tmp', delete=False) as f:
+                temp_path = Path(f.name)
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
 
             # Validar FITS descargado
-            if _is_valid_fits(output_path):
+            if _is_valid_fits(temp_path):
+                os.replace(temp_path, output_path)
+                temp_path = None
                 file_mb = output_path.stat().st_size / 1024 / 1024
                 logger.info(
                     "Recorte descargado OK | %s (%.2f MB)", output_path.name, file_mb
@@ -167,7 +190,6 @@ def download_cutout(
                     "Archivo descargado no es FITS válido (intento %d): %s",
                     attempt, output_path,
                 )
-                output_path.unlink(missing_ok=True)
 
         except requests.HTTPError as exc:
             last_error = exc
@@ -178,6 +200,17 @@ def download_cutout(
         except Exception as exc:
             last_error = exc
             logger.warning("Error de descarga (intento %d/%d): %s", attempt, MAX_RETRIES, exc)
+        finally:
+            try:
+                if response is not None:
+                    response.close()
+            except Exception as cleanup_exc:
+                logger.warning('No se pudo cerrar la respuesta HTTP: %s', cleanup_exc)
+            if temp_path is not None:
+                try:
+                    temp_path.unlink(missing_ok=True)
+                except OSError as cleanup_exc:
+                    logger.warning('No se pudo eliminar temporal de descarga: %s', cleanup_exc)
 
         if attempt < MAX_RETRIES:
             time.sleep(RETRY_DELAY)
