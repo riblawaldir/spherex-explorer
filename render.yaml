@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: spherex-explorer-jurados-api
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.11
+      - key: SPHEREX_USE_IRSA
+        value: "0"
