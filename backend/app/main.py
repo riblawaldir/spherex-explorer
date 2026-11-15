@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import comparability, compare, epochs, preview, search, scientific_validation, targets
 
 from app.routers import comparability, compare, epochs, preview, search, targets
- main
 
 app = FastAPI(
     title="SPHEREx Explorer",
