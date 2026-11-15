@@ -21,17 +21,10 @@ export function RadiusInput({ value, onChange, error, disabled = false }: Radius
 
   return (
     <div className="mt-5">
-      <div className="flex items-center justify-between mb-2">
-        <label className="field-label mb-0 flex items-center gap-1.5" htmlFor="radius">
-          <Compass size={11} className="text-primary" />
-          RADIO DE BÚSQUEDA <span>/ grados (°)</span>
-        </label>
-        {arcmin && (
-          <span className="text-[10px] font-mono text-muted-foreground">
-            ≈ {arcmin}′ ({arcsec}″)
-          </span>
-        )}
-      </div>
+      <label className="field-label flex items-center gap-1.5" htmlFor="radius">
+        <Compass size={14} className="text-primary" />
+        Radio de búsqueda <span>/ grados (°)</span>
+      </label>
 
       <input
         id="radius"
@@ -41,7 +34,7 @@ export function RadiusInput({ value, onChange, error, disabled = false }: Radius
         max="5.0"
         placeholder="0.01"
         disabled={disabled}
-        className={`field ${error ? "field-error" : ""}`}
+        className={`field scientific ${error ? "field-error" : ""}`}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={!!error}
@@ -56,7 +49,7 @@ export function RadiusInput({ value, onChange, error, disabled = false }: Radius
             type="button"
             disabled={disabled}
             onClick={() => onChange(r.value)}
-            className={`text-[9px] font-mono px-1.5 py-0.5 rounded border border-border transition-colors hover:border-primary/50 text-muted-foreground hover:text-foreground ${
+            className={`scientific text-xs px-2 py-1 rounded border border-border transition-colors hover:border-primary/50 text-muted-foreground hover:text-foreground ${
               value === r.value ? "bg-primary/10 border-primary text-primary" : "bg-card/40"
             }`}
           >
@@ -70,7 +63,12 @@ export function RadiusInput({ value, onChange, error, disabled = false }: Radius
           {error}
         </p>
       ) : (
-        <p id="radius-desc" className="text-muted-foreground text-[10px] mt-2">
+        <p id="radius-desc" className="text-muted-foreground text-sm leading-6 mt-2">
+          {arcmin && (
+            <span className="scientific mr-1">
+              ≈ {arcmin}′ ({arcsec}″).
+            </span>
+          )}
           Cono de búsqueda centrado en RA/Dec (máx. recomendado: 5.0°).
         </p>
       )}

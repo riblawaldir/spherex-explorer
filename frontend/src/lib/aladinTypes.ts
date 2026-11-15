@@ -28,6 +28,14 @@ export interface AladinInstance {
   getFov(): [number, number] | number;
   getRaDec(): [number, number];
   setImageSurvey(surveyId: string): void;
+  /** https://cds-astro.github.io/aladin-lite/Aladin.html — setCooGrid({ color, opacity, thickness, enabled }) */
+  setCooGrid(options: {
+    color?: string;
+    opacity?: number;
+    labelSize?: number;
+    thickness?: number;
+    enabled?: boolean;
+  }): void;
   addCatalog(catalog: AladinCatalog): void;
   removeCatalog?(catalog: AladinCatalog): void;
   addOverlay(overlay: AladinGraphicOverlay | AladinCatalog): void;

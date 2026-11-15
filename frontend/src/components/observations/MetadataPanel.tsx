@@ -64,7 +64,7 @@ export function MetadataPanel({
               ))}
             </tbody>
           </table>
-          <p className="text-muted-foreground text-[9px] px-4 pb-4">
+          <p className="text-muted-foreground text-xs leading-5 px-4 pb-4">
             {isSimulated
               ? "Registro simulado. El enlace es contexto de la misión, no la procedencia de estos datos."
               : "Valores entregados por la API. El enlace es la fuente indicada en source_url."}

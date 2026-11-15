@@ -132,7 +132,7 @@ export function ExplorerWorkspace() {
   }
 
   return (
-    <main>
+    <main className="explore-stage">
       <div className="workspace-heading">
         <div>
           <h1>Explorar el cielo</h1>
@@ -140,7 +140,7 @@ export function ExplorerWorkspace() {
         </div>
         <div className="eyebrow flex items-center gap-2">
           <Crosshair size={14} className="text-primary" />
-          EXPLORACIÓN POR COORDENADAS
+          Exploración por coordenadas
         </div>
       </div>
       <div className="workspace-layout">
@@ -203,6 +203,7 @@ export function ExplorerWorkspace() {
               }}
               onRetry={search}
               isSimulated={isSimulated}
+              hasSearched={hasSearched}
             />
             <MetadataPanel
               observation={observations.find((o) => o.id === selectedId)}

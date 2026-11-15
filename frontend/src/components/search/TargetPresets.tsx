@@ -15,17 +15,17 @@ export function TargetPresets({
 }: TargetPresetsProps) {
   return (
     <div className="mt-4">
-      <div className="flex items-center justify-between mb-2">
-        <label className="field-label mb-0 flex items-center gap-1.5" htmlFor="target-preset-select">
-          <Sparkles size={11} className="text-primary" />
-          OBJETIVOS DE REFERENCIA
+      <div className="mb-2">
+        <label className="field-label mb-1 flex items-center gap-1.5" htmlFor="target-preset-select">
+          <Sparkles size={14} className="text-primary" />
+          Objetivos de referencia
         </label>
-        <span className="text-[10px] text-muted-foreground">SPHEREx / Calibración</span>
+        <span className="text-xs leading-5 text-muted-foreground">SPHEREx / calibración</span>
       </div>
 
       <select
         id="target-preset-select"
-        className="field text-[11px] cursor-pointer"
+        className="field cursor-pointer"
         disabled={disabled}
         value={selectedTargetId ?? ""}
         onChange={(e) => {
@@ -70,7 +70,7 @@ export function TargetPresets({
               )
             }
             title={t.description}
-            className={`text-[10px] px-2 py-0.5 rounded border border-border transition-colors hover:border-primary/50 text-muted-foreground hover:text-foreground ${
+            className={`scientific text-xs px-2 py-1 rounded border border-border transition-colors hover:border-primary/50 text-muted-foreground hover:text-foreground ${
               selectedTargetId === t.id ? "bg-primary/10 border-primary text-primary" : "bg-card/50"
             }`}
           >
