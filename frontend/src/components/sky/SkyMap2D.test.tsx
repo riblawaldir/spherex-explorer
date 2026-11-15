@@ -6,6 +6,11 @@ import { SkyMap2D } from "./SkyMap2D";
 import type { Observation } from "@/types/observation";
 
 // Mock del componente AladinLiteMap para probar aislamiento y renderizado en jsdom
+vi.mock("@/components/sky3d/Sky3DViewer", () => ({
+  default: () =>
+    createElement("p", null, "Celestial sphere: shows RA/Dec positions, not real distances."),
+}));
+
 vi.mock("./AladinLiteMap", () => ({
   default: ({
     observations,
@@ -89,7 +94,9 @@ describe("SkyMap2D Component (Sprint 4.1)", () => {
     await act(async () => {
       threeD?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
-    expect(container.textContent).toContain("no distancias reales");
+    expect(container.textContent).toContain(
+      "Celestial sphere: shows RA/Dec positions, not real distances.",
+    );
 
     const twoD = Array.from(container.querySelectorAll("button")).find((button) =>
       button.textContent?.includes("2D"),

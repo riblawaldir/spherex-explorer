@@ -17,7 +17,8 @@ export function AboutPage() {
           Los datos simulados solo aparecen si la aplicación se ejecuta con{" "}
           <span className="scientific">VITE_USE_MOCKS=true</span>, y en ese caso llevan la etiqueta
           DATOS SIMULADOS. Esta interfaz no declara hallazgos
-          astronómicos. La vista 3D todavía es un espacio reservado.
+          astronómicos. La vista 3D coloca esas mismas RA/Dec en una esfera y, aparte, un cubo
+          espectral etiquetado como demo: no son distancias ni espectros de SPHEREx.
         </p>
         <a
           href="https://science.nasa.gov/mission/spherex/"
