@@ -72,9 +72,9 @@ describe("TemporalViewerSlot", () => {
     ]);
 
     expect(imageAlt()).toContain("earlier");
-    await click("Siguiente");
+    await click("Next");
     expect(imageAlt()).toContain("later");
-    await click("Anterior");
+    await click("Previous");
     expect(imageAlt()).toContain("earlier");
   });
 
@@ -85,10 +85,10 @@ describe("TemporalViewerSlot", () => {
     ]);
 
     const timeline = container.querySelector(
-      '[aria-label="Línea temporal de observaciones"]',
+      '[aria-label="Observation timeline"]',
     ) as HTMLInputElement;
     expect(timeline.value).toBe("0");
-    expect(timeline.getAttribute("aria-valuetext")).toContain("15 ago de 2026");
+    expect(timeline.getAttribute("aria-valuetext")).toContain("Aug 15, 2026");
 
     await act(async () => {
       const valueSetter = Object.getOwnPropertyDescriptor(
@@ -102,37 +102,37 @@ describe("TemporalViewerSlot", () => {
 
     expect(imageAlt()).toContain("later");
     expect(container.textContent).toContain("2 / 2");
-    expect(timeline.getAttribute("aria-valuetext")).toContain("20 ago de 2026");
+    expect(timeline.getAttribute("aria-valuetext")).toContain("Aug 20, 2026");
   });
 
   it("labels fixtures as simulated and leaves API observations unmarked", async () => {
     const rows = [observation("one", "2026-08-15T00:00:00Z")];
 
     await render(rows, undefined, true);
-    expect(container.textContent).toContain("DATOS SIMULADOS");
-    expect(container.textContent).toContain("1 observación simulada");
+    expect(container.textContent).toContain("SIMULATED DATA");
+    expect(container.textContent).toContain("1 simulated observation");
 
     await render(rows);
-    expect(container.textContent).not.toContain("DATOS SIMULADOS");
-    expect(container.textContent).toContain("1 observación · one");
+    expect(container.textContent).not.toContain("SIMULATED DATA");
+    expect(container.textContent).toContain("1 observation · one");
   });
 
   it("provides zoom and recenter controls for the displayed image", async () => {
     await render([observation("one", "2026-08-15T00:00:00Z")]);
 
-    expect(button("Acercar imagen").disabled).toBe(false);
-    expect(button("Alejar imagen").disabled).toBe(true);
-    expect(button("Centrar imagen").disabled).toBe(false);
+    expect(button("Zoom in on image").disabled).toBe(false);
+    expect(button("Zoom out of image").disabled).toBe(true);
+    expect(button("Center image").disabled).toBe(false);
     expect(container.textContent).toContain("1.0×");
   });
 
   it("shows a loading status until the selected preview loads", async () => {
     await render([observation("loading", "2026-08-15T00:00:00Z")]);
-    expect(container.textContent).toContain("Cargando previsualización…");
+    expect(container.textContent).toContain("Loading preview…");
 
     const image = container.querySelector("img");
     await act(async () => image?.dispatchEvent(new Event("load")));
-    expect(container.textContent).not.toContain("Cargando previsualización…");
+    expect(container.textContent).not.toContain("Loading preview…");
   });
 
   it("plays at the selected speed and pauses cleanly", async () => {
@@ -165,28 +165,28 @@ describe("TemporalViewerSlot", () => {
       observation("second", "2026-08-16T00:00:00Z"),
     ]);
 
-    await click("Modo Blink");
+    await click("Blink mode");
     expect(imageAlt()).toContain("first");
     await act(async () => vi.advanceTimersByTimeAsync(500));
     expect(imageAlt()).toContain("second");
-    await click("Detener Blink");
-    expect(button("Modo Blink").disabled).toBe(false);
+    await click("Stop Blink");
+    expect(button("Blink mode").disabled).toBe(false);
   });
 
   it("shows empty, missing-preview, invalid-date, and failed-image states", async () => {
     await render([]);
-    expect(container.textContent).toContain("No hay observaciones para mostrar.");
-    expect(button("Siguiente").disabled).toBe(true);
+    expect(container.textContent).toContain("No observations to show.");
+    expect(button("Next").disabled).toBe(true);
 
     await render([observation("missing", "not-a-date", null)]);
-    expect(container.textContent).toContain("Esta observación no tiene una URL de imagen disponible.");
-    expect(container.textContent).toContain("Fecha no disponible");
+    expect(container.textContent).toContain("This observation has no image URL available.");
+    expect(container.textContent).toContain("Date not available");
 
     await render([observation("broken", "2026-08-15T00:00:00Z")]);
     const image = container.querySelector("img");
     expect(image).not.toBeNull();
     await act(async () => image?.dispatchEvent(new Event("error")));
-    expect(container.textContent).toContain("No se pudo cargar la previsualización de esta observación.");
+    expect(container.textContent).toContain("The preview for this observation could not be loaded.");
   });
 
   it("stops playback and clears its timer when the list shrinks to one observation", async () => {

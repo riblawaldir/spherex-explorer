@@ -127,7 +127,7 @@ export default function AladinLiteMap({
       const current = queryRef.current;
       if (!current) {
         setLoading(false);
-        onErrorRef.current?.(new Error("La consulta no tiene RA, Dec y radio válidos."));
+        onErrorRef.current?.(new Error("The query does not have a valid RA, Dec, and radius."));
         return;
       }
       try {
@@ -306,22 +306,22 @@ export default function AladinLiteMap({
       className="sky-map-root"
       tabIndex={0}
       role="region"
-      aria-label="Mapa celeste Aladin Lite. Flechas para desplazar, más y menos para el zoom, Inicio para restablecer la búsqueda."
+      aria-label="Aladin Lite sky map. Arrow keys to pan, plus and minus to zoom, Home to reset to the search."
       onKeyDown={onKeyDown}
     >
       <div ref={containerRef} className="aladin-host" />
       {loading && (
         <div className="map-loading" role="status">
           <Loader2 className="animate-spin text-primary" size={28} />
-          <p>Cargando mapa Aladin Lite…</p>
+          <p>Loading Aladin Lite map…</p>
         </div>
       )}
       {backgroundState !== "ready" && (
         <div className="survey-status" role="status">
           <p>
             {backgroundState === "loading"
-              ? "Cargando fondo…"
-              : "Fondo del cielo no disponible; los marcadores siguen activos."}
+              ? "Loading background…"
+              : "Sky background unavailable; markers remain active."}
           </p>
         </div>
       )}
@@ -332,7 +332,7 @@ export default function AladinLiteMap({
         discardedCount={discardedCount}
         skippedCount={built.skipped.length}
         errorMessage={errorMessage}
-        queryError={query ? undefined : "Coordenadas de búsqueda no válidas. El mapa no se ha movido."}
+        queryError={query ? undefined : "Invalid search coordinates. The map has not moved."}
       />
       {activeGroup && (
         <MarkerGroupPicker
@@ -345,25 +345,25 @@ export default function AladinLiteMap({
         />
       )}
       <div className="map-controls">
-        <Button type="button" variant="ghost" size="icon" aria-label="Acercar vista" onClick={() => zoom("in")}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Zoom in" onClick={() => zoom("in")}>
           <Plus />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Alejar vista" onClick={() => zoom("out")}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Zoom out" onClick={() => zoom("out")}>
           <Minus />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Restablecer vista" onClick={resetView}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Reset view" onClick={resetView}>
           <LocateFixed />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Desplazar arriba" onClick={() => move("up")}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Pan up" onClick={() => move("up")}>
           <ChevronUp />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Desplazar abajo" onClick={() => move("down")}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Pan down" onClick={() => move("down")}>
           <ChevronDown />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Desplazar izquierda" onClick={() => move("left")}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Pan left" onClick={() => move("left")}>
           <ChevronLeft />
         </Button>
-        <Button type="button" variant="ghost" size="icon" aria-label="Desplazar derecha" onClick={() => move("right")}>
+        <Button type="button" variant="ghost" size="icon" aria-label="Pan right" onClick={() => move("right")}>
           <ChevronRight />
         </Button>
       </div>

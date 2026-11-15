@@ -7,9 +7,8 @@ export function Sidebar({ children }: { children: ReactNode }) {
       <div className="sidebar-note">
         <Info size={14} className="shrink-0 mt-1" />
         <p>
-          El fondo del mapa es un survey de contexto visual, no una imagen de SPHEREx. Las posiciones
-          usan la RA/Dec de cada observación. Si hay datos simulados, aparecen con la etiqueta DATOS
-          SIMULADOS.
+          The map background is a visual-context survey, not a SPHEREx image. Positions use each
+          observation's RA/Dec. Simulated data, if any, carries the SIMULATED DATA label.
         </p>
       </div>
     </aside>

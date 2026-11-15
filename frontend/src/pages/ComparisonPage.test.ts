@@ -4,19 +4,19 @@ import { getComparisonSummary } from "./ComparisonPage";
 describe("getComparisonSummary", () => {
   it("guides the user when no observations were selected", () => {
     expect(getComparisonSummary(0)).toBe(
-      "Selecciona observaciones desde los resultados para recorrer su secuencia temporal.",
+      "Select observations from the results to step through their time sequence.",
     );
   });
 
   it("uses singular wording for one observation", () => {
     expect(getComparisonSummary(1)).toBe(
-      "1 observación seleccionada para recorrer en orden cronológico.",
+      "1 observation selected to step through in chronological order.",
     );
   });
 
   it("uses plural wording for multiple observations", () => {
     expect(getComparisonSummary(3)).toBe(
-      "3 observaciones seleccionadas para recorrer en orden cronológico.",
+      "3 observations selected to step through in chronological order.",
     );
   });
 });

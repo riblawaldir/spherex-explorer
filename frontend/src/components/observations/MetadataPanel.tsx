@@ -12,7 +12,7 @@ export function MetadataPanel({
     <section className="glass-panel metadata-panel">
       <h2 className="panel-heading metadata-title">
         <FileText />
-        Metadatos de observación
+        Observation metadata
       </h2>
       {o ? (
         <>
@@ -20,13 +20,13 @@ export function MetadataPanel({
             {o.preview_url ? (
               <img
                 src={o.preview_url}
-                alt={isSimulated ? "Vista previa simulada" : "Vista previa de la observación"}
+                alt={isSimulated ? "Simulated preview" : "Observation preview"}
                 className="preview-image"
                 width={280}
                 height={105}
               />
             ) : (
-              <div className="preview-image empty-state">Vista previa no disponible.</div>
+              <div className="preview-image empty-state">Preview not available.</div>
             )}
             {isSimulated && <SimulatedBadge />}
           </div>
@@ -43,17 +43,17 @@ export function MetadataPanel({
                         rel="noreferrer"
                         className="text-primary inline-flex items-center gap-1"
                       >
-                        Abrir fuente
+                        Open source
                         <ExternalLink size={10} />
                       </a>
                     ) : k === "source_url" ? (
-                      "No disponible"
+                      "Not available"
                     ) : k === "preview_url" && v ? (
                       <a href={v} target="_blank" rel="noreferrer" className="text-primary">
-                        Abrir vista previa ↗
+                        Open preview ↗
                       </a>
                     ) : k === "preview_url" ? (
-                      "No disponible"
+                      "Not available"
                     ) : typeof v === "number" ? (
                       String(v)
                     ) : (
@@ -66,12 +66,12 @@ export function MetadataPanel({
           </table>
           <p className="text-muted-foreground text-xs leading-5 px-4 pb-4">
             {isSimulated
-              ? "Registro simulado. El enlace es contexto de la misión, no la procedencia de estos datos."
-              : "Valores entregados por la API. El enlace es la fuente indicada en source_url."}
+              ? "Simulated record. The link is mission context, not the provenance of this data."
+              : "Values returned by the API. The link is the source given in source_url."}
           </p>
         </>
       ) : (
-        <div className="empty-state">Selecciona una observación para ver sus metadatos.</div>
+        <div className="empty-state">Select an observation to see its metadata.</div>
       )}
     </section>
   );

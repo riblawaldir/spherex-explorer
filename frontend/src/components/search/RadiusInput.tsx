@@ -23,7 +23,7 @@ export function RadiusInput({ value, onChange, error, disabled = false }: Radius
     <div className="mt-5">
       <label className="field-label flex items-center gap-1.5" htmlFor="radius">
         <Compass size={14} className="text-primary" />
-        Radio de búsqueda <span>/ grados (°)</span>
+        Search radius <span>/ degrees (°)</span>
       </label>
 
       <input
@@ -69,7 +69,7 @@ export function RadiusInput({ value, onChange, error, disabled = false }: Radius
               ≈ {arcmin}′ ({arcsec}″).
             </span>
           )}
-          Cono de búsqueda centrado en RA/Dec (máx. recomendado: 5.0°).
+          Search cone centered on RA/Dec (recommended max: 5.0°).
         </p>
       )}
     </div>

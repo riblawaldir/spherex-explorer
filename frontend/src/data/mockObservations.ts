@@ -76,11 +76,11 @@ export const availableBands = ["B1", "B2", "B3", "B4", "B5", "B6"];
 export function validateCoordinates(c: Coordinates) {
   const errors: Partial<Record<keyof Coordinates, string>> = {};
   if (!c.ra.trim() || !Number.isFinite(Number(c.ra)) || Number(c.ra) < 0 || Number(c.ra) > 360)
-    errors.ra = "RA debe estar entre 0 y 360 grados.";
+    errors.ra = "RA must be between 0 and 360 degrees.";
   if (!c.dec.trim() || !Number.isFinite(Number(c.dec)) || Number(c.dec) < -90 || Number(c.dec) > 90)
-    errors.dec = "Dec debe estar entre −90 y 90 grados.";
+    errors.dec = "Dec must be between −90 and 90 degrees.";
   if (!c.radius.trim() || !Number.isFinite(Number(c.radius)) || Number(c.radius) <= 0)
-    errors.radius = "El radio debe ser mayor que 0.";
+    errors.radius = "Radius must be greater than 0.";
   return errors;
 }
 // Simulated bounding-box fixture filtering only; not an astronomical cone search.

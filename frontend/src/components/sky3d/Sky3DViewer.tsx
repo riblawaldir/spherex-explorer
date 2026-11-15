@@ -204,7 +204,7 @@ function ViewerBody({
         ) : (
           <p>DEMO · SIMULATED DATA — not SPHEREx data</p>
         )}
-        {isSimulated && <p className="sim-badge">DATOS SIMULADOS</p>}
+        {isSimulated && <p className="sim-badge">SIMULATED DATA</p>}
         {hasSearched && observations.length === 0 && <p>No observations in this region.</p>}
       </div>
       <div className="sky3d-panel-slot" inert={!analysis}>

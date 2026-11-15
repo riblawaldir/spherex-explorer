@@ -71,10 +71,10 @@ describe("AladinLiteMap", () => {
       await Promise.resolve();
     });
 
-    expect(container.textContent).toContain("Cargando fondo…");
+    expect(container.textContent).toContain("Loading background…");
     expect(container.textContent).toContain("DSS2 Color");
-    expect(container.textContent).toContain("Radio de búsqueda");
-    expect(container.textContent).not.toContain("DATOS SIMULADOS");
+    expect(container.textContent).toContain("Search radius");
+    expect(container.textContent).not.toContain("SIMULATED DATA");
     expect(mountAladinMap).toHaveBeenCalled();
 
     await act(async () => root.unmount());

@@ -36,7 +36,7 @@ export function ViewerInfo({
         Observations: {observationCount}
         {simulated ? " · simulated search" : " · positions from the current search"}
       </p>
-      {simulated && <p className="sim-badge">DATOS SIMULADOS</p>}
+      {simulated && <p className="sim-badge">SIMULATED DATA</p>}
       {scene === "sphere" && (
         <ul className="sky3d-legend">
           <li><i className="sky3d-swatch is-primary" /> Observation</li>

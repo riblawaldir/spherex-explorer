@@ -81,8 +81,8 @@ export async function fetchObservations(
     if (!res.ok) {
       const errorMsg =
         res.status >= 500
-          ? `Error del servidor backend (HTTP ${res.status}).`
-          : `Error en la solicitud de observaciones (HTTP ${res.status}).`;
+          ? `Backend server error (HTTP ${res.status}).`
+          : `Observation request failed (HTTP ${res.status}).`;
 
       return {
         status: "error",
@@ -105,7 +105,7 @@ export async function fetchObservations(
         provenance: "error",
         isSimulated: false,
         error:
-          "Formato de respuesta inválido: la API no devolvió la lista esperada 'epochs'.",
+          "Invalid response format: the API did not return the expected 'epochs' list.",
       };
     }
 
@@ -137,8 +137,8 @@ export async function fetchObservations(
       isSimulated: false,
       error:
         err instanceof Error
-          ? `Error de red al consultar /api/epochs: ${err.message}`
-          : "Error de red inesperado al conectar con /api/epochs.",
+          ? `Network error while querying /api/epochs: ${err.message}`
+          : "Unexpected network error while connecting to /api/epochs.",
     };
   }
 }

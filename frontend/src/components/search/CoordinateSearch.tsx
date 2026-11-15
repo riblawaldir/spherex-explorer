@@ -84,19 +84,19 @@ export function CoordinateSearch({
         onSearch();
       }}
       noValidate
-      aria-label="Formulario de búsqueda por coordenadas celestes"
+      aria-label="Celestial coordinate search form"
     >
       <div className="flex items-center justify-between">
         <h2 className="panel-heading">
           <Crosshair className="text-primary" />
-          Buscar coordenadas
+          Search coordinates
         </h2>
         {onReset && (
           <button
             type="button"
             onClick={onReset}
             disabled={loading}
-            title="Restablecer coordenadas predeterminadas"
+            title="Restore default coordinates"
             className="text-muted-foreground hover:text-foreground text-sm flex items-center gap-1 transition-colors"
           >
             <RotateCcw size={11} />
@@ -106,7 +106,7 @@ export function CoordinateSearch({
       </div>
 
       <p className="text-muted-foreground text-xs mt-1.5 mb-3">
-        Consulta observaciones astronómicas en coordenadas ecuatoriales (ICRS · J2000).
+        Query astronomical observations in equatorial coordinates (ICRS · J2000).
       </p>
 
       {/* Selector de objetivos astronómicos predefinidos */}
@@ -120,14 +120,14 @@ export function CoordinateSearch({
         {/* Campo RA */}
         <div>
           <label htmlFor="ra-input" className="field-label">
-            RA <span>/ grados (°)</span>
+            RA <span>/ degrees (°)</span>
           </label>
           <input
             id="ra-input"
             className={`field scientific ${errors.ra ? "field-error" : ""}`}
             type="text"
             inputMode="decimal"
-            placeholder="0.0 a 360.0"
+            placeholder="0.0 to 360.0"
             disabled={loading}
             value={coordinates.ra}
             onChange={(e) => handleRaChange(e.target.value)}
@@ -140,7 +140,7 @@ export function CoordinateSearch({
             </p>
           ) : (
             <span className="text-muted-foreground text-xs leading-5 block mt-1.5">
-              {hmsHint ? <span className="scientific">{hmsHint}</span> : "Rango: 0° a 360° (o HH:MM:SS)"}
+              {hmsHint ? <span className="scientific">{hmsHint}</span> : "Range: 0° to 360° (or HH:MM:SS)"}
             </span>
           )}
         </div>
@@ -148,14 +148,14 @@ export function CoordinateSearch({
         {/* Campo Dec */}
         <div>
           <label htmlFor="dec-input" className="field-label">
-            DEC <span>/ grados (°)</span>
+            DEC <span>/ degrees (°)</span>
           </label>
           <input
             id="dec-input"
             className={`field scientific ${errors.dec ? "field-error" : ""}`}
             type="text"
             inputMode="decimal"
-            placeholder="-90.0 a +90.0"
+            placeholder="-90.0 to +90.0"
             disabled={loading}
             value={coordinates.dec}
             onChange={(e) => handleDecChange(e.target.value)}
@@ -168,7 +168,7 @@ export function CoordinateSearch({
             </p>
           ) : (
             <span className="text-muted-foreground text-xs leading-5 block mt-1.5">
-              {dmsHint ? <span className="scientific">{dmsHint}</span> : "Rango: −90° a +90° (o ±DD:MM:SS)"}
+              {dmsHint ? <span className="scientific">{dmsHint}</span> : "Range: −90° to +90° (or ±DD:MM:SS)"}
             </span>
           )}
         </div>
@@ -191,12 +191,12 @@ export function CoordinateSearch({
         {loading ? (
           <>
             <LoaderCircle className="animate-spin" size={14} />
-            Buscando observaciones…
+            Searching observations…
           </>
         ) : (
           <>
             <Search size={14} />
-            Buscar observaciones
+            Search observations
           </>
         )}
       </Button>

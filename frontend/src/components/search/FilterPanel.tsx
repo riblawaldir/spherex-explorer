@@ -13,13 +13,13 @@ export function FilterPanel({
     <section>
       <div className="panel-heading mb-5">
         <SlidersHorizontal />
-        <h2>Filtros de observación</h2>
+        <h2>Observation filters</h2>
       </div>
       <label className="field-label" htmlFor="date-start">
-        Rango de fechas
+        Date range
       </label>
       <input
-        aria-label="Fecha inicial"
+        aria-label="Start date"
         id="date-start"
         className="field"
         type="date"
@@ -27,16 +27,16 @@ export function FilterPanel({
         max={filters.end || undefined}
         onChange={(e) => onChange({ ...filters, start: e.target.value })}
       />
-      <div className="text-center text-muted-foreground text-sm my-1.5">hasta</div>
+      <div className="text-center text-muted-foreground text-sm my-1.5">to</div>
       <input
-        aria-label="Fecha final"
+        aria-label="End date"
         className="field"
         type="date"
         value={filters.end}
         min={filters.start || undefined}
         onChange={(e) => onChange({ ...filters, end: e.target.value })}
       />
-      <p className="field-label mt-5">Bandas espectrales</p>
+      <p className="field-label mt-5">Spectral bands</p>
       <div className="grid grid-cols-3 gap-2">
         {availableBands.map((b) => (
           <Button
@@ -58,7 +58,7 @@ export function FilterPanel({
         ))}
       </div>
       <label className="field-label mt-5" htmlFor="collection">
-        Colección
+        Collection
       </label>
       <select
         id="collection"
@@ -66,7 +66,7 @@ export function FilterPanel({
         value={filters.collection}
         onChange={(e) => onChange({ ...filters, collection: e.target.value })}
       >
-        <option value="all">Todas las colecciones</option>
+        <option value="all">All collections</option>
         <option value="DR1">DR1</option>
         <option value="QR3">QR3</option>
       </select>
@@ -76,7 +76,7 @@ export function FilterPanel({
         onClick={() => onChange({ ...emptyFilters })}
       >
         <RotateCcw size={12} />
-        Limpiar filtros
+        Clear filters
       </Button>
     </section>
   );

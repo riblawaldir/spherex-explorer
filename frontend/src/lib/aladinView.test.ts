@@ -67,11 +67,11 @@ describe("consulta a vista de Aladin", () => {
   });
 
   it("no presenta DSS2 como activo si el fondo no llegó", () => {
-    expect(surveyBackgroundLabel("loading")).toContain("Cargando fondo…");
-    expect(surveyBackgroundLabel("ready")).toContain("Fondo: DSS2 Color");
+    expect(surveyBackgroundLabel("loading")).toContain("Loading background…");
+    expect(surveyBackgroundLabel("ready")).toContain("Background: DSS2 Color");
     expect(surveyBackgroundLabel("ready")).toContain("skies.esac.esa.int");
     expect(surveyBackgroundLabel("unavailable")).toBe(
-      "Fondo del cielo no disponible; los marcadores siguen activos.",
+      "Sky background unavailable; markers remain active.",
     );
   });
 

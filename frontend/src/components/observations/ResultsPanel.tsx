@@ -34,17 +34,17 @@ export function ResultsPanel({
   hasSearched?: boolean;
 }) {
   return (
-    <section className="glass-panel results-panel" aria-label="Panel de observaciones">
+    <section className="glass-panel results-panel" aria-label="Observations panel">
       <div className="results-head">
         <h2 className="panel-heading">
           <ListFilter />
-          Observaciones{" "}
+          Observations{" "}
           <span className="data-chip">{observations.length.toString().padStart(2, "0")}</span>
         </h2>
         {isSimulated && <SimulatedBadge />}
       </div>
       <p className="px-[14px] text-xs text-muted-foreground">
-        Selecciona observaciones para comparar.
+        Select observations to compare.
       </p>
 
       {/* Aviso discreto de observaciones descartadas por datos incompletos de la API */}
@@ -54,8 +54,8 @@ export function ResultsPanel({
             <summary className="cursor-pointer select-none font-medium flex items-center justify-between text-warning/90 hover:text-warning">
               <span className="flex items-center gap-1.5">
                 <AlertCircle size={12} className="text-warning flex-shrink-0" />
-                {discarded.length} observación{discarded.length > 1 ? "es" : ""} descartada
-                {discarded.length > 1 ? "s" : ""} por datos incompletos
+                {discarded.length} observation{discarded.length > 1 ? "s" : ""} discarded
+                because of incomplete data
               </span>
               <span className="text-xs text-muted-foreground group-open:rotate-180 transition-transform">
                 ▼
@@ -65,7 +65,7 @@ export function ResultsPanel({
               {discarded.map((d, idx) => (
                 <li key={idx} className="leading-tight">
                   <span className="scientific text-foreground font-medium">
-                    {d.obs_id || "Sin obs_id"}
+                    {d.obs_id || "No obs_id"}
                   </span>
                   : <span className="text-muted-foreground">{d.reasons.join(" · ")}</span>
                 </li>
@@ -77,20 +77,20 @@ export function ResultsPanel({
 
       <div className="results-list">
         {status === "loading" ? (
-          <div aria-label="Cargando observaciones">
+          <div aria-label="Loading observations">
             {[1, 2, 3].map((i) => (
               <div key={i} className="shimmer" />
             ))}
           </div>
         ) : status === "error" ? (
           <div className="empty-state">
-            <p className="text-destructive font-medium mb-1">Error al consultar observaciones</p>
+            <p className="text-destructive font-medium mb-1">Could not load observations</p>
             <p className="text-muted-foreground text-sm mb-3">
-              {errorMessage || "No se pudo conectar con el backend FastAPI (/api)."}
+              {errorMessage || "Could not connect to the FastAPI backend (/api)."}
             </p>
             <Button variant="ghost" onClick={onRetry}>
               <RefreshCw />
-              Reintentar
+              Retry
             </Button>
           </div>
         ) : observations.length ? (
@@ -106,22 +106,22 @@ export function ResultsPanel({
           ))
         ) : !hasSearched ? (
           <div className="empty-state">
-            <p>Aún no has buscado.</p>
-            <p className="mt-2">Introduce coordenadas y pulsa Buscar.</p>
+            <p>No search yet.</p>
+            <p className="mt-2">Enter coordinates and press Search.</p>
           </div>
         ) : (
           <div className="empty-state">
             <SearchX className="mx-auto mb-3" />
-            <p>Sin observaciones en esta región.</p>
-            <p className="mt-2">Amplía el radio o limpia los filtros.</p>
+            <p>No observations in this region.</p>
+            <p className="mt-2">Widen the radius or clear the filters.</p>
           </div>
         )}
       </div>
 
       <div className="border-t border-border p-3">
         <div className="text-muted-foreground text-xs mb-2 flex justify-between gap-2">
-          <span>{compareIds.length} seleccionadas</span>
-          <span>Mínimo 2 observaciones</span>
+          <span>{compareIds.length} selected</span>
+          <span>Minimum 2 observations</span>
         </div>
         <Button
           variant="outline"
@@ -129,7 +129,7 @@ export function ResultsPanel({
           disabled={!canCompare(compareIds) || status === "loading"}
           onClick={onCompare}
         >
-          Comparar en visor temporal
+          Compare in temporal viewer
           <ArrowRight />
         </Button>
       </div>

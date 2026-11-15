@@ -17,7 +17,7 @@ import { TransformComponent, TransformWrapper } from "react-zoom-pan-pinch";
 
 const playbackSpeeds = [0.5, 1, 2, 4];
 const blinkIntervalMs = 500;
-const dateFormatter = new Intl.DateTimeFormat("es-BO", {
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
   dateStyle: "medium",
   timeStyle: "short",
   timeZone: "UTC",
@@ -38,7 +38,7 @@ function timestamp(value: string | null | undefined): number | undefined {
 
 function formatDate(value: string | null | undefined): string {
   const parsed = timestamp(value);
-  return parsed === undefined ? "Fecha no disponible" : `${dateFormatter.format(parsed)} UTC`;
+  return parsed === undefined ? "Date not available" : `${dateFormatter.format(parsed)} UTC`;
 }
 
 function hasPreviewUrl(value: string | null | undefined): value is string {
@@ -222,11 +222,11 @@ export function TemporalViewerSlot({
 
   return (
     <>
-      <section className="glass-panel temporal-slot" aria-label="Visor temporal de observaciones">
+      <section className="glass-panel temporal-slot" aria-label="Temporal observation viewer">
         <div className="flex items-center justify-between gap-3">
           <h2 className="panel-heading">
             <History />
-            Visor temporal
+            Temporal viewer
           </h2>
           {isSimulated && <SimulatedBadge />}
         </div>
@@ -259,7 +259,7 @@ export function TemporalViewerSlot({
                       <img
                         key={previewKey}
                         src={displayedObservation.preview_url ?? undefined}
-                        alt={`Previsualización de ${displayedObservation.id}, ${formatDate(displayedObservation.observed_at)}`}
+                        alt={`Preview of ${displayedObservation.id}, ${formatDate(displayedObservation.observed_at)}`}
                         className="max-h-full max-w-full object-contain"
                         onError={() => setFailedPreviewKey(previewKey)}
                         onLoad={() => {
@@ -276,7 +276,7 @@ export function TemporalViewerSlot({
                         role="status"
                         aria-live="polite"
                       >
-                        Cargando previsualización…
+                        Loading preview…
                       </div>
                     )}
                     <div className="absolute left-3 top-3 flex items-center gap-1 rounded bg-black/70 p-1 text-white">
@@ -284,8 +284,8 @@ export function TemporalViewerSlot({
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 text-white hover:bg-white/20 hover:text-white"
-                        aria-label="Acercar imagen"
-                        title="Acercar imagen"
+                        aria-label="Zoom in on image"
+                        title="Zoom in on image"
                         disabled={zoomScale >= 8}
                         onClick={() => zoomIn()}
                       >
@@ -295,8 +295,8 @@ export function TemporalViewerSlot({
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 text-white hover:bg-white/20 hover:text-white"
-                        aria-label="Alejar imagen"
-                        title="Alejar imagen"
+                        aria-label="Zoom out of image"
+                        title="Zoom out of image"
                         disabled={zoomScale <= 1}
                         onClick={() => zoomOut()}
                       >
@@ -306,8 +306,8 @@ export function TemporalViewerSlot({
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7 text-white hover:bg-white/20 hover:text-white"
-                        aria-label="Centrar imagen"
-                        title="Centrar imagen"
+                        aria-label="Center image"
+                        title="Center image"
                         onClick={() => resetTransform()}
                       >
                         <LocateFixed size={14} />
@@ -335,10 +335,10 @@ export function TemporalViewerSlot({
             <div className="px-5 text-center" role="status">
               <History size={28} className="mx-auto mb-4 opacity-40" />
               {count === 0
-                ? "No hay observaciones para mostrar."
+                ? "No observations to show."
                 : !hasDisplayedPreview
-                  ? "Esta observación no tiene una URL de imagen disponible."
-                  : "No se pudo cargar la previsualización de esta observación."}
+                  ? "This observation has no image URL available."
+                  : "The preview for this observation could not be loaded."}
             </div>
           )}
         </div>
@@ -350,8 +350,8 @@ export function TemporalViewerSlot({
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Anterior"
-              title="Anterior"
+              aria-label="Previous"
+              title="Previous"
               disabled={count < 2}
               onClick={() => step(-1)}
             >
@@ -382,8 +382,8 @@ export function TemporalViewerSlot({
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Siguiente"
-              title="Siguiente"
+              aria-label="Next"
+              title="Next"
               disabled={count < 2}
               onClick={() => step(1)}
             >
@@ -393,11 +393,11 @@ export function TemporalViewerSlot({
 
           <div className="flex flex-wrap items-center gap-3">
             <label className="sr-only" htmlFor="temporal-playback-speed">
-              Velocidad de reproducción
+              Playback speed
             </label>
             <select
               id="temporal-playback-speed"
-              aria-label="Velocidad de reproducción"
+              aria-label="Playback speed"
               className="field w-20"
               value={playbackSpeed}
               disabled={count < 2}
@@ -412,11 +412,11 @@ export function TemporalViewerSlot({
             {isBlinking && otherBlinkOptions.length > 0 && (
               <>
                 <label className="sr-only" htmlFor="temporal-blink-second">
-                  Segunda observación de Blink
+                  Second Blink observation
                 </label>
                 <select
                   id="temporal-blink-second"
-                  aria-label="Segunda observación de Blink"
+                  aria-label="Second Blink observation"
                   className="field max-w-48"
                   value={blinkSecondObservation?.id ?? ""}
                   onChange={(event) => {
@@ -438,14 +438,14 @@ export function TemporalViewerSlot({
               disabled={blinkOptions.length < 2}
               onClick={toggleBlink}
             >
-              {isBlinking ? "Detener Blink" : "Modo Blink"}
+              {isBlinking ? "Stop Blink" : "Blink mode"}
             </Button>
           </div>
         </div>
 
         <div className="mt-5 flex items-center gap-3">
           <span className="min-w-32 text-xs text-muted-foreground" aria-live="polite">
-            {activeObservation ? formatDate(activeObservation.observed_at) : "Sin observaciones"}
+            {activeObservation ? formatDate(activeObservation.observed_at) : "No observations"}
           </span>
           <input
             type="range"
@@ -454,8 +454,8 @@ export function TemporalViewerSlot({
             step={1}
             value={Math.max(activeIndex, 0)}
             disabled={count < 2}
-            aria-label="Línea temporal de observaciones"
-            aria-valuetext={activeObservation ? formatDate(activeObservation.observed_at) : "Sin observaciones"}
+            aria-label="Observation timeline"
+            aria-valuetext={activeObservation ? formatDate(activeObservation.observed_at) : "No observations"}
             className="w-full accent-primary disabled:opacity-40"
             onChange={(event) => selectObservation(Number(event.target.value))}
           />
@@ -465,13 +465,13 @@ export function TemporalViewerSlot({
         </div>
 
         <p className="text-muted-foreground text-xs mt-4">
-          {count} observación{count === 1 ? "" : "es"}{isSimulated ? " simuladas" : ""}
+          {count}{isSimulated ? " simulated" : ""} observation{count === 1 ? "" : "s"}
           {activeObservation ? ` · ${activeObservation.id}` : ""}
         </p>
       </section>
       <div className="warning-banner">
         <AlertTriangle size={18} className="shrink-0" />
-        Una diferencia entre imágenes no implica un hallazgo astronómico sin validación científica.
+        A difference between images is not an astronomical finding without scientific validation.
       </div>
     </>
   );

@@ -105,7 +105,7 @@ export function ExplorerWorkspace() {
       console.warn("Fallo al consultar /api/epochs:", error);
       setIsSimulated(false);
       setErrorMessage(
-        error instanceof Error ? error.message : "Error inesperado al conectar con el backend",
+        error instanceof Error ? error.message : "Unexpected error while connecting to the backend",
       );
       setObservations([]);
       setDiscarded([]);
@@ -135,16 +135,16 @@ export function ExplorerWorkspace() {
     <main className="explore-stage">
       <div className="workspace-heading">
         <div>
-          <h1>Explorar el cielo</h1>
-          <p>Una nueva perspectiva del universo, observación a observación.</p>
+          <h1>Explore the sky</h1>
+          <p>A new view of the universe, one observation at a time.</p>
         </div>
         <div className="eyebrow flex items-center gap-2">
           <Crosshair size={14} className="text-primary" />
-          Exploración por coordenadas
+          Coordinate exploration
         </div>
       </div>
       <div className="workspace-layout">
-        <ResponsivePanel title="Búsqueda y filtros" kind="search">
+        <ResponsivePanel title="Search and filters" kind="search">
           <Sidebar>
             <CoordinateSearch
               coordinates={coordinates}
@@ -183,7 +183,7 @@ export function ExplorerWorkspace() {
           hasSearched={hasSearched}
         />
 
-        <ResponsivePanel title="Observaciones y metadatos" kind="results">
+        <ResponsivePanel title="Observations and metadata" kind="results">
           <aside className="right-sidebar">
             <ResultsPanel
               observations={observations}
