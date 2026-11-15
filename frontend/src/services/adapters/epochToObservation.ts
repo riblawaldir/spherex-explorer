@@ -5,9 +5,10 @@
  * 1. obs_id -> id.
  * 2. t_mjd -> observed_at (ISO 8601 UTC) usando la fórmula unixMs = (mjd - 40587) * 86400000.
  * 3. bandpass -> band.
- * 4. Para ra, dec, collection, source_url y preview_url usar ÚNICAMENTE los valores
- *    que traiga la API. Jamás inventar coordenadas, colecciones ni URLs simuladas.
- * 5. Si falta un campo requerido, la época se descarta y se registra el motivo.
+ * 4. Para ra, dec, collection, source_url, preview_url y provenance usar ÚNICAMENTE los
+ *    valores que traiga la API. Jamás inventar coordenadas, colecciones ni URLs simuladas.
+ * 5. Si falta un campo requerido (obs_id, t_mjd, bandpass, ra, dec), la época se descarta.
+ * 6. collection / source_url son opcionales (null si ausentes); no provocan descarte.
  */
 
 import type { Observation } from "@/types/observation";
@@ -81,21 +82,7 @@ export function adaptSingleEpoch(raw: unknown): {
     reasons.push("bandpass ausente o inválido (debe ser una cadena no vacía).");
   }
 
-  /* =========================================================================
-   * CAMPOS PENDIENTES DE CONFIRMAR CON EL INTEGRANTE 3 (Backend FastAPI):
-   *
-   * - ra / dec: openapi.yaml los define como nullable. Si vienen null o fuera
-   *   de rango físico, se descartan obligatoriamente.
-   * - collection: NO existe en el esquema Epoch de openapi.yaml v0.1.1.
-   *   Hasta que el backend lo incluya en los fixtures/IRSA, cualquier época
-   *   sin collection se descarta (no se asume ni inventa una colección).
-   * - source_url: NO existe en openapi.yaml v0.1.1. No se construyen URLs
-   *   sintéticas; si no viene provisto, se descarta.
-   * - preview_url: nullable en openapi.yaml. Si es null o ausente, la interfaz
-   *   lo trata como "imagen no disponible", sin asignar imágenes simuladas.
-   * ========================================================================= */
-
-  // 4. ra (0 a 360 grados)
+  // 4. ra (0 a 360 grados) — nullable en OpenAPI; sin valor válido se descarta
   const ra = epoch.ra;
   if (
     typeof ra !== "number" ||
@@ -119,23 +106,17 @@ export function adaptSingleEpoch(raw: unknown): {
     reasons.push("dec ausente o fuera de rango [-90, 90] grados.");
   }
 
-  // 6. collection (debe ser string no vacío provisto por la API)
+  // 6. collection (opcional: null si ausente/vacío; nunca se inventa DR1/QR3)
   const collection =
-    typeof epoch.collection === "string" ? epoch.collection.trim() : null;
-  if (!collection) {
-    reasons.push(
-      "collection ausente (campo obligatorio de Observation no provisto por la API; pendiente confirmar con integrante 3).",
-    );
-  }
+    typeof epoch.collection === "string" && epoch.collection.trim() !== ""
+      ? epoch.collection.trim()
+      : null;
 
-  // 7. source_url (debe ser string no vacío provisto por la API)
+  // 7. source_url (opcional: null si ausente/vacío; nunca se inventan URLs)
   const sourceUrl =
-    typeof epoch.source_url === "string" ? epoch.source_url.trim() : null;
-  if (!sourceUrl) {
-    reasons.push(
-      "source_url ausente (campo no provisto por la API; pendiente confirmar con integrante 3).",
-    );
-  }
+    typeof epoch.source_url === "string" && epoch.source_url.trim() !== ""
+      ? epoch.source_url.trim()
+      : null;
 
   // 8. preview_url (nullable: si no existe, es null; no se inventa imagen simulada)
   const previewUrl =
@@ -143,16 +124,13 @@ export function adaptSingleEpoch(raw: unknown): {
       ? epoch.preview_url.trim()
       : null;
 
-  if (
-    reasons.length > 0 ||
-    !obsId ||
-    !observedAt ||
-    !band ||
-    ra === undefined ||
-    dec === undefined ||
-    !collection ||
-    !sourceUrl
-  ) {
+  // 9. provenance (passthrough opcional; no se inventa)
+  const provenance =
+    typeof epoch.provenance === "string" && epoch.provenance.trim() !== ""
+      ? epoch.provenance.trim()
+      : null;
+
+  if (reasons.length > 0 || !obsId || !observedAt || !band) {
     return {
       discarded: {
         obs_id: obsId,
@@ -161,6 +139,7 @@ export function adaptSingleEpoch(raw: unknown): {
     };
   }
 
+  // ra/dec already validated above when reasons is empty
   return {
     observation: {
       id: obsId,
@@ -171,6 +150,7 @@ export function adaptSingleEpoch(raw: unknown): {
       band,
       preview_url: previewUrl,
       source_url: sourceUrl,
+      provenance,
     },
   };
 }

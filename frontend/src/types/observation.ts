@@ -2,10 +2,13 @@
 export interface Observation {
   id: string
   observed_at: string
-  collection: string
+  /** Present only when the API supplies it (live IRSA); fixtures omit this. */
+  collection: string | null
   ra: number
   dec: number
   band: string
   preview_url: string | null
   source_url: string | null
+  /** Per-epoch API provenance when present; never invented. */
+  provenance?: string | null
 }

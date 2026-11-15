@@ -5,6 +5,17 @@ import {
   adaptEpochsToObservations,
 } from "./epochToObservation";
 
+/** Fixture-shaped epoch: no collection / source_url (as returned by /api/epochs stubs). */
+const fixtureEpoch = {
+  obs_id: "SPX-FIXTURE-001",
+  t_mjd: 60000,
+  bandpass: "B1",
+  ra: 127.694,
+  dec: -39.177,
+  preview_url: null,
+  provenance: "cached_sample",
+};
+
 describe("Adaptador Epoch a Observation (epochToObservation)", () => {
   describe("Conversión MJD a ISO 8601 UTC", () => {
     it("convierte MJD 40587 exactamente a 1970-01-01T00:00:00.000Z (Unix Epoch)", () => {
@@ -16,24 +27,15 @@ describe("Adaptador Epoch a Observation (epochToObservation)", () => {
     });
 
     it("convierte valores no enteros de MJD dando la hora fraccional correcta", () => {
-      // 40587.5 = 12 horas después de la medianoche
       expect(mjdToIsoUtc(40587.5)).toBe("1970-01-01T12:00:00.000Z");
-      // 40587.25 = 06:00:00
       expect(mjdToIsoUtc(40587.25)).toBe("1970-01-01T06:00:00.000Z");
     });
   });
 
   describe("Validación estricta y descarte de t_mjd inválido", () => {
     const baseValidEpoch = {
+      ...fixtureEpoch,
       obs_id: "SPX-TEST-001",
-      t_mjd: 60000,
-      bandpass: "B1",
-      ra: 127.694,
-      dec: -39.177,
-      collection: "DR1",
-      source_url: "https://example.com/obs/1",
-      preview_url: null,
-      provenance: "cached_sample",
     };
 
     it("descarta la época si t_mjd es nulo, sin inventar fecha", () => {
@@ -57,15 +59,74 @@ describe("Adaptador Epoch a Observation (epochToObservation)", () => {
     });
   });
 
-  describe("Épocas incompletas sin campos requeridos de Observation", () => {
+  describe("collection / source_url opcionales (fixtures / demo)", () => {
+    it("acepta época fixture sin collection ni source_url", () => {
+      const res = adaptSingleEpoch(fixtureEpoch);
+      expect(res.discarded).toBeUndefined();
+      expect(res.observation).toBeDefined();
+      expect(res.observation?.id).toBe("SPX-FIXTURE-001");
+      expect(res.observation?.collection).toBeNull();
+      expect(res.observation?.source_url).toBeNull();
+      expect(res.observation?.provenance).toBe("cached_sample");
+    });
+
+    it("acepta collection y source_url null sin inventar valores", () => {
+      const res = adaptSingleEpoch({
+        ...fixtureEpoch,
+        collection: null,
+        source_url: null,
+      });
+      expect(res.observation).toBeDefined();
+      expect(res.observation?.collection).toBeNull();
+      expect(res.observation?.source_url).toBeNull();
+      expect(res.observation?.collection).not.toBe("DR1");
+      expect(res.observation?.collection).not.toBe("QR3");
+      expect(res.observation?.source_url).toBeNull();
+    });
+
+    it("acepta collection / source_url omitidos (undefined) sin inventar", () => {
+      const { collection: _c, source_url: _s, ...rest } = {
+        ...fixtureEpoch,
+        collection: undefined as string | undefined,
+        source_url: undefined as string | undefined,
+      };
+      void _c;
+      void _s;
+      const res = adaptSingleEpoch(rest);
+      expect(res.observation).toBeDefined();
+      expect(res.observation?.collection).toBeNull();
+      expect(res.observation?.source_url).toBeNull();
+    });
+
+    it("pasa collection / source_url reales cuando la API los provee", () => {
+      const res = adaptSingleEpoch({
+        ...fixtureEpoch,
+        collection: "DR1",
+        source_url: "https://data.nasa.gov/obs/1",
+      });
+      expect(res.observation?.collection).toBe("DR1");
+      expect(res.observation?.source_url).toBe("https://data.nasa.gov/obs/1");
+    });
+
+    it("trata cadenas vacías de collection / source_url como null (sin inventar)", () => {
+      const res = adaptSingleEpoch({
+        ...fixtureEpoch,
+        collection: "   ",
+        source_url: "",
+      });
+      expect(res.observation).toBeDefined();
+      expect(res.observation?.collection).toBeNull();
+      expect(res.observation?.source_url).toBeNull();
+    });
+  });
+
+  describe("Épocas incompletas: campos realmente requeridos", () => {
     const baseValidEpoch = {
+      ...fixtureEpoch,
       obs_id: "SPX-TEST-002",
-      t_mjd: 60000,
       bandpass: "B2",
       ra: 180.0,
       dec: 45.0,
-      collection: "DR1",
-      source_url: "https://example.com/obs/2",
       preview_url: "/api/preview/2",
       provenance: "stub",
     };
@@ -98,18 +159,6 @@ describe("Adaptador Epoch a Observation (epochToObservation)", () => {
       expect(res.discarded?.reasons.some((r) => r.includes("dec"))).toBe(true);
     });
 
-    it("descarta si falta collection (no asume ni inventa una colección)", () => {
-      const res = adaptSingleEpoch({ ...baseValidEpoch, collection: undefined });
-      expect(res.observation).toBeUndefined();
-      expect(res.discarded?.reasons.some((r) => r.includes("collection"))).toBe(true);
-    });
-
-    it("descarta si falta source_url (no construye URLs inventadas)", () => {
-      const res = adaptSingleEpoch({ ...baseValidEpoch, source_url: undefined });
-      expect(res.observation).toBeUndefined();
-      expect(res.discarded?.reasons.some((r) => r.includes("source_url"))).toBe(true);
-    });
-
     it("descarta si falta obs_id", () => {
       const res = adaptSingleEpoch({ ...baseValidEpoch, obs_id: "" });
       expect(res.observation).toBeUndefined();
@@ -123,8 +172,8 @@ describe("Adaptador Epoch a Observation (epochToObservation)", () => {
     });
   });
 
-  describe("Época completa y gestión de preview_url", () => {
-    it("convierte exactamente una época completa", () => {
+  describe("Época completa y gestión de preview_url / provenance", () => {
+    it("convierte exactamente una época completa con provenance", () => {
       const fullEpoch = {
         obs_id: "SPX-VALID-999",
         t_mjd: 60000,
@@ -148,6 +197,7 @@ describe("Adaptador Epoch a Observation (epochToObservation)", () => {
         band: "B3",
         preview_url: "/api/preview/SPX-VALID-999",
         source_url: "https://data.nasa.gov/obs/999",
+        provenance: "cached_sample",
       });
     });
 
@@ -158,8 +208,6 @@ describe("Adaptador Epoch a Observation (epochToObservation)", () => {
         bandpass: "B4",
         ra: 90.0,
         dec: -66.56,
-        collection: "DR1",
-        source_url: "https://data.nasa.gov/obs/1000",
         preview_url: null,
         provenance: "stub",
       };
@@ -167,11 +215,20 @@ describe("Adaptador Epoch a Observation (epochToObservation)", () => {
       const res = adaptSingleEpoch(epochWithoutPreview);
       expect(res.observation).toBeDefined();
       expect(res.observation?.preview_url).toBeNull();
+      expect(res.observation?.provenance).toBe("stub");
+    });
+
+    it("pone provenance null si está ausente (sin inventar)", () => {
+      const { provenance: _p, ...noProv } = fixtureEpoch;
+      void _p;
+      const res = adaptSingleEpoch(noProv);
+      expect(res.observation).toBeDefined();
+      expect(res.observation?.provenance).toBeNull();
     });
   });
 
   describe("adaptEpochsToObservations con listas heterogéneas", () => {
-    it("separa observaciones válidas de épocas descartadas con sus motivos", () => {
+    it("acepta fixtures sin collection y descarta solo épocas inválidas", () => {
       const list = [
         {
           obs_id: "OBS-OK-1",
@@ -179,19 +236,16 @@ describe("Adaptador Epoch a Observation (epochToObservation)", () => {
           bandpass: "B1",
           ra: 100,
           dec: 10,
-          collection: "DR1",
-          source_url: "https://example.com/1",
           preview_url: null,
           provenance: "stub",
         },
         {
-          obs_id: "OBS-BAD-COLLECTION",
+          obs_id: "OBS-OK-NO-PROVENANCE-FIELDS",
           t_mjd: 60000,
           bandpass: "B2",
           ra: 100,
           dec: 10,
-          // collection ausente
-          source_url: "https://example.com/2",
+          // collection / source_url ausentes — debe aceptarse
         },
         {
           obs_id: "OBS-BAD-MJD",
@@ -199,18 +253,27 @@ describe("Adaptador Epoch a Observation (epochToObservation)", () => {
           bandpass: "B3",
           ra: 100,
           dec: 10,
-          collection: "DR1",
-          source_url: "https://example.com/3",
+        },
+        {
+          obs_id: "",
+          t_mjd: 60000,
+          bandpass: "B1",
+          ra: 100,
+          dec: 10,
         },
       ];
 
       const { observations, discarded } = adaptEpochsToObservations(list);
-      expect(observations).toHaveLength(1);
+      expect(observations).toHaveLength(2);
       expect(observations[0]?.id).toBe("OBS-OK-1");
+      expect(observations[0]?.collection).toBeNull();
+      expect(observations[0]?.source_url).toBeNull();
+      expect(observations[1]?.id).toBe("OBS-OK-NO-PROVENANCE-FIELDS");
+      expect(observations[1]?.collection).toBeNull();
 
       expect(discarded).toHaveLength(2);
-      expect(discarded[0]?.obs_id).toBe("OBS-BAD-COLLECTION");
-      expect(discarded[1]?.obs_id).toBe("OBS-BAD-MJD");
+      expect(discarded[0]?.obs_id).toBe("OBS-BAD-MJD");
+      expect(discarded[1]?.reasons.some((r) => r.includes("obs_id"))).toBe(true);
     });
 
     it("gestiona una lista vacía retornando arreglos vacíos", () => {

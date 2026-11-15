@@ -106,7 +106,7 @@ export function transformObservationsToMarkers(
     const hasSelected = group.some((observation) => observation.id === selectedId);
     const hasCompared = group.some((observation) => compareIds.includes(observation.id));
     const state = visualState(hasSelected, hasCompared);
-    const style = markerStyle(primary.collection, state, isGrouped);
+    const style = markerStyle(primary.collection ?? "", state, isGrouped);
 
     return {
       key: isGrouped ? `group:${primary.ra}:${primary.dec}` : primary.id,
