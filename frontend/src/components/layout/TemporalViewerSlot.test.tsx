@@ -39,9 +39,13 @@ describe("TemporalViewerSlot", () => {
     document.body.innerHTML = "";
   });
 
-  async function render(observations: Observation[], selectedId?: string) {
+  async function render(
+    observations: Observation[],
+    selectedId?: string,
+    isSimulated = false,
+  ) {
     await act(async () => {
-      root.render(createElement(TemporalViewerSlot, { observations, selectedId }));
+      root.render(createElement(TemporalViewerSlot, { observations, selectedId, isSimulated }));
     });
   }
 
@@ -72,6 +76,54 @@ describe("TemporalViewerSlot", () => {
     expect(imageAlt()).toContain("later");
     await click("Anterior");
     expect(imageAlt()).toContain("earlier");
+  });
+
+  it("lets the timeline select an observation in chronological order", async () => {
+    await render([
+      observation("later", "2026-08-20T00:00:00Z"),
+      observation("earlier", "2026-08-15T00:00:00Z"),
+    ]);
+
+    const timeline = container.querySelector(
+      '[aria-label="Línea temporal de observaciones"]',
+    ) as HTMLInputElement;
+    expect(timeline.value).toBe("0");
+    expect(timeline.getAttribute("aria-valuetext")).toContain("15 ago de 2026");
+
+    await act(async () => {
+      const valueSetter = Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        "value",
+      )?.set;
+      valueSetter?.call(timeline, "1");
+      timeline.dispatchEvent(new Event("input", { bubbles: true }));
+      timeline.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    expect(imageAlt()).toContain("later");
+    expect(container.textContent).toContain("2 / 2");
+    expect(timeline.getAttribute("aria-valuetext")).toContain("20 ago de 2026");
+  });
+
+  it("labels fixtures as simulated and leaves API observations unmarked", async () => {
+    const rows = [observation("one", "2026-08-15T00:00:00Z")];
+
+    await render(rows, undefined, true);
+    expect(container.textContent).toContain("DATOS SIMULADOS");
+    expect(container.textContent).toContain("1 observación simulada");
+
+    await render(rows);
+    expect(container.textContent).not.toContain("DATOS SIMULADOS");
+    expect(container.textContent).toContain("1 observación · one");
+  });
+
+  it("provides zoom and recenter controls for the displayed image", async () => {
+    await render([observation("one", "2026-08-15T00:00:00Z")]);
+
+    expect(button("Acercar imagen").disabled).toBe(false);
+    expect(button("Alejar imagen").disabled).toBe(true);
+    expect(button("Centrar imagen").disabled).toBe(false);
+    expect(container.textContent).toContain("1.0×");
   });
 
   it("plays at the selected speed and pauses cleanly", async () => {

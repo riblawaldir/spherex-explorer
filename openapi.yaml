@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
   title: SPHEREx Explorer API
-  version: 0.2.0-sprint2
+  version: 0.3.0-sprint3
   description: |
-    Sprint 2 contract for SPHEREx Explorer.
+    Sprint 3 contract for SPHEREx Explorer.
     Default search/epochs path uses labeled fixtures under `data/metadata/`
     with provenance `stub` or `cached_sample` (offline demo / CI).
     When `SPHEREX_USE_IRSA=1` (or CatalogService `use_irsa=True`), the
@@ -13,8 +13,10 @@ info:
     preview_url, provenance (nullable values where the row lacks them).
     For live rows only, optional `collection` and `source_url` are passed
     through from P4 when IRSA provides them — never invented for fixtures.
-    Preview returns PNG when a local sample FITS exists and P5 `fits_to_png`
-    succeeds; otherwise 501 (or null `preview_url` on live rows without a sample).
+    `preview_url` is non-null only when a local FITS resolves (sample under
+    data/samples/, fits_sample, data/raw/{obs_id}.fits, or a P4 fits_path
+    already on disk). GET /api/preview/{obs_id} uses P5 inspect_fits +
+    fits_to_png; otherwise 501 / null preview_url.
 servers:
   - url: http://127.0.0.1:8000
     description: Local uvicorn
@@ -134,7 +136,7 @@ paths:
           description: Validation error (missing/out-of-range ra/dec/radius)
   /api/preview/{obs_id}:
     get:
-      summary: Preview PNG (P5 fits_to_png when sample FITS exists)
+      summary: Preview PNG (P5 fits_to_png + HDU inspect when local FITS exists)
       operationId: getPreview
       tags: [preview]
       parameters:
@@ -152,7 +154,7 @@ paths:
             default: 512
       responses:
         "200":
-          description: image/png from local sample via P5 fits_to_png
+          description: image/png from local sample / cutout via P5 fits_to_png
           content:
             image/png:
               schema:
@@ -163,8 +165,18 @@ paths:
               schema:
                 type: string
                 example: cached_sample
+            X-Obs-Id:
+              schema:
+                type: string
+            X-Source-Fits:
+              schema:
+                type: string
+            X-Hdu-Index:
+              schema:
+                type: string
+                description: HDU index selected by inspect_fits / select_image_hdu
         "501":
-          description: No sample FITS or processing failed
+          description: No local FITS or processing failed
           content:
             application/json:
               schema:
@@ -229,9 +241,9 @@ components:
           em_min/em_max → wavelength_um (midpoint µm when both present),
           access_url → source_url (optional), collection → collection (optional).
         collection / source_url are omitted on fixture rows; included on live
-        rows only when P4/IRSA actually provided them. preview_url is null for
-        live rows without a local sample FITS; fixture rows may point at
-        /api/preview/{obs_id} even when that endpoint returns 501.
+        rows only when P4/IRSA actually provided them. preview_url is non-null
+        only when a local FITS resolves — clients should not request preview
+        when it is null (endpoint would 501).
       properties:
         obs_id:
           type: string
@@ -256,6 +268,7 @@ components:
         preview_url:
           type: string
           nullable: true
+          description: /api/preview/{obs_id} when local FITS exists; else null
         provenance:
           type: string
           enum: [stub, cached_sample, live]
