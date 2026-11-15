@@ -1,5 +1,4 @@
 import { useMemo, useRef } from "react";
-import { Html } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { Polyline, SegmentLines } from "./lines";
@@ -60,15 +59,6 @@ function Marker({
   );
 }
 
-const GRID_LABELS = [
-  { ra: 0, dec: 0, text: "RA 0°" },
-  { ra: 90, dec: 0, text: "RA 90°" },
-  { ra: 180, dec: 0, text: "RA 180°" },
-  { ra: 270, dec: 0, text: "RA 270°" },
-  { ra: 0, dec: 60, text: "Dec +60°" },
-  { ra: 0, dec: -60, text: "Dec −60°" },
-];
-
 export function CelestialSphere({
   observations,
   selectedId,
@@ -76,7 +66,6 @@ export function CelestialSphere({
   center,
   radiusDeg,
   colors,
-  showLabels,
   reducedMotion,
   onSelect,
   onCursor,
@@ -87,7 +76,6 @@ export function CelestialSphere({
   center: { ra: number; dec: number } | null;
   radiusDeg: number | null;
   colors: ThemeColors;
-  showLabels: boolean;
   reducedMotion: boolean;
   onSelect: (id: string) => void;
   onCursor: (cursor: { ra: number; dec: number } | null) => void;
@@ -111,15 +99,6 @@ export function CelestialSphere({
       </mesh>
       <SegmentLines positions={grid} color={colors.primary} opacity={0.38} />
       {circle.length > 0 && <Polyline positions={circle} color={colors.warning} />}
-      {showLabels &&
-        GRID_LABELS.map((label) => {
-          const point = observationToMarker(label, 1.08);
-          return (
-            <Html key={label.text} position={[point.x, point.y, point.z]} center zIndexRange={[1, 0]} style={{ pointerEvents: "none" }}>
-              <span className="sky3d-grid-label">{label.text}</span>
-            </Html>
-          );
-        })}
       {observations.map((observation) => (
         <Marker
           key={observation.id}

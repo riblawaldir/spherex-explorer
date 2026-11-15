@@ -15,11 +15,13 @@ import type { Coordinates, SearchFilters } from "@/types/search";
 import { Sidebar } from "./Sidebar";
 import { ResponsivePanel } from "./ResponsivePanel";
 import { useExplorer } from "./ExplorerContext";
-import { CoordinateSearch } from "@/components/search/CoordinateSearch";
+import { CoordinateSearch, SearchSubmitButton } from "@/components/search/CoordinateSearch";
 import { FilterPanel } from "@/components/search/FilterPanel";
 import { SkyMap2D } from "@/components/sky/SkyMap2D";
 import { ResultsPanel } from "@/components/observations/ResultsPanel";
 import { MetadataPanel } from "@/components/observations/MetadataPanel";
+
+const SEARCH_FORM_ID = "coordinate-search-form";
 
 export function ExplorerWorkspace() {
   const isMockMode = import.meta.env?.VITE_USE_MOCKS === "true";
@@ -145,8 +147,9 @@ export function ExplorerWorkspace() {
       </div>
       <div className="workspace-layout">
         <ResponsivePanel title="Search and filters" kind="search">
-          <Sidebar>
+          <Sidebar footer={<SearchSubmitButton formId={SEARCH_FORM_ID} loading={status === "loading"} />}>
             <CoordinateSearch
+              formId={SEARCH_FORM_ID}
               coordinates={coordinates}
               onChange={setCoordinates}
               onSearch={search}

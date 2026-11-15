@@ -39,7 +39,7 @@ export function ResultsPanel({
         <h2 className="panel-heading">
           <ListFilter />
           Observations{" "}
-          <span className="data-chip">{observations.length.toString().padStart(2, "0")}</span>
+          <span className="data-chip">{observations.length}</span>
         </h2>
         {isSimulated && <SimulatedBadge />}
       </div>

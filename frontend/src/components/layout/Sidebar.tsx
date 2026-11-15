@@ -1,9 +1,12 @@
 import { Info } from "lucide-react";
 import type { ReactNode } from "react";
-export function Sidebar({ children }: { children: ReactNode }) {
+export function Sidebar({ children, footer }: { children: ReactNode; footer?: ReactNode }) {
   return (
     <aside className="left-sidebar">
-      <div className="glass-panel search-panel">{children}</div>
+      <div className="glass-panel search-panel">
+        <div className="search-panel-body">{children}</div>
+        {footer && <div className="search-panel-footer">{footer}</div>}
+      </div>
       <div className="sidebar-note">
         <Info size={14} className="shrink-0 mt-1" />
         <p>

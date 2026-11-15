@@ -13,6 +13,7 @@ import {
 import type { Coordinates } from "@/types/search";
 
 interface CoordinateSearchProps {
+  formId: string;
   coordinates: Coordinates;
   onChange: (c: Coordinates) => void;
   onSearch: () => void;
@@ -21,7 +22,26 @@ interface CoordinateSearchProps {
   onReset?: () => void;
 }
 
+export function SearchSubmitButton({ formId, loading }: { formId: string; loading: boolean }) {
+  return (
+    <Button type="submit" form={formId} variant="brand" className="w-full font-medium" disabled={loading}>
+      {loading ? (
+        <>
+          <LoaderCircle className="animate-spin" size={14} />
+          Searching observations…
+        </>
+      ) : (
+        <>
+          <Search size={14} />
+          Search observations
+        </>
+      )}
+    </Button>
+  );
+}
+
 export function CoordinateSearch({
+  formId,
   coordinates,
   onChange,
   onSearch,
@@ -79,6 +99,7 @@ export function CoordinateSearch({
 
   return (
     <form
+      id={formId}
       onSubmit={(e) => {
         e.preventDefault();
         onSearch();
@@ -181,25 +202,6 @@ export function CoordinateSearch({
         error={errors.radius}
         disabled={loading}
       />
-
-      <Button
-        type="submit"
-        variant="brand"
-        className="w-full mt-4 font-medium"
-        disabled={loading}
-      >
-        {loading ? (
-          <>
-            <LoaderCircle className="animate-spin" size={14} />
-            Searching observations…
-          </>
-        ) : (
-          <>
-            <Search size={14} />
-            Search observations
-          </>
-        )}
-      </Button>
     </form>
   );
 }

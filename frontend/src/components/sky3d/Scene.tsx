@@ -1,43 +1,16 @@
-import { useMemo, useRef } from "react";
-import { Html } from "@react-three/drei";
-import { useFrame, useThree } from "@react-three/fiber";
-import * as THREE from "three";
+import type { RefObject } from "react";
 import type { Observation } from "@/types/observation";
 import type { DemoSpectrumSample } from "./demoCube";
 import type { ThemeColors } from "./themeColor";
-import { Polyline } from "./lines";
 import { CelestialSphere } from "./CelestialSphere";
 import { SpectralCube } from "./SpectralCube";
-import { CameraControls, type CameraNudge } from "./CameraControls";
+import { CameraControls, ViewFraming, type CameraNudge } from "./CameraControls";
+import { fitDistance, type ViewerFrame } from "./framing";
+import { AxisGizmo, ScreenLabels, type ScreenLabel } from "./overlays";
 
-function AxisGizmo({ colors }: { colors: ThemeColors }) {
-  const ref = useRef<THREE.Group>(null);
-  const camera = useThree((state) => state.camera);
-  const offset = useMemo(() => new THREE.Vector3(0.62, -0.42, -1.5), []);
-  const scratch = useMemo(() => new THREE.Vector3(), []);
-  useFrame(() => {
-    const group = ref.current;
-    if (!group) return;
-    scratch.copy(offset).applyQuaternion(camera.quaternion).add(camera.position);
-    group.position.copy(scratch);
-    group.quaternion.identity();
-  });
-  const arm = (end: [number, number, number], color: string, label: string) => (
-    <group key={label}>
-      <Polyline positions={[0, 0, 0, ...end]} color={color} />
-      <Html position={end} center zIndexRange={[1, 0]} style={{ pointerEvents: "none" }}>
-        <span className="sky3d-grid-label">{label}</span>
-      </Html>
-    </group>
-  );
-  return (
-    <group ref={ref} scale={0.16}>
-      {arm([1, 0, 0], colors.primary, "X")}
-      {arm([0, 1, 0], colors.violet, "Y")}
-      {arm([0, 0, 1], colors.muted, "Z")}
-    </group>
-  );
-}
+const FOV = 45;
+const SCENE_RADIUS = { sphere: 1.05, cube: 1.3 } as const;
+const REST_DIRECTION = { sphere: [0, 0.35, 2.6], cube: [2.2, 1.1, 1.7] } as const;
 
 export function Scene({
   scene,
@@ -54,6 +27,11 @@ export function Scene({
   flyTarget,
   resetToken,
   nudge,
+  frame,
+  frameRef,
+  labels,
+  labelLayerRef,
+  gizmoRef,
   onBusy,
   onPose,
   onSelect,
@@ -73,16 +51,25 @@ export function Scene({
   flyTarget: [number, number, number] | null;
   resetToken: number;
   nudge: CameraNudge | null;
+  frame: ViewerFrame | null;
+  frameRef: RefObject<ViewerFrame | null>;
+  labels: readonly ScreenLabel[];
+  labelLayerRef: RefObject<HTMLDivElement | null>;
+  gizmoRef: RefObject<SVGSVGElement | null>;
   onBusy: (busy: boolean) => void;
   onPose: (pose: { distance: number; fov: number }) => void;
   onSelect: (id: string) => void;
   onCursor: (cursor: { ra: number; dec: number } | null) => void;
 }) {
+  const distance = frame ? fitDistance(SCENE_RADIUS[scene], FOV, frame.height, frame.fit) : 2.6;
   return (
     <>
       <color attach="background" args={[colors.background]} />
       <fogExp2 attach="fog" args={[colors.background, reducedMotion ? 0 : 0.04]} />
+      <ViewFraming fit={frame?.fit ?? null} />
       <CameraControls
+        restDirection={REST_DIRECTION[scene]}
+        fitDistance={distance}
         flyTarget={flyTarget}
         resetToken={resetToken}
         nudge={nudge}
@@ -98,24 +85,17 @@ export function Scene({
           center={center}
           radiusDeg={radiusDeg}
           colors={colors}
-          showLabels={analysis}
           reducedMotion={reducedMotion}
           onSelect={onSelect}
           onCursor={onCursor}
         />
       ) : (
         center && (
-          <SpectralCube
-            samples={samples}
-            center={center}
-            bandId={bandId}
-            colors={colors}
-            showLabels={analysis}
-            onSelect={onSelect}
-          />
+          <SpectralCube samples={samples} center={center} bandId={bandId} colors={colors} onSelect={onSelect} />
         )
       )}
-      {analysis && <AxisGizmo colors={colors} />}
+      <ScreenLabels labels={labels} layerRef={labelLayerRef} frameRef={frameRef} />
+      {analysis && <AxisGizmo svgRef={gizmoRef} />}
     </>
   );
 }
