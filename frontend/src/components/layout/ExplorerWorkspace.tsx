@@ -1,16 +1,12 @@
-import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Crosshair } from "lucide-react";
 import {
   defaultCoordinates,
-  emptyFilters,
   filterMockObservations,
-  mockObservations,
 } from "@/data/mockObservations";
 import { validateCoordinatesStrict } from "@/lib/coordinates";
 import { keepOrReplaceSelection, retainKnownIds } from "@/lib/selection";
 import { fetchObservations } from "@/services/observationsApi";
-import type { DiscardedEpoch } from "@/services/adapters/epochToObservation";
 import type { Coordinates, SearchFilters } from "@/types/search";
 import { Sidebar } from "./Sidebar";
 import { ResponsivePanel } from "./ResponsivePanel";
@@ -23,30 +19,12 @@ import { MetadataPanel } from "@/components/observations/MetadataPanel";
 
 export function ExplorerWorkspace() {
   const isMockMode = import.meta.env?.VITE_USE_MOCKS === "true";
-  const [coordinates, setCoordinates] = useState<Coordinates>({ ...defaultCoordinates });
-  const [submitted, setSubmitted] = useState<Coordinates>({ ...defaultCoordinates });
-  const [filters, setFilters] = useState<SearchFilters>({ ...emptyFilters });
-  const [observations, setObservations] = useState(isMockMode ? mockObservations : []);
-  const [isSimulated, setIsSimulated] = useState(isMockMode);
-  const [discarded, setDiscarded] = useState<DiscardedEpoch[]>([]);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>();
-  const [status, setStatus] = useState<"ready" | "loading" | "error">("ready");
-  const [errors, setErrors] = useState<Partial<Record<keyof Coordinates, string>>>({});
-  const [hasSearched, setHasSearched] = useState(isMockMode);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const seededSelection = useRef(false);
   const navigate = useNavigate();
-  const { setComparison, selectedId, setSelectedId, compareIds, setCompareIds, toggleCompareId } =
+  const { workspace, setComparison, selectedId, setSelectedId, compareIds, setCompareIds, toggleCompareId } =
     useExplorer();
-
-  useEffect(() => () => clearTimeout(timer.current), []);
-
-  useEffect(() => {
-    if (seededSelection.current || !isMockMode) return;
-    seededSelection.current = true;
-    const first = mockObservations[0];
-    if (first) setSelectedId(first.id);
-  }, [isMockMode, setSelectedId]);
+  const { coordinates, setCoordinates, submitted, setSubmitted, filters, setFilters,
+    observations, setObservations, isSimulated, setIsSimulated, discarded, setDiscarded,
+    errorMessage, setErrorMessage, status, setStatus, errors, setErrors, hasSearched, setHasSearched } = workspace;
 
   function commitMock(c: Coordinates, f: SearchFilters) {
     const rows = filterMockObservations(c, f);
@@ -62,18 +40,15 @@ export function ExplorerWorkspace() {
     setErrors(validation.errors);
     if (!validation.isValid || !validation.parsed) return;
 
-    clearTimeout(timer.current);
     setStatus("loading");
     setErrorMessage(undefined);
     setHasSearched(true);
 
     // Si está explícitamente activado VITE_USE_MOCKS=true, usar fixtures locales
     if (isMockMode) {
-      timer.current = setTimeout(() => {
-        commitMock(coordinates, filters);
-        setSubmitted({ ...coordinates });
-        setStatus("ready");
-      }, 300);
+      commitMock(coordinates, filters);
+      setSubmitted({ ...coordinates });
+      setStatus("ready");
       return;
     }
 
@@ -158,7 +133,6 @@ export function ExplorerWorkspace() {
             <FilterPanel
               filters={filters}
               onChange={(f) => {
-                clearTimeout(timer.current);
                 setFilters(f);
                 if (isMockMode) {
                   commitMock(submitted, f);
