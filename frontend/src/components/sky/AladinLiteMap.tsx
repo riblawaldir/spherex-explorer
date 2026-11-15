@@ -24,8 +24,11 @@ import {
   nextFov,
   panCenter,
   parseSubmittedQuery,
+  probeAladinSurvey,
   surveyBackgroundLabel,
+  surveyFetchFailed,
   surveyTileSeen,
+  SURVEY_TILE_WAIT_MS,
   type PanDirection,
   type SurveyBackgroundState,
 } from "@/lib/aladinView";
@@ -199,10 +202,21 @@ export default function AladinLiteMap({
       stopped = true;
       observer?.disconnect();
       window.clearTimeout(timer);
+      if (state === "unavailable") {
+        // Corta el bucle ESA → P/DSS2/color → reintento de Aladin Lite offline.
+        controllerRef.current?.clearSurvey();
+      }
       setBackgroundState(state);
     };
     const mark = () => {
-      if (surveyTileSeen(urls(), DEFAULT_ALADIN_SURVEY)) finish("ready");
+      const seen = urls();
+      if (surveyTileSeen(seen, DEFAULT_ALADIN_SURVEY)) {
+        finish("ready");
+        return;
+      }
+      if (surveyFetchFailed(seen, DEFAULT_ALADIN_SURVEY)) {
+        finish("unavailable");
+      }
     };
     try {
       observer = new PerformanceObserver(mark);
@@ -211,9 +225,13 @@ export default function AladinLiteMap({
       observer = null;
     }
     mark();
+    void probeAladinSurvey(DEFAULT_ALADIN_SURVEY).then((ok) => {
+      if (stopped || ok) return;
+      finish("unavailable");
+    });
     timer = window.setTimeout(() => {
       finish(surveyTileSeen(urls(), DEFAULT_ALADIN_SURVEY) ? "ready" : "unavailable");
-    }, 8000);
+    }, SURVEY_TILE_WAIT_MS);
     return () => {
       stopped = true;
       observer?.disconnect();
@@ -316,13 +334,14 @@ export default function AladinLiteMap({
           <p>Cargando mapa Aladin Lite…</p>
         </div>
       )}
-      {backgroundState !== "ready" && (
+      {backgroundState === "loading" && (
         <div className="survey-status" role="status">
-          <p>
-            {backgroundState === "loading"
-              ? "Cargando fondo…"
-              : "Fondo del cielo no disponible; los marcadores siguen activos."}
-          </p>
+          <p>Cargando fondo…</p>
+        </div>
+      )}
+      {backgroundState === "unavailable" && (
+        <div className="survey-status survey-status-fallback" role="status">
+          <p>Fondo del cielo no disponible (DSS/HiPS). Los marcadores y la búsqueda siguen activos.</p>
         </div>
       )}
       <MapNotices

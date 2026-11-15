@@ -22,12 +22,22 @@ export interface AladinGraphicOverlay {
   removeAll(): void;
 }
 
+export interface AladinImageLayer {
+  /** Layer id used by removeImageLayer (set when the HiPS is added to the view). */
+  layer?: string;
+  id?: string;
+}
+
 export interface AladinInstance {
   gotoRaDec(ra: number, dec: number): void;
   setFoV(fovInDegrees: number): void;
   getFov(): [number, number] | number;
   getRaDec(): [number, number];
   setImageSurvey(surveyId: string): void;
+  setImageLayer?(surveyId: string): void;
+  setBaseImageLayer?(surveyId: string): void;
+  getBaseImageLayer?(): AladinImageLayer | undefined;
+  removeImageLayer?(layerId?: string): void;
   /** https://cds-astro.github.io/aladin-lite/Aladin.html — setCooGrid({ color, opacity, thickness, enabled }) */
   setCooGrid(options: {
     color?: string;

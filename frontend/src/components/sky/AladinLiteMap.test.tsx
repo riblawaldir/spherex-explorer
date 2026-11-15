@@ -12,6 +12,7 @@ const { controllers, mountAladinMap } = vi.hoisted(() => {
       getCenter: vi.fn(() => ({ ra: 127.69444, dec: -39.1776 })),
       getFov: vi.fn(() => ({ width: 0.35, height: 0.2 })),
       setSurvey: vi.fn(),
+      clearSurvey: vi.fn(),
       setSearchCircle: vi.fn(),
       setMarkers: vi.fn(),
       subscribe: vi.fn(),

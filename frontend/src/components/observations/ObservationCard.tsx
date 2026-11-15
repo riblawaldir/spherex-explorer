@@ -41,7 +41,10 @@ export function ObservationCard({
               ) : null}
             </div>
           </div>
-          <p className="scientific text-xs text-muted-foreground mt-2">
+          <p className="observation-obs-id scientific text-xs text-muted-foreground mt-1.5 font-mono">
+            <span className="text-muted-foreground/80">obs_id</span> {o.id}
+          </p>
+          <p className="scientific text-xs text-muted-foreground mt-1">
             RA {o.ra.toFixed(5)}° <span className="mx-1">·</span> Dec {o.dec.toFixed(5)}°
           </p>
         </div>

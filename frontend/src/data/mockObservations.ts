@@ -66,7 +66,15 @@ export const mockObservations: Observation[] = [
     source_url: "https://science.nasa.gov/mission/spherex/",
   },
 ];
+/** Cone that hits API/fixture epochs (WISE 0855). Mock-mode rows stay at SPX-SIM-DEFAULT. */
 export const defaultCoordinates: Coordinates = {
+  ra: "133.79513",
+  dec: "-7.24459",
+  radius: "0.01",
+};
+
+/** Coordinates of the local UI fixtures in mockObservations (VITE_USE_MOCKS). */
+export const simulatedFixtureCoordinates: Coordinates = {
   ra: "127.69444",
   dec: "-39.17760",
   radius: "0.01",

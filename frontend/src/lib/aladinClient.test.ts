@@ -4,6 +4,7 @@ import {
   AladinMountCancelled,
   createAladinController,
   mountAladinWithNamespace,
+  silenceHiPSRetries,
 } from "./aladinClient";
 import { computeAladinViewParams } from "./aladinView";
 import type { ObservationMarkerItem } from "./markerUtils";
@@ -42,6 +43,10 @@ function fakeNamespace() {
     getFov: vi.fn(() => [0.35, 0.22] as [number, number]),
     getRaDec: vi.fn(() => [10, -5] as [number, number]),
     setImageSurvey: vi.fn(),
+    setImageLayer: vi.fn(),
+    setBaseImageLayer: vi.fn(),
+    getBaseImageLayer: vi.fn(() => ({ layer: "base-layer", id: "hips-1" })),
+    removeImageLayer: vi.fn(),
     setCooGrid: vi.fn(),
     addCatalog: vi.fn(),
     removeCatalog: vi.fn(),
@@ -174,5 +179,25 @@ describe("cliente de Aladin Lite", () => {
     controller.destroy();
     expect(instance.off).toHaveBeenCalledWith("positionChanged");
     expect(instance.removeOverlay).toHaveBeenCalledTimes(2);
+  });
+
+  it("al silenciar HiPS quita la capa base y bloquea recargas del survey por defecto", () => {
+    const { namespace, instance } = fakeNamespace();
+    const setSurvey = instance.setImageSurvey as ReturnType<typeof vi.fn>;
+    const setBase = instance.setBaseImageLayer as ReturnType<typeof vi.fn>;
+    const remove = instance.removeImageLayer as ReturnType<typeof vi.fn>;
+
+    silenceHiPSRetries(instance);
+    expect(remove).toHaveBeenCalledWith("base-layer");
+
+    instance.setImageSurvey("P/DSS2/color");
+    instance.setBaseImageLayer?.("P/DSS2/color");
+    // Tras silenciar, las llamadas no deben llegar a los mocks originales.
+    expect(setSurvey).not.toHaveBeenCalled();
+    expect(setBase).not.toHaveBeenCalled();
+
+    const controller = createAladinController(namespace, instance);
+    controller.clearSurvey();
+    expect(remove).toHaveBeenCalled();
   });
 });

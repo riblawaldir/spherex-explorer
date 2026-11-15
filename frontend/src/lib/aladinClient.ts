@@ -33,6 +33,11 @@ export interface AladinController {
   getCenter(): { ra: number; dec: number };
   getFov(): { width: number; height: number };
   setSurvey(surveyId: string): void;
+  /**
+   * Drop the HiPS base layer and block Aladin from re-loading DEFAULT DSS
+   * (offline failure otherwise loops: ESA fail → P/DSS2/color → fail → …).
+   */
+  clearSurvey(): void;
   setSearchCircle(ra: number, dec: number, radiusDeg: number): void;
   setMarkers(
     markers: readonly ObservationMarkerItem[],
@@ -98,6 +103,35 @@ function sourceKey(source: unknown): string | undefined {
   return typeof key === "string" ? key : undefined;
 }
 
+/**
+ * Aladin Lite re-loads P/DSS2/color when a HiPS layer fails and the view is empty.
+ * Offline that becomes an unbounded retry storm. Patch survey setters to no-op and
+ * remove the current base layer so markers stay on a quiet solid background.
+ */
+export function silenceHiPSRetries(instance: AladinInstance): void {
+  const noop = () => undefined;
+  instance.setImageSurvey = noop as AladinInstance["setImageSurvey"];
+  if (typeof instance.setImageLayer === "function") {
+    instance.setImageLayer = noop as NonNullable<AladinInstance["setImageLayer"]>;
+  }
+  if (typeof instance.setBaseImageLayer === "function") {
+    instance.setBaseImageLayer = noop as NonNullable<AladinInstance["setBaseImageLayer"]>;
+  }
+
+  try {
+    const base = instance.getBaseImageLayer?.();
+    const layerId =
+      (typeof base?.layer === "string" && base.layer) ||
+      (typeof base?.id === "string" && base.id) ||
+      undefined;
+    if (layerId && typeof instance.removeImageLayer === "function") {
+      instance.removeImageLayer(layerId);
+    }
+  } catch {
+    // El fondo ya puede haberse descartado; los marcadores siguen usable.
+  }
+}
+
 export function createAladinController(
   A: AladinNamespace,
   instance: AladinInstance,
@@ -149,6 +183,9 @@ export function createAladinController(
     },
     setSurvey(surveyId) {
       instance.setImageSurvey(surveyId);
+    },
+    clearSurvey() {
+      silenceHiPSRetries(instance);
     },
     setSearchCircle(ra, dec, radiusDeg) {
       if (!overlay) {
