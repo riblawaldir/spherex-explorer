@@ -92,6 +92,7 @@ export function TemporalViewerSlot({
   );
   const [blinkFrame, setBlinkFrame] = useState(0);
   const [failedPreviewKey, setFailedPreviewKey] = useState<string | undefined>();
+  const [loadedPreviewKeys, setLoadedPreviewKeys] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     if (sortedObservations.length === 0) {
@@ -151,6 +152,11 @@ export function TemporalViewerSlot({
     : undefined;
   const hasDisplayedPreview = hasPreviewUrl(displayedObservation?.preview_url);
   const imageFailed = previewKey !== undefined && failedPreviewKey === previewKey;
+  const isPreviewLoading =
+    previewKey !== undefined &&
+    hasDisplayedPreview &&
+    !imageFailed &&
+    !loadedPreviewKeys.has(previewKey);
 
   useEffect(() => {
     if (isBlinking && (!hasPreviewUrl(activeObservation?.preview_url) || !blinkSecondObservation)) {
@@ -256,9 +262,23 @@ export function TemporalViewerSlot({
                         alt={`Previsualización de ${displayedObservation.id}, ${formatDate(displayedObservation.observed_at)}`}
                         className="max-h-full max-w-full object-contain"
                         onError={() => setFailedPreviewKey(previewKey)}
-                        onLoad={() => setFailedPreviewKey((failed) => (failed === previewKey ? undefined : failed))}
+                        onLoad={() => {
+                          setFailedPreviewKey((failed) => (failed === previewKey ? undefined : failed));
+                          if (previewKey) {
+                            setLoadedPreviewKeys((loaded) => new Set(loaded).add(previewKey));
+                          }
+                        }}
                       />
                     </TransformComponent>
+                    {isPreviewLoading && (
+                      <div
+                        className="absolute inset-0 z-10 grid place-items-center bg-black/30 text-sm text-white"
+                        role="status"
+                        aria-live="polite"
+                      >
+                        Cargando previsualización…
+                      </div>
+                    )}
                     <div className="absolute left-3 top-3 flex items-center gap-1 rounded bg-black/70 p-1 text-white">
                       <Button
                         variant="ghost"
