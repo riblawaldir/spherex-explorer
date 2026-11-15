@@ -5,3 +5,4 @@ astroquery>=0.4.10,<1
 pyvo>=1.6,<2
 numpy>=2,<3
 pillow>=11,<13
+reproject>=0.21,<0.22
