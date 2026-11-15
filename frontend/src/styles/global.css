@@ -850,37 +850,144 @@ svg {
   gap: 10px;
   margin-top: 24px;
 }
-.sphere-placeholder {
+.sky3d-root {
+  position: absolute;
+  inset: 0;
+  outline: none;
+}
+.sky3d-root:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--ring);
+}
+.sky3d-canvas {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+.sky3d-toolbar,
+.sky3d-status,
+.sky3d-panel-slot {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+}
+.sky3d-toolbar {
+  top: 64px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+.sky3d-toolbar-actions,
+.sky3d-toolbar > * {
+  pointer-events: auto;
+}
+.sky3d-toolbar-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.sky3d-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklch, var(--card) 72%, transparent);
+  color: var(--foreground);
+  font: 500 0.8125rem/1 var(--font-sans);
+}
+.sky3d-status {
+  left: 18px;
+  right: 18px;
+  bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+.sky3d-status p {
+  margin: 0;
+}
+.sky3d-panel-slot {
+  top: 116px;
+  right: 18px;
+  width: min(280px, calc(100% - 36px));
+  transition: opacity 200ms ease;
+}
+.sky3d-root[data-density="focus"] .sky3d-panel-slot {
+  opacity: 0;
+  visibility: hidden;
+}
+.sky3d-panel {
+  pointer-events: auto;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  max-height: min(420px, calc(100% - 180px));
+  overflow: auto;
+}
+.sky3d-panel p {
+  margin: 0;
+}
+.sky3d-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sky3d-legend li {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 28px;
-  padding: 45px;
-  text-align: center;
+  gap: 8px;
 }
-.wire-sphere {
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  border: 1px solid var(--primary);
-  position: relative;
-  opacity: 0.6;
+.sky3d-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--foreground);
 }
-.wire-sphere:before {
-  content: "";
+.sky3d-swatch.is-primary { background: var(--primary); }
+.sky3d-swatch.is-violet { background: var(--violet); }
+.sky3d-swatch.is-warning { background: var(--warning); }
+.sky3d-swatch.is-selected {
+  background: var(--primary);
+  box-shadow: var(--active-shadow);
+}
+.sky3d-grid-label {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.sky3d-dust,
+.sky3d-vignette {
   position: absolute;
-  inset: 0 60px;
-  border: 1px solid var(--primary);
-  border-radius: 50%;
+  inset: 0;
+  pointer-events: none;
 }
-.wire-sphere:after {
-  content: "";
+.sky3d-dust { z-index: 2; }
+.sky3d-vignette {
+  z-index: 3;
+  background: radial-gradient(circle, transparent 58%, var(--background) 100%);
+  opacity: 0.45;
+}
+.sky3d-skeleton {
   position: absolute;
-  inset: 60px 0;
-  border: 1px solid var(--primary);
-  border-radius: 50%;
+  inset: 72px 24px 72px;
+  border-radius: 16px;
 }
 @keyframes panel-rise {
   from {
@@ -917,9 +1024,14 @@ svg {
     left: 352px;
     max-width: calc(100% - 720px);
   }
-  .map-status {
+  .map-status,
+  .sky3d-toolbar,
+  .sky3d-status {
     left: 352px;
     right: 352px;
+  }
+  .sky3d-panel-slot {
+    right: 368px;
   }
   .results-list {
     max-height: 240px;
