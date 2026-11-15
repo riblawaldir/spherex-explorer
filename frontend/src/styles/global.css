@@ -907,6 +907,9 @@ svg {
     left: 352px;
     right: 352px;
   }
+  .right-sidebar {
+    bottom: 80px;
+  }
   .map-controls {
     right: 352px;
   }
