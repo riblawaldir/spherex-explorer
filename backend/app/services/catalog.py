@@ -134,6 +134,7 @@ class CatalogService:
         self._search_observations_fn = search_observations_fn
         # obs_id → local FITS from a live P4 download in this process (no invent).
         self._live_fits: dict[str, Path] = {}
+        self._live_observations: dict[str, list[Any]] = {}
 
     def _targets_payload(self) -> dict[str, Any]:
         return _load_json(self._targets_path)
@@ -340,6 +341,9 @@ class CatalogService:
         """Map P4 ObservationRecord → Epoch contract fields."""
         rows: list[dict[str, Any]] = []
         for rec in _observation_records(payload):
+            known = self._live_observations.setdefault(str(rec.obs_id), [])
+            if not any(item.collection == rec.collection and item.detector == rec.detector and item.access_url == rec.access_url for item in known):
+                known.append(rec)
             bandpass = rec.band_label
             if band is not None and band.strip():
                 if bandpass is None or band.strip().lower() not in str(
@@ -457,6 +461,27 @@ class CatalogService:
                 return found
         return None
 
+feat/spherex-data
+    def resolve_observation(self, obs_id: str):
+        """Resolve a previously discovered IRSA record or a labeled fixture.
+
+        An observation ID can identify several detector products; do not choose
+        one silently. Local paths are resolved separately by resolve_preview_fits.
+        """
+        from app.science.spherex_data.search import ObservationRecord
+
+        records = self._live_observations.get(obs_id, [])
+        if len(records) > 1:
+            raise ValueError('Observation identifier matches multiple products')
+        if records:
+            return records[0]
+        for row in self._epochs_payload().get('epochs', []):
+            if str(row.get('obs_id')) == obs_id:
+                return ObservationRecord(
+                    obs_id=obs_id, collection=row.get('collection') or '', access_url='',
+                    ra=row.get('ra'), dec=row.get('dec'), t_min_mjd=row.get('t_mjd'),
+                    band_label=row.get('bandpass'),
+                )
     def get_epoch_by_obs_id(self, obs_id: str) -> dict[str, Any] | None:
         """Return a known epoch row for ``obs_id``, or ``None`` if unknown.
 
@@ -490,6 +515,7 @@ class CatalogService:
             if row.get("source_url"):
                 epoch["source_url"] = row["source_url"]
             return epoch
+ main
         return None
 
 
