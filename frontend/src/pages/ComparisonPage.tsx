@@ -4,7 +4,7 @@ import { useExplorer } from "@/components/layout/ExplorerContext";
 import { TemporalViewerSlot } from "@/components/layout/TemporalViewerSlot";
 
 export function ComparisonPage() {
-  const { comparison } = useExplorer();
+  const { comparison, comparisonIsSimulated } = useExplorer();
 
   return (
     <main className="secondary-page">
@@ -16,7 +16,7 @@ export function ComparisonPage() {
       <p className="text-muted-foreground text-sm mt-3">
         Observaciones seleccionadas · espacio reservado
       </p>
-      <TemporalViewerSlot observations={comparison} />
+      <TemporalViewerSlot observations={comparison} isSimulated={comparisonIsSimulated} />
     </main>
   );
 }

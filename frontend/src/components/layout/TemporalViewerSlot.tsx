@@ -14,6 +14,7 @@ const dateFormatter = new Intl.DateTimeFormat("es-BO", {
 
 export interface TemporalViewerSlotProps {
   observations: Observation[];
+  isSimulated?: boolean;
   selectedId?: string;
   onSelect?: (id: string) => void;
 }
@@ -59,6 +60,7 @@ function sortObservations(observations: Observation[]): Observation[] {
 
 export function TemporalViewerSlot({
   observations,
+  isSimulated = false,
   selectedId,
   onSelect,
 }: TemporalViewerSlotProps) {
@@ -208,7 +210,7 @@ export function TemporalViewerSlot({
             <History />
             Visor temporal
           </h2>
-          <SimulatedBadge />
+          {isSimulated && <SimulatedBadge />}
         </div>
 
         <div className="temporal-image relative overflow-hidden">
@@ -368,7 +370,7 @@ export function TemporalViewerSlot({
         </div>
 
         <p className="text-muted-foreground text-xs mt-4">
-          {count} observaciones simuladas
+          {count} observación{count === 1 ? "" : "es"}{isSimulated ? " simuladas" : ""}
           {activeObservation ? ` · ${activeObservation.id}` : ""}
         </p>
       </section>

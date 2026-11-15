@@ -39,9 +39,13 @@ describe("TemporalViewerSlot", () => {
     document.body.innerHTML = "";
   });
 
-  async function render(observations: Observation[], selectedId?: string) {
+  async function render(
+    observations: Observation[],
+    selectedId?: string,
+    isSimulated = false,
+  ) {
     await act(async () => {
-      root.render(createElement(TemporalViewerSlot, { observations, selectedId }));
+      root.render(createElement(TemporalViewerSlot, { observations, selectedId, isSimulated }));
     });
   }
 
@@ -72,6 +76,18 @@ describe("TemporalViewerSlot", () => {
     expect(imageAlt()).toContain("later");
     await click("Anterior");
     expect(imageAlt()).toContain("earlier");
+  });
+
+  it("labels fixtures as simulated and leaves API observations unmarked", async () => {
+    const rows = [observation("one", "2026-08-15T00:00:00Z")];
+
+    await render(rows, undefined, true);
+    expect(container.textContent).toContain("DATOS SIMULADOS");
+    expect(container.textContent).toContain("1 observación simulada");
+
+    await render(rows);
+    expect(container.textContent).not.toContain("DATOS SIMULADOS");
+    expect(container.textContent).toContain("1 observación · one");
   });
 
   it("plays at the selected speed and pauses cleanly", async () => {
