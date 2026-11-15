@@ -17,6 +17,34 @@ export interface ComparePanelProps {
 const EMPTY_CANDIDATES: Observation[] = [];
 const EMPTY_IDS: string[] = [];
 
+async function scientificErrorMessage(response: Response): Promise<string> {
+  let detail: unknown;
+  try {
+    const body: unknown = await response.json();
+    if (body && typeof body === "object" && "detail" in body) detail = body.detail;
+  } catch {
+    // Algunas respuestas de error no contienen JSON.
+  }
+  if (typeof detail === "string") {
+    if (detail.startsWith("Invalid FITS image:")) {
+      return "No se pudo validar: el FITS no contiene una imagen científica compatible. Las muestras de prueba pueden no incluir la extensión IMAGE necesaria.";
+    }
+    if (detail.startsWith("Invalid celestial WCS:")) {
+      return "No se pudo validar: el FITS no contiene coordenadas WCS celestes válidas para alinear las imágenes.";
+    }
+    if (detail.startsWith("FITS unavailable for observation:")) {
+      return "No se pudo validar: no hay un archivo FITS local disponible para una de las observaciones.";
+    }
+    if (detail.startsWith("Observation not found:")) {
+      return "No se pudo validar: una de las observaciones no está disponible en el catálogo.";
+    }
+    if (detail.startsWith("FITS read error:")) {
+      return "No se pudo validar: hubo un error al leer el archivo FITS.";
+    }
+  }
+  return `No se pudo completar la validación científica (HTTP ${response.status}).`;
+}
+
 function pickDefaults(preferred: string[], candidates: Observation[]): [string, string] {
   const fromPreferred = preferred.filter(Boolean);
   if (fromPreferred.length >= 2) {
@@ -125,8 +153,14 @@ export function ComparePanel({
       fetchCompare({ obsIdA, obsIdB }),
       fetch('/api/scientific-validation', { method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({observation_1: obsIdA.trim(), observation_2: obsIdB.trim()}) })
-        .then(async response => { if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json(); })
-        .catch(error => { setScientificError(String(error)); return null; }),
+        .then(async response => {
+          if (!response.ok) {
+            setScientificError(await scientificErrorMessage(response));
+            return null;
+          }
+          return response.json();
+        })
+        .catch(() => { setScientificError("No se pudo conectar con la API de validación científica."); return null; }),
     ]);
     setResult(next);
     setScientific(science);
