@@ -29,6 +29,12 @@ vi.mock("@/lib/aladinClient", () => ({
   mountAladinMap,
 }));
 
+vi.mock("@/lib/aladinView", async (importOriginal) => ({
+  ...await importOriginal<typeof import("@/lib/aladinView")>(),
+  probeAladinSurvey: vi.fn(async () => true),
+}));
+
+import { probeAladinSurvey } from "@/lib/aladinView";
 import AladinLiteMap from "./AladinLiteMap";
 
 describe("AladinLiteMap", () => {
@@ -39,6 +45,7 @@ describe("AladinLiteMap", () => {
   beforeEach(() => {
     controllers.length = 0;
     mountAladinMap.mockClear();
+    vi.mocked(probeAladinSurvey).mockResolvedValue(true);
     (
       globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }
     ).IS_REACT_ACT_ENVIRONMENT = true;
@@ -88,5 +95,17 @@ describe("AladinLiteMap", () => {
     for (const controller of controllers) {
       expect(controller.destroy).toHaveBeenCalledTimes(1);
     }
+  });
+
+  it("muestra el fallback cuando no se puede acceder al fondo", async () => {
+    vi.mocked(probeAladinSurvey).mockResolvedValue(false);
+    await act(async () => {
+      root.render(createElement(AladinLiteMap, {
+        observations: [], onSelect: vi.fn(),
+        coordinates: { ra: "127.69444", dec: "-39.17760", radius: "0.01" },
+      }));
+    });
+    expect(container.textContent).toContain("Fondo del cielo no disponible");
+    expect(container.textContent).toContain("Los marcadores y la búsqueda siguen activos");
   });
 });

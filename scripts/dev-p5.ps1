@@ -269,4 +269,3 @@ Write-Host "Frontend http://127.0.0.1:$FrontendPort/"
 Write-Host "Proxy    $env:VITE_API_PROXY"
 Start-Process "http://127.0.0.1:$FrontendPort/"
 Write-Host "Servidores en marcha. Para detenerlos: .\scripts\dev-p5.ps1 -Stop"
-
