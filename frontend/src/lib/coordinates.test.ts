@@ -187,5 +187,11 @@ describe("Astronomical Coordinates Parser & Validator (Sprint 1)", () => {
         expect(target.radius).toBeGreaterThan(0);
       }
     });
+
+    it("lists WISE 0855 first so the demo cone is one click away", () => {
+      expect(PRESET_TARGETS[0]?.id).toBe("WISE-0855");
+      expect(PRESET_TARGETS[0]?.ra).toBe(133.79513);
+      expect(PRESET_TARGETS[0]?.dec).toBe(-7.24459);
+    });
   });
 });

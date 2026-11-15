@@ -1,14 +1,15 @@
 import { describe, it, expect } from "vitest";
 import {
   defaultCoordinates,
+  simulatedFixtureCoordinates,
   emptyFilters,
   validateCoordinates,
   filterMockObservations,
   canCompare,
 } from "./mockObservations";
 describe("Simulated observation rules", () => {
-  it("preloads the requested coordinates and radius", () => {
-    expect(defaultCoordinates).toEqual({ ra: "127.69444", dec: "-39.17760", radius: "0.01" });
+  it("preloads the WISE 0855 fixture cone so the first API search returns results", () => {
+    expect(defaultCoordinates).toEqual({ ra: "133.79513", dec: "-7.24459", radius: "0.01" });
   });
   it("accepts RA endpoints 0 and 360 and rejects outside that range", () => {
     for (const ra of ["0", "360"])
@@ -30,21 +31,24 @@ describe("Simulated observation rules", () => {
   });
   it("applies and clears bands, dates and collection filters to mock rows", () => {
     expect(
-      filterMockObservations(defaultCoordinates, { ...emptyFilters, bands: ["B2"] }).map(
+      filterMockObservations(simulatedFixtureCoordinates, { ...emptyFilters, bands: ["B2"] }).map(
         (o) => o.id,
       ),
     ).toEqual(["SPX-SIM-002"]);
     expect(
-      filterMockObservations(defaultCoordinates, { ...emptyFilters, collection: "QR3" }).length,
+      filterMockObservations(simulatedFixtureCoordinates, {
+        ...emptyFilters,
+        collection: "QR3",
+      }).length,
     ).toBe(2);
     expect(
-      filterMockObservations(defaultCoordinates, {
+      filterMockObservations(simulatedFixtureCoordinates, {
         ...emptyFilters,
         start: "2026-08-20",
         end: "2026-08-22",
       }).length,
     ).toBe(2);
-    expect(filterMockObservations(defaultCoordinates, emptyFilters).length).toBe(6);
+    expect(filterMockObservations(simulatedFixtureCoordinates, emptyFilters).length).toBe(6);
   });
   it("rejects a nonpositive radius", () => {
     expect(validateCoordinates({ ...defaultCoordinates, radius: "0" }).radius).toBeDefined();

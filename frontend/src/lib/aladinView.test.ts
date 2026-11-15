@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   ALADIN_SURVEYS,
   computeAladinViewParams,
@@ -7,8 +7,10 @@ import {
   nextFov,
   panCenter,
   parseSubmittedQuery,
+  probeAladinSurvey,
   projectFallbackPosition,
   surveyBackgroundLabel,
+  surveyFetchFailed,
   surveyTileSeen,
   unprojectFallbackPosition,
 } from "./aladinView";
@@ -70,9 +72,40 @@ describe("consulta a vista de Aladin", () => {
     expect(surveyBackgroundLabel("loading")).toContain("Cargando fondo…");
     expect(surveyBackgroundLabel("ready")).toContain("Fondo: DSS2 Color");
     expect(surveyBackgroundLabel("ready")).toContain("skies.esac.esa.int");
-    expect(surveyBackgroundLabel("unavailable")).toBe(
-      "Fondo del cielo no disponible; los marcadores siguen activos.",
+    expect(surveyBackgroundLabel("unavailable")).toContain("Fondo del cielo no disponible");
+    expect(surveyBackgroundLabel("unavailable")).toContain("marcadores");
+  });
+
+  it("detecta fallos de HiPS sin tesela válida hacia el host del survey", () => {
+    const host = "https://skies.esac.esa.int/DSSColor";
+    expect(
+      surveyFetchFailed(["https://skies.esac.esa.int/DSSColor/properties"], host),
+    ).toBe(true);
+    expect(
+      surveyFetchFailed(
+        ["https://skies.esac.esa.int/DSSColor/Norder3/Dir0/Npix0.jpg"],
+        host,
+      ),
+    ).toBe(false);
+    expect(surveyFetchFailed(["http://localhost:5173/app.js"], host)).toBe(false);
+  });
+
+  it("sondea el manifiesto HiPS y trata errores de red como no disponible", async () => {
+    const okFetch = vi.fn(async () => ({ ok: true }) as Response);
+    await expect(
+      probeAladinSurvey("https://skies.esac.esa.int/DSSColor", { fetchImpl: okFetch }),
+    ).resolves.toBe(true);
+    expect(okFetch).toHaveBeenCalledWith(
+      "https://skies.esac.esa.int/DSSColor/properties",
+      expect.objectContaining({ method: "GET" }),
     );
+
+    const badFetch = vi.fn(async () => {
+      throw new TypeError("Failed to fetch");
+    });
+    await expect(
+      probeAladinSurvey("https://skies.esac.esa.int/DSSColor", { fetchImpl: badFetch }),
+    ).resolves.toBe(false);
   });
 
   it("formatea el centro en grados y en sexagesimal", () => {

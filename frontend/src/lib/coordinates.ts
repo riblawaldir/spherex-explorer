@@ -18,6 +18,16 @@ export interface PresetTarget {
  */
 export const PRESET_TARGETS: PresetTarget[] = [
   {
+    id: "WISE-0855",
+    name: "WISE 0855",
+    category: "Fixture demo",
+    ra: 133.79513,
+    dec: -7.24459,
+    radius: 0.01,
+    description:
+      "Región de fixtures stub/cached (WISE J085510.83-071442.5). Primera búsqueda con resultados en modo API.",
+  },
+  {
     id: "SPX-NEP",
     name: "Polo Eclíptico Norte (NEP)",
     category: "SPHEREx Deep Field",

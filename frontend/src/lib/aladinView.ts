@@ -37,6 +37,12 @@ export const ALADIN_SURVEYS: Record<string, AladinSurveyInfo> = {
 
 export type SurveyBackgroundState = "loading" | "ready" | "unavailable";
 
+/** Cuánto esperar teselas HiPS antes de marcar el fondo como no disponible. */
+export const SURVEY_TILE_WAIT_MS = 8000;
+
+/** Timeout corto para sondear el HiPS antes / durante el montaje. */
+export const SURVEY_PROBE_TIMEOUT_MS = 2500;
+
 /** Una tesela HiPS real, no el fichero properties ni el HTML de respaldo. */
 export function surveyTileSeen(urls: readonly string[], surveyUrl: string): boolean {
   let host = "";
@@ -50,9 +56,58 @@ export function surveyTileSeen(urls: readonly string[], surveyUrl: string): bool
   );
 }
 
+/** Host del survey, o cadena vacía si la URL no es válida. */
+export function surveyHost(surveyUrl: string): string {
+  try {
+    return new URL(surveyUrl).host;
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * True si el performance log muestra fallos de red hacia el host HiPS
+ * (sin tesela JPEG/PNG válida). Sirve para cortar reintentos antes del timeout.
+ */
+export function surveyFetchFailed(urls: readonly string[], surveyUrl: string): boolean {
+  const host = surveyHost(surveyUrl);
+  if (!host) return false;
+  const related = urls.filter((url) => url.includes(host));
+  if (!related.length) return false;
+  return !surveyTileSeen(related, surveyUrl) && related.some((url) => /properties|Norder/i.test(url));
+}
+
+/**
+ * Sondea el manifiesto HiPS. Si falla (offline / DNS), no hace falta esperar
+ * el timeout de teselas para mostrar el banner y silenciar reintentos.
+ */
+export async function probeAladinSurvey(
+  surveyUrl: string,
+  options: { timeoutMs?: number; fetchImpl?: typeof fetch } = {},
+): Promise<boolean> {
+  const timeoutMs = options.timeoutMs ?? SURVEY_PROBE_TIMEOUT_MS;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const propertiesUrl = surveyUrl.replace(/\/?$/, "/") + "properties";
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetchImpl(propertiesUrl, {
+      method: "GET",
+      signal: controller.signal,
+      mode: "cors",
+      cache: "no-store",
+    });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export function surveyBackgroundLabel(state: SurveyBackgroundState = "ready"): string {
   if (state === "unavailable") {
-    return "Fondo del cielo no disponible; los marcadores siguen activos.";
+    return "Fondo del cielo no disponible (DSS/HiPS). Los marcadores y la búsqueda siguen activos.";
   }
   const survey = ALADIN_SURVEYS[DEFAULT_ALADIN_SURVEY];
   const place = `${survey?.name ?? "DSS2 Color"} (${DEFAULT_ALADIN_SURVEY})`;
