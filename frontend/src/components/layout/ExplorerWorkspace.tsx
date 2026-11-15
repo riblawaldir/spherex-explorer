@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Crosshair } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   defaultCoordinates,
   emptyFilters,
@@ -35,6 +35,8 @@ export function ExplorerWorkspace() {
   const [status, setStatus] = useState<"ready" | "loading" | "error">("ready");
   const [errors, setErrors] = useState<Partial<Record<keyof Coordinates, string>>>({});
   const [hasSearched, setHasSearched] = useState(isMockMode);
+  const [showSearchPanel, setShowSearchPanel] = useState(true);
+  const [showResultsPanel, setShowResultsPanel] = useState(true);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const seededSelection = useRef(false);
   const navigate = useNavigate();
@@ -135,17 +137,12 @@ export function ExplorerWorkspace() {
 
   return (
     <main className="explore-stage">
-      <div className="workspace-heading">
-        <div>
-          <h1>Explore the sky</h1>
-          <p>A new view of the universe, one observation at a time.</p>
-        </div>
-        <div className="eyebrow flex items-center gap-2">
-          <Crosshair size={14} className="text-primary" />
-          Coordinate exploration
-        </div>
-      </div>
-      <div className="workspace-layout">
+      <h1 className="sr-only">Explore the sky</h1>
+      <div
+        className="workspace-layout"
+        data-search-panel={showSearchPanel ? "shown" : "hidden"}
+        data-results-panel={showResultsPanel ? "shown" : "hidden"}
+      >
         <ResponsivePanel title="Search and filters" kind="search">
           <Sidebar footer={<SearchSubmitButton formId={SEARCH_FORM_ID} loading={status === "loading"} />}>
             <CoordinateSearch
@@ -214,6 +211,27 @@ export function ExplorerWorkspace() {
             />
           </aside>
         </ResponsivePanel>
+
+        <button
+          type="button"
+          className="panel-handle left"
+          aria-label={showSearchPanel ? "Collapse search panel" : "Expand search panel"}
+          aria-expanded={showSearchPanel}
+          title={showSearchPanel ? "Collapse search panel" : "Expand search panel"}
+          onClick={() => setShowSearchPanel((visible) => !visible)}
+        >
+          <ChevronLeft size={14} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          className="panel-handle right"
+          aria-label={showResultsPanel ? "Collapse observations panel" : "Expand observations panel"}
+          aria-expanded={showResultsPanel}
+          title={showResultsPanel ? "Collapse observations panel" : "Expand observations panel"}
+          onClick={() => setShowResultsPanel((visible) => !visible)}
+        >
+          <ChevronRight size={14} aria-hidden="true" />
+        </button>
       </div>
     </main>
   );

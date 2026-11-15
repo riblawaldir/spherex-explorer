@@ -1,5 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
-import { Orbit, Compass, History, Info } from "lucide-react";
+import { Compass, History, Info } from "lucide-react";
+import logo from "@/assets/spherex-explorer-logo.png";
 export function SimulatedBadge({ prototype = false }: { prototype?: boolean }) {
   return (
     <span className="sim-badge">
@@ -13,12 +14,7 @@ export function Header() {
   return (
     <header className="app-header">
       <Link to="/" className="brand" aria-label="SPHEREx Explorer, home">
-        <span className="brand-icon">
-          <Orbit size={35} />
-        </span>
-        <div className="brand-name">
-          SPHEREx <span>Explorer</span>
-        </div>
+        <img src={logo} alt="" className="brand-logo" width={244} height={54} />
       </Link>
       <nav className="main-nav" aria-label="Main navigation">
         <NavLink to="/" end className={({ isActive }) => `nav-link${isActive ? " active" : ""}`}>
