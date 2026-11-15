@@ -29,4 +29,24 @@ describe('demo IRSA', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/scientific-validation', expect.objectContaining({method:'POST',body:JSON.stringify({observation_1:'a',observation_2:'b'})}));
     await act(async () => root.unmount()); container.remove();
   });
+
+  it('explica el rechazo del FITS sin afirmar que se validó científicamente', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === '/api/real-data-demo') return { ok: true, status: 200, json: async () => ({ observations: [] }) };
+      if (url === '/api/scientific-validation') return { ok: false, status: 422, json: async () => ({ detail: 'Invalid FITS image: stub-wise0855-001' }) };
+      return { ok: true, status: 200, json: async () => ({ obs_id_a: 'a', obs_id_b: 'b', status: 'not_comparable', provenance: 'stub', reasons: [], alignment: { status: 'failed', detail: 'sin WCS' }, diff: { status: 'skipped', detail: 'sin resta', provenance: 'stub' }, checks: {} }) };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const container = document.createElement('div'); document.body.appendChild(container);
+    const root = createRoot(container);
+    await act(async () => { root.render(<ComparePanel preferredIds={['a', 'b']} />); });
+    const compare = Array.from(container.querySelectorAll('button')).find(b => b.textContent?.includes('Comparar vía API'))!;
+    await act(async () => { compare.click(); });
+    expect(container.textContent).toContain('el FITS no contiene una imagen científica compatible');
+    expect(container.textContent).toContain('extensión IMAGE');
+    expect(container.textContent).toContain('not_comparable');
+    expect(container.textContent).not.toContain('Error: HTTP 422');
+    await act(async () => root.unmount()); container.remove();
+  });
 });
