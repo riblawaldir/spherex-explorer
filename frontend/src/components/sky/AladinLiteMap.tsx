@@ -24,9 +24,7 @@ import {
   nextFov,
   panCenter,
   parseSubmittedQuery,
-  probeAladinSurvey,
   surveyBackgroundLabel,
-  surveyFetchFailed,
   surveyTileSeen,
   SURVEY_TILE_WAIT_MS,
   type PanDirection,
@@ -88,6 +86,7 @@ export default function AladinLiteMap({
 
   const [loading, setLoading] = useState(true);
   const [ready, setReady] = useState(false);
+  const [fitsLayerStatus, setFitsLayerStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [backgroundState, setBackgroundState] = useState<SurveyBackgroundState>("loading");
   const [center, setCenter] = useState<{ ra: number; dec: number } | null>(
     query ? { ra: query.ra, dec: query.dec } : null,
@@ -199,23 +198,18 @@ export default function AladinLiteMap({
     const urls = () => performance.getEntriesByType("resource").map((entry) => entry.name);
     const finish = (state: SurveyBackgroundState) => {
       if (stopped) return;
-      stopped = true;
-      observer?.disconnect();
-      window.clearTimeout(timer);
-      if (state === "unavailable") {
-        // Corta el bucle ESA → P/DSS2/color → reintento de Aladin Lite offline.
-        controllerRef.current?.clearSurvey();
-      }
       setBackgroundState(state);
+      if (state === "ready") {
+        stopped = true;
+        observer?.disconnect();
+        window.clearTimeout(timer);
+      }
     };
     const mark = () => {
       const seen = urls();
       if (surveyTileSeen(seen, DEFAULT_ALADIN_SURVEY)) {
         finish("ready");
         return;
-      }
-      if (surveyFetchFailed(seen, DEFAULT_ALADIN_SURVEY)) {
-        finish("unavailable");
       }
     };
     try {
@@ -225,10 +219,6 @@ export default function AladinLiteMap({
       observer = null;
     }
     mark();
-    void probeAladinSurvey(DEFAULT_ALADIN_SURVEY).then((ok) => {
-      if (stopped || ok) return;
-      finish("unavailable");
-    });
     timer = window.setTimeout(() => {
       finish(surveyTileSeen(urls(), DEFAULT_ALADIN_SURVEY) ? "ready" : "unavailable");
     }, SURVEY_TILE_WAIT_MS);
@@ -260,6 +250,42 @@ export default function AladinLiteMap({
     if (!controller) return;
     publishMarkers(controller);
   }, [observations, selectedId, compareIds, ready, status]);
+
+  useEffect(() => {
+    const controller = controllerRef.current;
+    const selected = observations.find((observation) => observation.id === selectedId);
+    if (!ready || !controller || !selected?.preview_url || isSimulated) {
+      controller?.clearFitsOverlay?.();
+      setFitsLayerStatus("idle");
+      return;
+    }
+    const abort = new AbortController();
+    let active = true;
+    let objectUrl: string | undefined;
+    setFitsLayerStatus("loading");
+    void fetch(`/api/overlay/${encodeURIComponent(selected.id)}`, { signal: abort.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("Capa FITS no disponible");
+        return response.blob();
+      })
+      .then((blob) => {
+        if (!active) return;
+        if (!controller.showFitsOverlay) throw new Error("Visor FITS no disponible");
+        objectUrl = URL.createObjectURL(blob);
+        controller.showFitsOverlay(objectUrl, () => {
+          if (active) setFitsLayerStatus("ready");
+        }, () => {
+          if (active) setFitsLayerStatus("error");
+        });
+      })
+      .catch(() => { if (active) setFitsLayerStatus("error"); });
+    return () => {
+      active = false;
+      abort.abort();
+      controller.clearFitsOverlay?.();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [ready, selectedId, observations, isSimulated]);
 
   const built = transformObservationsToMarkers(
     status === "loading" ? [] : observations,
@@ -328,6 +354,11 @@ export default function AladinLiteMap({
       onKeyDown={onKeyDown}
     >
       <div ref={containerRef} className="aladin-host" />
+      {fitsLayerStatus !== "idle" && (
+        <div className="absolute left-4 top-16 z-10 rounded bg-black/80 px-3 py-2 text-xs text-white" role="status">
+          {fitsLayerStatus === "loading" ? "Cargando recorte FITS…" : fitsLayerStatus === "ready" ? "Recorte FITS colocado por WCS" : "No se pudo mostrar el recorte FITS en el mapa."}
+        </div>
+      )}
       {loading && (
         <div className="map-loading" role="status">
           <Loader2 className="animate-spin text-primary" size={28} />

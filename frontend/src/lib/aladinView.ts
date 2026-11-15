@@ -7,7 +7,7 @@
  * (https://aladin.cds.unistra.fr/AladinLite/doc/API/).
  * Ese identificador apunta a https://alasky.cds.unistra.fr/DSS/DSSColor,
  * que en este entorno responde 404. El mismo HiPS (ivo://CDS/P/DSS2/color)
- * sí se sirve desde el espejo de la ESA, host permitido por Aladin Lite.
+ * también se sirve desde el espejo público de IRSA.
  * setFoV(número) fija el campo de visión en grados.
  */
 
@@ -22,16 +22,16 @@ export interface AladinSurveyInfo {
 
 /**
  * Mismo HiPS que P/DSS2/color (ivo://CDS/P/DSS2/color), servido por el espejo
- * skies.esac.esa.int. Es contexto visual óptico, no una imagen de SPHEREx.
+ * IRSA. Es contexto visual óptico, no una imagen de SPHEREx.
  */
-export const DEFAULT_ALADIN_SURVEY = "https://skies.esac.esa.int/DSSColor";
+export const DEFAULT_ALADIN_SURVEY = "https://irsa.ipac.caltech.edu/data/hips/CDS/DSS2/color";
 
 export const ALADIN_SURVEYS: Record<string, AladinSurveyInfo> = {
   [DEFAULT_ALADIN_SURVEY]: {
     id: DEFAULT_ALADIN_SURVEY,
     name: "DSS2 Color",
     description:
-      "Digitized Sky Survey 2 en color, espejo ESA de ivo://CDS/P/DSS2/color. Fondo visual, no datos de SPHEREx.",
+      "Digitized Sky Survey 2 en color, espejo IRSA de ivo://CDS/P/DSS2/color. Fondo visual, no datos de SPHEREx.",
   },
 };
 
@@ -63,18 +63,6 @@ export function surveyHost(surveyUrl: string): string {
   } catch {
     return "";
   }
-}
-
-/**
- * True si el performance log muestra fallos de red hacia el host HiPS
- * (sin tesela JPEG/PNG válida). Sirve para cortar reintentos antes del timeout.
- */
-export function surveyFetchFailed(urls: readonly string[], surveyUrl: string): boolean {
-  const host = surveyHost(surveyUrl);
-  if (!host) return false;
-  const related = urls.filter((url) => url.includes(host));
-  if (!related.length) return false;
-  return !surveyTileSeen(related, surveyUrl) && related.some((url) => /properties|Norder/i.test(url));
 }
 
 /**

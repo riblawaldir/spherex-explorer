@@ -6,13 +6,42 @@ from pathlib import Path
 from fastapi import APIRouter, Query
 from fastapi.responses import JSONResponse, Response
 from PIL import Image
+from astropy.io import fits
+from astropy.wcs import WCS
 
 from app.routers.fixtures import STUB_PROVENANCE
 from app.science.fits_inspection import inspect_fits, select_image_hdu
 from app.science.image_processing import fits_to_png
+from app.science.image_alignment import validate_fits_wcs
 from app.services.catalog import get_catalog_service
 
 router = APIRouter(prefix="/api", tags=["preview"])
+
+
+@router.get("/overlay/{obs_id}")
+def get_wcs_overlay(obs_id: str):
+    """Return the selected IMAGE plane and WCS, not the original MEF or local path."""
+    path = get_catalog_service().resolve_preview_fits(obs_id)
+    if path is None:
+        return JSONResponse(status_code=404, content={"detail": "Observación local no disponible"})
+    try:
+        index = select_image_hdu(inspect_fits(path))
+        validate_fits_wcs(path, hdu=index)
+        with fits.open(path, mode="readonly", memmap=False) as hdus:
+            source = hdus[index]
+            wcs = WCS(source.header, fobj=hdus).celestial
+            if any(getattr(wcs, key, None) is not None for key in ("cpdis1", "cpdis2", "det2im1", "det2im2")):
+                raise ValueError("Esta distorsión WCS necesita extensiones adicionales")
+            if source.data.size > 10_000_000:
+                raise ValueError("Imagen demasiado grande para la vista local")
+            header = wcs.to_header(relax=True)
+            if "BUNIT" in source.header:
+                header["BUNIT"] = source.header["BUNIT"]
+            result = BytesIO()
+            fits.PrimaryHDU(data=source.data, header=header).writeto(result)
+        return Response(result.getvalue(), media_type="application/fits", headers={"Cache-Control": "no-store"})
+    except (OSError, ValueError, KeyError, IndexError) as exc:
+        return JSONResponse(status_code=422, content={"detail": f"No se puede preparar la capa WCS: {exc}"})
 
 
 def _choose_image_hdu(fits_path: Path) -> int:

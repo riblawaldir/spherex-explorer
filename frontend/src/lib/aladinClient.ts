@@ -38,6 +38,8 @@ export interface AladinController {
    * (offline failure otherwise loops: ESA fail → P/DSS2/color → fail → …).
    */
   clearSurvey(): void;
+  showFitsOverlay?(url: string, onLoad: () => void, onError: (error: unknown) => void): void;
+  clearFitsOverlay?(): void;
   setSearchCircle(ra: number, dec: number, radiusDeg: number): void;
   setMarkers(
     markers: readonly ObservationMarkerItem[],
@@ -187,6 +189,21 @@ export function createAladinController(
     clearSurvey() {
       silenceHiPSRetries(instance);
     },
+    showFitsOverlay(url, onLoad, onError) {
+      if (!instance.createImageFITS || !instance.setOverlayImageLayer) {
+        onError(new Error("El visor no admite capas FITS."));
+        return;
+      }
+      try {
+        const image = instance.createImageFITS(url, { name: "Recorte FITS local" }, onLoad, onError);
+        instance.setOverlayImageLayer(image, "spherex-fits");
+      } catch (error) {
+        onError(error);
+      }
+    },
+    clearFitsOverlay() {
+      try { instance.removeImageLayer?.("spherex-fits"); } catch { /* No layer is loaded. */ }
+    },
     setSearchCircle(ra, dec, radiusDeg) {
       if (!overlay) {
         overlay = A.graphicOverlay({ name: "Radio de búsqueda", color: "#22d3ee" });
@@ -256,6 +273,7 @@ export function createAladinController(
       destroyed = true;
       listeners.clear();
       try {
+        instance.removeImageLayer?.("spherex-fits");
         instance.off("positionChanged");
         instance.off("mouseMove");
         instance.off("zoomChanged");
