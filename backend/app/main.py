@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import epochs, preview, search, targets
+from app.routers import comparability, epochs, preview, search, targets
 
 app = FastAPI(
     title="SPHEREx Explorer",
@@ -24,6 +24,7 @@ app.include_router(targets.router)
 app.include_router(search.router)
 app.include_router(epochs.router)
 app.include_router(preview.router)
+app.include_router(comparability.router)
 
 
 @app.get("/health")
