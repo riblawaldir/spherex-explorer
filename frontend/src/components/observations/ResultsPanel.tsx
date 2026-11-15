@@ -17,6 +17,7 @@ export function ResultsPanel({
   onCheck,
   onCompare,
   onRetry,
+  isSimulated = false,
 }: {
   observations: Observation[];
   selectedId?: string | undefined;
@@ -28,6 +29,7 @@ export function ResultsPanel({
   onCheck: (id: string) => void;
   onCompare: () => void;
   onRetry: () => void;
+  isSimulated?: boolean;
 }) {
   return (
     <section className="glass-panel results-panel" aria-label="Panel de observaciones">
@@ -37,7 +39,7 @@ export function ResultsPanel({
           Observaciones{" "}
           <span className="data-chip">{observations.length.toString().padStart(2, "0")}</span>
         </h2>
-        <SimulatedBadge />
+        {isSimulated && <SimulatedBadge />}
       </div>
       <p className="px-[18px] text-[10px] text-muted-foreground">
         Selecciona observaciones para comparar.

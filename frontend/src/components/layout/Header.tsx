@@ -9,6 +9,7 @@ export function SimulatedBadge({ prototype = false }: { prototype?: boolean }) {
   );
 }
 export function Header() {
+  const showSimulated = import.meta.env.VITE_USE_MOCKS === "true";
   return (
     <header className="app-header">
       <Link to="/" className="brand" aria-label="SPHEREx Explorer, inicio">
@@ -42,9 +43,7 @@ export function Header() {
           Acerca de
         </NavLink>
       </nav>
-      <div className="header-badge">
-        <SimulatedBadge prototype />
-      </div>
+      <div className="header-badge">{showSimulated ? <SimulatedBadge prototype /> : null}</div>
     </header>
   );
 }

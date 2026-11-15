@@ -126,6 +126,15 @@ describe("TemporalViewerSlot", () => {
     expect(container.textContent).toContain("1.0×");
   });
 
+  it("shows a loading status until the selected preview loads", async () => {
+    await render([observation("loading", "2026-08-15T00:00:00Z")]);
+    expect(container.textContent).toContain("Cargando previsualización…");
+
+    const image = container.querySelector("img");
+    await act(async () => image?.dispatchEvent(new Event("load")));
+    expect(container.textContent).not.toContain("Cargando previsualización…");
+  });
+
   it("plays at the selected speed and pauses cleanly", async () => {
     vi.useFakeTimers();
     await render([
