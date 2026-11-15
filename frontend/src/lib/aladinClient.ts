@@ -266,6 +266,14 @@ export async function mountAladinWithNamespace(
   // gotoRaDec/setFoV reciben los números de la consulta, no el texto de target.
   instance.gotoRaDec(view.ra, view.dec);
   instance.setFoV(view.fov);
+  // El trazo por defecto del bundle es rgb(150, 150, 220). setCooGrid es la API
+  // oficial (Aladin.prototype.setCooGrid → view.setGridOptions).
+  instance.setCooGrid({
+    enabled: true,
+    color: "#7eb8c9",
+    opacity: 0.42,
+    thickness: 1,
+  });
   return createAladinController(A, instance);
 }
 
