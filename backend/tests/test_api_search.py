@@ -111,10 +111,14 @@ def test_epochs_time_ordered_for_wise_region():
     # Fixture truth: coords from data/metadata/epochs.json — not invented defaults.
     assert epochs[0]["ra"] == 133.79513
     assert epochs[0]["dec"] == -7.24459
-    # Frontend Observation fields not available from Epoch contract yet.
+    # Epochs preserve the existing payload and add normalized timeline metadata.
     assert "collection" not in epochs[0]
     assert "source_url" not in epochs[0]
-    assert "observed_at" not in epochs[0]
+    assert epochs[0]["observed_at"].endswith("Z")
+    assert epochs[0]["detector"] == "SPHEREx-D1"
+    assert epochs[0]["resolving_power"] == 39
+    assert epochs[0]["survey_cycle"] is None
+    
     # Honest preview_url: only when local FITS resolves (Sprint 3).
     by_id = {e["obs_id"]: e for e in epochs}
     assert by_id["stub-wise0855-001"]["preview_url"] == "/api/preview/stub-wise0855-001"
@@ -136,6 +140,7 @@ def test_epochs_band_filter():
     epochs = response.json()["epochs"]
     assert len(epochs) == 1
     assert "B3" in epochs[0]["bandpass"]
+    assert epochs[0]["detector"] == "SPHEREx-D3"
 
 
 def test_epochs_requires_ra_dec():

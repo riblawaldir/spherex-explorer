@@ -21,6 +21,8 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
+from app.science.spherex_data.timing import get_timeline_metadata
+from app.science.spherex_data.bands import classify_band, classify_wavelength
 
 # Repo root: backend/app/services/catalog.py → parents[3] = repo root
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -307,18 +309,22 @@ class CatalogService:
                 if self.resolve_preview_fits(obs_id) is not None
                 else None
             )
-            rows.append(
-                {
-                    "obs_id": obs_id,
-                    "ra": row.get("ra"),
-                    "dec": row.get("dec"),
-                    "t_mjd": row.get("t_mjd"),
-                    "bandpass": row.get("bandpass"),
-                    "wavelength_um": row.get("wavelength_um"),
-                    "preview_url": preview_url,
-                    "provenance": row.get("provenance", provenance),
-                }
-            )
+            epoch = {
+                "obs_id": obs_id,
+                "ra": row.get("ra"),
+                "dec": row.get("dec"),
+                "t_mjd": row.get("t_mjd"),
+                "bandpass": row.get("bandpass"),
+                "wavelength_um": row.get("wavelength_um"),
+                "preview_url": preview_url,
+                "provenance": row.get("provenance", provenance),
+            }
+            epoch.update(get_timeline_metadata(epoch))
+            spectral = classify_wavelength(epoch.get("wavelength_um"))
+            if spectral:
+                epoch.update(spectral)
+                epoch["band"] = spectral["detector"]
+            rows.append(epoch)
 
         rows.sort(
             key=lambda e: (
@@ -363,9 +369,21 @@ class CatalogService:
                 "t_mjd": rec.t_min_mjd,
                 "bandpass": bandpass,
                 "wavelength_um": _wavelength_um_from_record(rec),
+                "t_min_mjd": rec.t_min_mjd,
+                "t_max_mjd": rec.t_max_mjd,
+                "exposure_seconds": getattr(rec, "exposure_seconds", None),
                 "preview_url": preview_url,
                 "provenance": PROVENANCE_LIVE,
             }
+            # Preserve the detector metadata normalized from IRSA when present;
+            # otherwise classify only from the reported wavelength interval.
+            spectral = classify_band(
+                rec.em_min_m, rec.em_max_m, getattr(rec, "detector", None)
+            )
+            if spectral:
+                epoch.update(spectral)
+                epoch["band"] = spectral["detector"]
+            epoch.update(get_timeline_metadata(epoch))
             # P4 provides these; include only when present (do not invent).
             if rec.collection:
                 epoch["collection"] = rec.collection
@@ -397,11 +415,7 @@ class CatalogService:
             self._samples_dir.resolve(),
             self._raw_dir.resolve(),
         )
-        resolved_s = str(resolved)
-        if not any(
-            resolved_s == str(root) or resolved_s.startswith(str(root) + "/")
-            for root in allowed
-        ):
+        if not any(resolved == root or root in resolved.parents for root in allowed):
             return None
         return resolved if resolved.is_file() else None
 

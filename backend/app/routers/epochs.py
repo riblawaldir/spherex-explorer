@@ -17,6 +17,11 @@ def get_epochs(
 ) -> dict:  # radius default via = (FastAPI Annotated rule)
     """Return time-ordered epochs near ra/dec.
 
+    Returns fixture fields plus normalized UTC, detector metadata, and
+    Planning Period when encoded in the ID. Unknown fields remain null.
+    ra/dec come from labeled fixtures when present (nullable);
+    collection/source_url are not invented here.
+    TODO(P4): replace fixture CatalogService with IRSA SIA2/TAP results.
     Default: labeled fixtures (stub / cached_sample). With SPHEREX_USE_IRSA=1,
     CatalogService calls P4 search_observations and labels successful rows
     ``live`` (falls back to fixtures on IRSA failure).
